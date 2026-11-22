@@ -781,3 +781,157 @@
 - Status label(s) after this activity: IMPLEMENTED-UNVERIFIED.
 - Follow-ups / next action: Sync this entry, stage it, rerun whitespace/path checks, then create and push the root commit.
 ---
+
+## L-0072 | 2026-11-22 15:35 UTC | 2026-11-22 18:35 EAT | agent: codex-session-2026-11-22 | tier/phase: Tier A / GitHub initial import
+- Activity type: COMPLETED
+- What and why: Created the initial root commit for the previously empty remote after final staged whitespace and forbidden-path checks.
+- Files created / modified: 192 project paths committed in `/tmp/BlePOS-push`.
+- Migrations: None.
+- Commands run (secrets redacted): `git -C /tmp/BlePOS-push commit -m "feat: initialize BlePOS platform console"`.
+- Actual results (exit codes, counts, error summaries): Exit 0; root commit `cce1961` on `main`, 192 files changed, 22,781 insertions. Push is still pending; L-0070 remains the commit/push write-ahead entry until remote confirmation.
+- Status label(s) after this activity: IMPLEMENTED-UNVERIFIED (local commit exists; remote push pending).
+- Follow-ups / next action: Push `main` to the requested GitHub remote, verify the remote ref and commit SHA, then record completion and continue A1/A2 work.
+---
+
+## L-0073 | 2026-11-22 15:36 UTC | 2026-11-22 18:36 EAT | agent: codex-session-2026-11-22 | tier/phase: Tier A / GitHub initial import
+- Activity type: COMPLETED
+- What and why: Pushed the initial root commit to the user's requested GitHub remote and verified the local branch tracks the remote branch.
+- Files created / modified: None in the source workspace; remote repository now contains the initial import.
+- Migrations: None.
+- Commands run (secrets redacted): `git -C /tmp/BlePOS-push push -u origin main`; `git -C /tmp/BlePOS-push status --short --branch`; `git -C /tmp/BlePOS-push rev-parse HEAD`.
+- Actual results (exit codes, counts, error summaries): Push exited 0 and created `origin/main`; working tree is clean and tracks `origin/main`. Commit SHA: `cce196120aeb5688b70c2f793bec1ff9725269f7`.
+- Status label(s) after this activity: VERIFIED (initial commit pushed); A1/A2 remain PARTIAL.
+- Follow-ups / next action: Continue A2 role authorization coverage with a data-provider endpoint test for every built-in role that lacks role-management permission; keep A3 blocked until A1 and A2 are VERIFIED.
+---
+
+## L-0074 | 2026-11-22 15:37 UTC | 2026-11-22 18:37 EAT | agent: codex-session-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: SESSION START / HANDOFF RECEIVED
+- What and why: Resumed after the user asked to continue. Read the progress state and current history; the remote initial commit is pushed and verified. A1/A2 remain PARTIAL, and A3 is gated on their verification.
+- Files created / modified: None.
+- Migrations: None.
+- Commands run (secrets redacted): `scripts/progress-check`.
+- Actual results (exit codes, counts, error summaries): Exit 0; 73 numbered log entries validated, with no stale resume point, unmatched STARTED entry, unexplained downgrade, or unevidenced VERIFIED ledger row.
+- Status label(s) after this activity: A1 PARTIAL; A2 PARTIAL; GitHub initial commit VERIFIED.
+- Follow-ups / next action: Continue the A2 role authorization matrix with direct request denials for each built-in role lacking role-management permission, following the project testing skill's data-provider guidance.
+---
+
+## L-0075 | 2026-11-22 15:38 UTC | 2026-11-22 18:38 EAT | agent: codex-session-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: IMPLEMENT
+- What and why: Added a data-provider feature test that submits direct role-creation requests as each built-in non-Security-Officer role lacking `platform.security.roles.manage`; the existing Security Officer boundary test covers that role separately. Each denial also asserts no role is persisted.
+- Files created / modified: `tests/Feature/PlatformRoleBoundaryTest.php`.
+- Migrations: None.
+- Commands run (secrets redacted): None.
+- Actual results (exit codes, counts, error summaries): Test authored; focused execution pending.
+- Status label(s) after this activity: IMPLEMENTED-UNVERIFIED.
+- Follow-ups / next action: Run `php artisan test --compact tests/Feature/PlatformRoleBoundaryTest.php`, then Pint and the full suite.
+---
+
+## L-0076 | 2026-11-22 15:38 UTC | 2026-11-22 18:38 EAT | agent: codex-session-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Ran the focused role-boundary tests with the new data-provider cases.
+- Files created / modified: None.
+- Migrations: None.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformRoleBoundaryTest.php`.
+- Actual results (exit codes, counts, error summaries): Exit 0; 8 tests passed, 20 assertions, 0 failures, duration 0.904 seconds.
+- Status label(s) after this activity: VERIFIED (focused role-boundary behavior).
+- Follow-ups / next action: Run Pint and the full regression suite.
+---
+
+## L-0077 | 2026-11-22 15:39 UTC | 2026-11-22 18:39 EAT | agent: codex-session-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Ran the repository PHP formatter after adding the role-denial data provider.
+- Files created / modified: No formatting changes reported.
+- Migrations: None.
+- Commands run (secrets redacted): `vendor/bin/pint --format agent`.
+- Actual results (exit codes, counts, error summaries): Exit 0; Pint passed.
+- Status label(s) after this activity: VERIFIED (PHP formatting).
+- Follow-ups / next action: Run the full PHPUnit suite.
+---
+
+## L-0078 | 2026-11-22 15:40 UTC | 2026-11-22 18:40 EAT | agent: codex-session-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Ran the full suite after expanding direct role-creation denial coverage to built-in roles without role-management permission.
+- Files created / modified: None.
+- Migrations: None.
+- Commands run (secrets redacted): `php artisan test --compact`.
+- Actual results (exit codes, counts, error summaries): Exit 0; 78 tests passed, 542 assertions, 0 failures, duration 6.704 seconds.
+- Status label(s) after this activity: VERIFIED (current full test suite); A1 and A2 remain PARTIAL.
+- Follow-ups / next action: Record the new A2 evidence, synchronize the changed test/progress files to `/tmp/BlePOS-push`, commit and push the follow-up change, then continue A1/A2 acceptance.
+---
+
+## L-0079 | 2026-11-22 15:51 UTC | 2026-11-22 18:51 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Re-ran the full PHPUnit suite while resuming the pending A2 evidence and synchronization step.
+- Files created / modified: `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`.
+- Migrations: None.
+- Commands run (secrets redacted): `php artisan test --compact`; checked for `/tmp/BlePOS-push` under `/tmp` and `/home/benjakusa/Downloads`.
+- Actual results (exit codes, counts, error summaries): Test command exited 0; 78 tests passed, 542 assertions, 0 failures, duration 7.483 seconds. The temporary clone was not present in either searched location; the workspace `.git` directory is empty, so no follow-up commit or push could be made.
+- Status label(s) after this activity: VERIFIED (current full test suite); A1 and A2 remain PARTIAL; synchronization pending repository metadata.
+- Follow-ups / next action: Restore or recreate the temporary clone at `/tmp/BlePOS-push`, confirm its `main` remote, sync the role-boundary test and progress evidence, and commit/push the A2 follow-up. Continue remaining A1/A2 acceptance gaps afterward.
+---
+
+## L-0080 | 2026-11-22 15:53 UTC | 2026-11-22 18:53 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Added and verified the positive Super Administrator role-creation path to complement direct denial coverage for all other built-in roles without role-management permission. The test checks the redirect, role, permission pivot and audit record.
+- Files created / modified: `tests/Feature/PlatformRoleBoundaryTest.php`, `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`.
+- Migrations: None.
+- Commands run (secrets redacted): `git clone git@github.com:Benjakusa/BlePOS.git /tmp/BlePOS-push`; `php artisan test --compact tests/Feature/PlatformRoleBoundaryTest.php`; `vendor/bin/pint --format agent`; `php artisan test --compact`; `scripts/progress-check` (pending final run).
+- Actual results (exit codes, counts, error summaries): Clone exited 128 because DNS could not resolve `github.com`. Focused boundary suite passed: 9 tests, 25 assertions. Pint exited 0 and ordered imports. Full suite passed: 79 tests, 547 assertions, 0 failures, duration 7.003 seconds. Progress integrity check pending.
+- Status label(s) after this activity: VERIFIED (role create/denial cases covered by this feature test; current full suite and style); A1 and A2 remain PARTIAL; Git synchronization pending network/repository metadata.
+- Follow-ups / next action: Run `scripts/progress-check`; continue reviewing service/action-layer role authorization and remaining A1/A2 gaps. Sync and push the verified changes after GitHub connectivity and a confirmed `main` clone are available.
+---
+
+## L-0081 | 2026-11-22 15:54 UTC | 2026-11-22 18:54 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Validated the append-only progress ledger after recording the positive role-creation path and the current Git synchronization limitation.
+- Files created / modified: `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`.
+- Migrations: None.
+- Commands run (secrets redacted): `scripts/progress-check`.
+- Actual results (exit codes, counts, error summaries): Exit 0; all 80 numbered entries validated with no stale resume point, unmatched STARTED entry, unexplained downgrade, or unevidenced VERIFIED ledger row.
+- Status label(s) after this activity: VERIFIED (progress integrity).
+- Follow-ups / next action: Review role authorization beyond route middleware and complete remaining A1/A2 acceptance evidence. Git sync remains pending a reachable, confirmed `main` clone.
+---
+
+## L-0082 | 2026-11-22 18:07 UTC | 2026-11-22 21:07 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Centralized platform permission evaluation in `PlatformPermissionAuthorizer`, reused it in route middleware, and added direct permission checks to role viewing, mutation, assignment and removal actions. Added a feature case that removes route permission middleware and verifies a Support Agent still cannot create a role.
+- Files created / modified: `app/Services/PlatformPermissionAuthorizer.php`, `app/Http/Middleware/EnsurePlatformPermission.php`, `app/Http/Controllers/Platform/PlatformRoleController.php`, `tests/Feature/PlatformRoleBoundaryTest.php`, `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`.
+- Migrations: None.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformRoleBoundaryTest.php`; `vendor/bin/pint --format agent`; `php artisan test --compact`.
+- Actual results (exit codes, counts, error summaries): Focused suite passed: 10 tests, 27 assertions. Pint exited 0 and ordered imports. Full suite passed: 80 tests, 549 assertions, 0 failures, duration 8.362 seconds.
+- Status label(s) after this activity: VERIFIED (role permission decision shared with middleware and enforced within role actions, including a middleware-bypass denial test); A1/A2 remain PARTIAL because other protected action groups and the complete acceptance matrix remain unverified.
+- Follow-ups / next action: Run progress integrity validation. Continue direct/action-level authorization review for platform user, approval, session, audit and security-event actions. Git sync is pending a reachable GitHub host and restored clone.
+---
+
+## L-0083 | 2026-11-22 18:08 UTC | 2026-11-22 21:08 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Revalidated the progress ledger after recording shared and action-level authorization for role operations.
+- Files created / modified: `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`.
+- Migrations: None.
+- Commands run (secrets redacted): `scripts/progress-check`; attempted `git diff --check`.
+- Actual results (exit codes, counts, error summaries): Progress integrity check exited 0; all 82 numbered entries passed. `git diff --check` could not run because the workspace does not contain Git metadata and is not recognized as a repository.
+- Status label(s) after this activity: VERIFIED (progress integrity); A1/A2 remain PARTIAL; source synchronization remains pending Git metadata and network access.
+- Follow-ups / next action: Continue direct/action-level authorization review for platform user, approval, session, audit and security-event actions. Restore a reachable clone before committing or pushing.
+---
+
+## L-0084 | 2026-11-22 18:17 UTC | 2026-11-22 21:17 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Applied the shared permission authorizer inside every platform controller action protected by named route permissions, including dashboard, platform users, approvals, sessions, security events and audit. Added direct-request coverage that disables route permission middleware and exercises all protected listing screens plus invitation creation as a restricted custom-role user.
+- Files created / modified: `app/Services/PlatformPermissionAuthorizer.php`, `app/Http/Middleware/EnsurePlatformPermission.php`, `app/Http/Controllers/Platform/DashboardController.php`, `app/Http/Controllers/Platform/PlatformUserController.php`, `app/Http/Controllers/Platform/PlatformRoleController.php`, `app/Http/Controllers/Platform/PlatformApprovalController.php`, `app/Http/Controllers/Platform/PlatformSessionController.php`, `app/Http/Controllers/Platform/PlatformSecurityEventController.php`, `app/Http/Controllers/Platform/PlatformAuditController.php`, `tests/Feature/PlatformRouteAuthorizationTest.php`, `tests/Feature/PlatformRoleBoundaryTest.php`, `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`.
+- Migrations: None.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformRouteAuthorizationTest.php`; `vendor/bin/pint --format agent`; `php artisan test --compact`; `git clone git@github.com:Benjakusa/BlePOS.git /tmp/BlePOS-push`.
+- Actual results (exit codes, counts, error summaries): Focused route-authorization suite passed: 4 tests, 195 assertions. Pint passed. Full suite passed: 81 tests, 558 assertions, 0 failures, duration 7.699 seconds. Initial test runs exposed a role fixture that included dashboard access and a corrected fixture variable; final focused and full runs pass. The network-enabled retry restored a clean clone at `main`, checkpoint `cce196120aeb5688b70c2f793bec1ff9725269f7`.
+- Status label(s) after this activity: VERIFIED (permission checks inside protected controller actions and representative middleware-bypass requests); A1/A2 remain PARTIAL pending exhaustive action/API/security matrix review.
+- Follow-ups / next action: Validate the progress ledger, synchronize the changed files to the restored clone, review the staged diff, commit and push the requested `main` update.
+---
+
+## L-0085 | 2026-11-22 18:19 UTC | 2026-11-22 21:19 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Verified the append-only progress files before syncing them with the controller authorization changes.
+- Files created / modified: `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`.
+- Migrations: None.
+- Commands run (secrets redacted): `scripts/progress-check`.
+- Actual results (exit codes, counts, error summaries): Exit 0; all 84 numbered log entries passed with no stale resume point, unmatched STARTED entry, unexplained downgrade, or unevidenced VERIFIED ledger row.
+- Status label(s) after this activity: VERIFIED (progress integrity).
+- Follow-ups / next action: Sync the final progress files, stage the reviewed source/test/docs paths, create the requested commit on `main`, and push it to the supplied remote.
+---

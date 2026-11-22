@@ -9,6 +9,7 @@ use App\Models\PlatformRole;
 use App\Models\PlatformUser;
 use App\Notifications\PlatformRoleChanged;
 use App\Services\PlatformAuditRecorder;
+use App\Services\PlatformPermissionAuthorizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,16 +18,20 @@ use Illuminate\View\View;
 
 class PlatformRoleController extends Controller
 {
-    public function index(): View
+    public function index(Request $request, PlatformPermissionAuthorizer $authorizer): View
     {
+        $this->authorizePermission($request, $authorizer, 'platform.security.roles.manage');
+
         return view('platform.security.roles', [
             'roles' => PlatformRole::query()->with('permissions')->orderBy('name')->get(),
             'permissionsByArea' => PlatformPermission::query()->orderBy('area')->orderBy('action')->get()->groupBy('area'),
         ]);
     }
 
-    public function store(Request $request, PlatformAuditRecorder $audit): RedirectResponse
+    public function store(Request $request, PlatformAuditRecorder $audit, PlatformPermissionAuthorizer $authorizer): RedirectResponse
     {
+        $this->authorizePermission($request, $authorizer, 'platform.security.roles.manage');
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:120', 'unique:platform_roles,name'],
             'description' => ['required', 'string', 'max:1000'],
@@ -55,8 +60,10 @@ class PlatformRoleController extends Controller
         return back()->with('status', 'Platform role created.');
     }
 
-    public function update(Request $request, PlatformRole $platformRole, PlatformAuditRecorder $audit): RedirectResponse
+    public function update(Request $request, PlatformRole $platformRole, PlatformAuditRecorder $audit, PlatformPermissionAuthorizer $authorizer): RedirectResponse
     {
+        $this->authorizePermission($request, $authorizer, 'platform.security.roles.manage');
+
         abort_if($platformRole->is_builtin, 403, 'Built-in platform roles are protected.');
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:120', 'unique:platform_roles,name,'.$platformRole->id],
@@ -115,8 +122,10 @@ class PlatformRoleController extends Controller
         return back()->with('status', 'Platform role updated.');
     }
 
-    public function destroy(Request $request, PlatformRole $platformRole, PlatformAuditRecorder $audit): RedirectResponse
+    public function destroy(Request $request, PlatformRole $platformRole, PlatformAuditRecorder $audit, PlatformPermissionAuthorizer $authorizer): RedirectResponse
     {
+        $this->authorizePermission($request, $authorizer, 'platform.security.roles.manage');
+
         $validated = $request->validate(['reason' => ['required', 'string', 'min:8', 'max:1000']]);
         DB::transaction(function () use ($request, $platformRole, $validated, $audit): void {
             $role = PlatformRole::query()->whereKey($platformRole->id)->lockForUpdate()->firstOrFail();
@@ -131,8 +140,10 @@ class PlatformRoleController extends Controller
         return back()->with('status', 'Platform role deleted.');
     }
 
-    public function assign(Request $request, PlatformUser $platformUser, PlatformAuditRecorder $audit): RedirectResponse
+    public function assign(Request $request, PlatformUser $platformUser, PlatformAuditRecorder $audit, PlatformPermissionAuthorizer $authorizer): RedirectResponse
     {
+        $this->authorizePermission($request, $authorizer, 'platform.security.users.roles.manage');
+
         abort_if($request->user('platform')->is($platformUser), 403, 'You cannot assign roles to your own account.');
         $validated = $request->validate([
             'platform_role_id' => ['required', 'integer', 'exists:platform_roles,id'],
@@ -183,8 +194,10 @@ class PlatformRoleController extends Controller
         return back()->with('status', 'Role assigned. The affected user must sign in again.');
     }
 
-    public function remove(Request $request, PlatformUser $platformUser, PlatformRole $platformRole, PlatformAuditRecorder $audit): RedirectResponse
+    public function remove(Request $request, PlatformUser $platformUser, PlatformRole $platformRole, PlatformAuditRecorder $audit, PlatformPermissionAuthorizer $authorizer): RedirectResponse
     {
+        $this->authorizePermission($request, $authorizer, 'platform.security.users.roles.manage');
+
         $validated = $request->validate(['reason' => ['required', 'string', 'min:8', 'max:1000']]);
         abort_if($request->user('platform')->is($platformUser), 422, 'You cannot remove your own platform role.');
 
@@ -220,6 +233,11 @@ class PlatformRoleController extends Controller
         foreach ($role->users as $user) {
             $this->revokeUserSessions($user);
         }
+    }
+
+    private function authorizePermission(Request $request, PlatformPermissionAuthorizer $authorizer, string $permission): void
+    {
+        $authorizer->ensure($request->user('platform'), $permission);
     }
 
     private function revokeUserSessions(PlatformUser $user): void

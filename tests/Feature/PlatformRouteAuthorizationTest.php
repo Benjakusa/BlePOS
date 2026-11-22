@@ -2,7 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\EnsurePlatformPermission;
 use App\Models\PlatformPermission;
+use App\Models\PlatformRole;
+use App\Models\PlatformSession;
+use App\Models\PlatformUser;
 use Database\Seeders\PlatformRoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
@@ -101,5 +105,55 @@ class PlatformRouteAuthorizationTest extends TestCase
                 "Unknown permission for {$route->getName()}.",
             );
         }
+    }
+
+    public function test_platform_action_controllers_recheck_permissions_without_route_middleware(): void
+    {
+        $this->seed(PlatformRoleSeeder::class);
+        $restrictedUser = PlatformUser::factory()->create(['mfa_confirmed_at' => now()]);
+        $restrictedRole = PlatformRole::query()->create([
+            'name' => 'Restricted Test Role',
+            'slug' => 'restricted-test-role',
+            'description' => 'No platform permissions.',
+            'is_builtin' => false,
+        ]);
+        $restrictedUser->roles()->attach($restrictedRole->id);
+        $sessionId = app('session.store')->getId();
+        PlatformSession::query()->create([
+            'platform_user_id' => $restrictedUser->id,
+            'session_hash' => hash('sha256', $sessionId),
+            'session_identifier' => $sessionId,
+            'logged_in_at' => now(),
+            'last_activity_at' => now(),
+            'expires_at' => now()->addHours(8),
+        ]);
+
+        $this->withoutMiddleware(EnsurePlatformPermission::class)
+            ->actingAs($restrictedUser, 'platform')
+            ->withSession([
+                'platform_mfa_verified_at' => now()->timestamp,
+                'platform_step_up_at' => now()->timestamp,
+            ])
+            ->withCookie(config('session.platform.cookie'), $sessionId);
+
+        foreach ([
+            'platform.dashboard',
+            'platform.users.index',
+            'platform.roles.index',
+            'platform.approvals.index',
+            'platform.sessions.index',
+            'platform.security.events.index',
+            'platform.audit.index',
+        ] as $routeName) {
+            $this->get(route($routeName))->assertForbidden();
+        }
+
+        $this->post(route('platform.users.invite'), [
+            'email' => 'unauthorized-direct-action@example.test',
+            'platform_role_id' => $restrictedRole->id,
+            'reason' => 'Direct action authorization check.',
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('platform_invitations', ['email' => 'unauthorized-direct-action@example.test']);
     }
 }

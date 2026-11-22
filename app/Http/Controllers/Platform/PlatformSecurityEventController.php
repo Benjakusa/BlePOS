@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Platform;
 
 use App\Http\Controllers\Controller;
 use App\Models\PlatformSecurityEvent;
+use App\Services\PlatformPermissionAuthorizer;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class PlatformSecurityEventController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, PlatformPermissionAuthorizer $authorizer): View
     {
+        $authorizer->ensure($request->user('platform'), 'platform.security.view');
+
         $filters = $request->validate([
             'severity' => ['nullable', 'in:info,warning,critical'],
             'search' => ['nullable', 'string', 'max:120'],

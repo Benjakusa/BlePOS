@@ -9,6 +9,7 @@ use App\Models\PlatformUser;
 use App\Notifications\PlatformMfaReset;
 use App\Notifications\PlatformRoleChanged;
 use App\Services\PlatformAuditRecorder;
+use App\Services\PlatformPermissionAuthorizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,15 +17,19 @@ use Illuminate\View\View;
 
 class PlatformApprovalController extends Controller
 {
-    public function index(): View
+    public function index(Request $request, PlatformPermissionAuthorizer $authorizer): View
     {
+        $authorizer->ensure($request->user('platform'), 'platform.security.approvals.review');
+
         return view('platform.security.approvals', [
             'approvals' => PlatformApproval::query()->with('requester')->where('status', 'pending')->orderBy('created_at')->get(),
         ]);
     }
 
-    public function approve(Request $request, PlatformApproval $platformApproval, PlatformAuditRecorder $audit): RedirectResponse
+    public function approve(Request $request, PlatformApproval $platformApproval, PlatformAuditRecorder $audit, PlatformPermissionAuthorizer $authorizer): RedirectResponse
     {
+        $authorizer->ensure($request->user('platform'), 'platform.security.approvals.review');
+
         abort_unless($platformApproval->status === 'pending', 409);
         abort_if($platformApproval->requested_by === $request->user('platform')->id, 403, 'The requester cannot approve their own action.');
         abort_if($platformApproval->expires_at?->isPast(), 410, 'This approval request has expired.');
@@ -63,8 +68,10 @@ class PlatformApprovalController extends Controller
         return back()->with('status', 'Approval completed. The requester and target are recorded in the audit log.');
     }
 
-    public function cancel(Request $request, PlatformApproval $platformApproval, PlatformAuditRecorder $audit): RedirectResponse
+    public function cancel(Request $request, PlatformApproval $platformApproval, PlatformAuditRecorder $audit, PlatformPermissionAuthorizer $authorizer): RedirectResponse
     {
+        $authorizer->ensure($request->user('platform'), 'platform.security.approvals.review');
+
         abort_unless($platformApproval->requested_by === $request->user('platform')->id, 403, 'Only the requester can cancel this approval.');
         abort_unless($platformApproval->status === 'pending', 409, 'Only pending approval requests can be cancelled.');
         abort_if($platformApproval->expires_at?->isPast(), 410, 'This approval request has expired.');

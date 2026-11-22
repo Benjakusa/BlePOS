@@ -9,6 +9,7 @@ use App\Models\PlatformInvitation;
 use App\Models\PlatformRole;
 use App\Models\PlatformUser;
 use App\Services\PlatformAuditRecorder;
+use App\Services\PlatformPermissionAuthorizer;
 use App\Services\PlatformSecurityEvents;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,8 +24,10 @@ use Throwable;
 
 class PlatformUserController extends Controller
 {
-    public function index(): View
+    public function index(Request $request, PlatformPermissionAuthorizer $authorizer): View
     {
+        $authorizer->ensure($request->user('platform'), 'platform.security.users.view');
+
         return view('platform.security.users', [
             'users' => PlatformUser::query()->with('roles')->orderBy('name')->paginate(25),
             'roles' => PlatformRole::query()->orderBy('name')->get(),
@@ -32,8 +35,10 @@ class PlatformUserController extends Controller
         ]);
     }
 
-    public function invite(Request $request, PlatformAuditRecorder $audit, PlatformSecurityEvents $events): RedirectResponse
+    public function invite(Request $request, PlatformAuditRecorder $audit, PlatformSecurityEvents $events, PlatformPermissionAuthorizer $authorizer): RedirectResponse
     {
+        $authorizer->ensure($request->user('platform'), 'platform.security.users.invite');
+
         $validated = $request->validate([
             'email' => ['required', 'email:rfc', 'max:255', 'unique:platform_users,email'],
             'platform_role_id' => ['required', 'integer', 'exists:platform_roles,id'],
@@ -83,8 +88,10 @@ class PlatformUserController extends Controller
         return back()->with('status', 'Invitation sent. The link expires in three days.');
     }
 
-    public function resendInvitation(Request $request, PlatformInvitation $platformInvitation, PlatformAuditRecorder $audit, PlatformSecurityEvents $events): RedirectResponse
+    public function resendInvitation(Request $request, PlatformInvitation $platformInvitation, PlatformAuditRecorder $audit, PlatformSecurityEvents $events, PlatformPermissionAuthorizer $authorizer): RedirectResponse
     {
+        $authorizer->ensure($request->user('platform'), 'platform.security.users.invite');
+
         abort_unless($platformInvitation->status === 'pending', 409, 'Only a pending invitation can be resent.');
         $validated = $request->validate(['reason' => ['required', 'string', 'min:8', 'max:1000']]);
         $token = Str::random(64);
@@ -127,8 +134,10 @@ class PlatformUserController extends Controller
         return back()->with('status', 'A new invitation link was sent. The previous link is now cancelled.');
     }
 
-    public function cancelInvitation(Request $request, PlatformInvitation $platformInvitation, PlatformAuditRecorder $audit): RedirectResponse
+    public function cancelInvitation(Request $request, PlatformInvitation $platformInvitation, PlatformAuditRecorder $audit, PlatformPermissionAuthorizer $authorizer): RedirectResponse
     {
+        $authorizer->ensure($request->user('platform'), 'platform.security.users.invite');
+
         abort_unless($platformInvitation->status === 'pending', 409, 'Only a pending invitation can be cancelled.');
         $validated = $request->validate(['reason' => ['required', 'string', 'min:8', 'max:1000']]);
         $platformInvitation->update(['status' => 'cancelled']);
@@ -176,8 +185,10 @@ class PlatformUserController extends Controller
         return redirect()->route('platform.login')->with('status', 'Your platform account is ready. Sign in to enroll multi-factor authentication.');
     }
 
-    public function updateStatus(Request $request, PlatformUser $platformUser, PlatformAuditRecorder $audit): RedirectResponse
+    public function updateStatus(Request $request, PlatformUser $platformUser, PlatformAuditRecorder $audit, PlatformPermissionAuthorizer $authorizer): RedirectResponse
     {
+        $authorizer->ensure($request->user('platform'), 'platform.security.users.status');
+
         $validated = $request->validate([
             'status' => ['required', 'in:active,locked,disabled'],
             'reason' => ['required', 'string', 'min:8', 'max:1000'],
@@ -211,8 +222,10 @@ class PlatformUserController extends Controller
         return back()->with('status', 'Platform user status updated.');
     }
 
-    public function requestMfaReset(Request $request, PlatformUser $platformUser, PlatformAuditRecorder $audit): RedirectResponse
+    public function requestMfaReset(Request $request, PlatformUser $platformUser, PlatformAuditRecorder $audit, PlatformPermissionAuthorizer $authorizer): RedirectResponse
     {
+        $authorizer->ensure($request->user('platform'), 'platform.security.users.mfa-reset.request');
+
         $validated = $request->validate(['reason' => ['required', 'string', 'min:8', 'max:1000']]);
         abort_if($request->user('platform')->is($platformUser), 422, 'Use recovery codes to reset your own MFA.');
 
@@ -231,8 +244,10 @@ class PlatformUserController extends Controller
         return back()->with('status', 'MFA reset request submitted for a second platform approver.');
     }
 
-    public function requirePasswordReset(Request $request, PlatformUser $platformUser, PlatformAuditRecorder $audit): RedirectResponse
+    public function requirePasswordReset(Request $request, PlatformUser $platformUser, PlatformAuditRecorder $audit, PlatformPermissionAuthorizer $authorizer): RedirectResponse
     {
+        $authorizer->ensure($request->user('platform'), 'platform.security.users.password-reset');
+
         $validated = $request->validate(['reason' => ['required', 'string', 'min:8', 'max:1000']]);
         abort_if($request->user('platform')->is($platformUser), 422, 'Use the password reset flow to update your own password.');
         $status = Password::broker('platform')->sendResetLink(['email' => $platformUser->email]);

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PlatformAuditLog;
 use App\Services\PlatformAuditRecorder;
 use App\Services\PlatformAuditVerifier;
+use App\Services\PlatformPermissionAuthorizer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -13,8 +14,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PlatformAuditController extends Controller
 {
-    public function index(Request $request, PlatformAuditVerifier $verifier): View
+    public function index(Request $request, PlatformAuditVerifier $verifier, PlatformPermissionAuthorizer $authorizer): View
     {
+        $authorizer->ensure($request->user('platform'), 'platform.audit.view');
+
         $filters = $request->validate([
             'actor_id' => ['nullable', 'integer', 'exists:platform_users,id'],
             'action' => ['nullable', 'string', 'max:160'],
@@ -31,8 +34,10 @@ class PlatformAuditController extends Controller
         ]);
     }
 
-    public function export(Request $request, PlatformAuditRecorder $audit): StreamedResponse
+    public function export(Request $request, PlatformAuditRecorder $audit, PlatformPermissionAuthorizer $authorizer): StreamedResponse
     {
+        $authorizer->ensure($request->user('platform'), 'platform.audit.export');
+
         $filters = $request->validate([
             'actor_id' => ['nullable', 'integer', 'exists:platform_users,id'],
             'action' => ['nullable', 'string', 'max:160'],
