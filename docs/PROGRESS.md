@@ -1,17 +1,17 @@
 # BlePOS Annex A Progress
 
 ## Session header
-- Last updated: 2026-11-22 18:39 UTC / 21:39 EAT
+- Last updated: 2026-11-22 18:40 UTC / 21:40 EAT
 - Last agent / session ID: codex-resume-2026-11-22
 - Current tier / phase: Tier A / A1–A2 acceptance completion
 - Build status: Not rerun this session
 - Last full test run: `php artisan test --compact` — 81 tests, 584 assertions (2026-11-22; see `PROGRESS_LOG.md` L-0087).
 - Resume verification: `vendor/bin/pint --format agent` passed (2026-11-22; see `PROGRESS_LOG.md` L-0005).
-- Git working branch / checkpoint: `main` contains pushed commit `9216e6416cc9ca433f2b62a66342daf1a64f0436`; `/tmp/BlePOS-push` is clean and tracks `origin/main`. The workspace `.git` remains empty.
+- Git working branch / checkpoint: The tested role-permission code is pushed in `9216e6416cc9ca433f2b62a66342daf1a64f0436`; progress records were synced in `0c2eb0d873556578f917d83a16e1d40b05d7db2b`. `/tmp/BlePOS-push` is clean and tracks `origin/main`; the workspace `.git` remains empty.
 
 ## RESUME POINT
 - Next action (exact): Continue A1/A2 acceptance review using the remaining Annex A evidence gaps; keep A3 gated.
-- Preconditions / what must be true first: Super Administrator role creation now persists every seeded permission, and direct action authorization checks cover all protected routes with middleware bypass (L-0091, L-0087). Commits `23ffb51`, `133516c`, and `9216e64` are pushed.
+- Preconditions / what must be true first: Super Administrator role creation now persists every seeded permission, and direct action authorization checks cover all protected routes with middleware bypass (L-0091, L-0087). Commits `23ffb51`, `133516c`, `9216e64`, and progress sync `0c2eb0d` are pushed.
 - Files in flight: No uncommitted files in `/tmp/BlePOS-push`; the workspace `.git` remains empty. Use the clean clone for the next increment and push verified work as completed.
 - First commands to run on resume: Re-read the remaining A1/A2 acceptance gaps in this file and Annex A, select a high-value unverified acceptance scenario, then verify it directly.
 - Warnings: Do not start A3 before A1/A2 are verified. The workspace `.git` is empty; continue using the confirmed `/tmp/BlePOS-push` clone for commits and pushes.
@@ -40,6 +40,7 @@
 | Git synchronization | `git -C /tmp/BlePOS-push push origin main` | 2026-11-22 | Passed | — | — | Commit `23ffb513e7a8bef8e2d9d8de0f7f87a64957065b`; `origin/main` verified at the same SHA, see `PROGRESS_LOG.md` L-0086. |
 | Git synchronization | `git -C /tmp/BlePOS-push push origin main` | 2026-11-22 | Passed | — | — | Commit `133516cb801bde0c5635de2d3583a5b78ae6ec20`; `origin/main` verified at the same SHA, see `PROGRESS_LOG.md` L-0090. |
 | Git synchronization | `git -C /tmp/BlePOS-push push origin main` | 2026-11-22 | Passed | — | — | Commit `9216e6416cc9ca433f2b62a66342daf1a64f0436`; `origin/main` verified at the same SHA, see `PROGRESS_LOG.md` L-0093. |
+| Git synchronization | `git -C /tmp/BlePOS-push push origin main` | 2026-11-22 | Passed | — | — | Progress sync commit `0c2eb0d873556578f917d83a16e1d40b05d7db2b` pushed and verified, see `PROGRESS_LOG.md` L-0095. |
 | Route authorization | `php artisan test --compact tests/Feature/PlatformRouteAuthorizationTest.php` | 2026-11-22 | 4 | 0 | 0 | 221 assertions, exit 0; direct checks cover protected listing and mutation routes with route permission middleware removed, see `PROGRESS_LOG.md` L-0087. |
 | PHP style | `vendor/bin/pint --format agent` | 2026-11-22 | Passed | — | — | See `PROGRESS_LOG.md` L-0087. |
 | Full PHPUnit suite | `php artisan test --compact` | 2026-11-22 | 81 | 0 | 0 | 584 assertions, exit 0; see `PROGRESS_LOG.md` L-0087. |

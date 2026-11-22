@@ -1034,3 +1034,14 @@
 - Status label(s) after this activity: VERIFIED (progress integrity).
 - Follow-ups / next action: Sync the progress files, commit and push the updated resume state.
 ---
+
+## L-0095 | 2026-11-22 18:40 UTC | 2026-11-22 21:40 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: COMPLETED
+- What and why: Pushed the progress record for the full-catalogue role assignment test and the successful direct-action matrix verification.
+- Files created / modified: `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`; progress sync commit `0c2eb0d873556578f917d83a16e1d40b05d7db2b`.
+- Migrations: None.
+- Commands run (secrets redacted): `git -C /tmp/BlePOS-push commit -m "docs: record platform authorization verification"`; `git -C /tmp/BlePOS-push push origin main`; checked `HEAD`, `origin/main`, and working-tree status.
+- Actual results (exit codes, counts, error summaries): Commit pushed successfully; `origin/main` advanced from `9216e64` to `0c2eb0d`. `HEAD` and `origin/main` both resolved to `0c2eb0d873556578f917d83a16e1d40b05d7db2b`; clone is clean.
+- Status label(s) after this activity: VERIFIED (progress sync pushed); A1/A2 remain PARTIAL pending remaining Annex acceptance work.
+- Follow-ups / next action: Continue A1/A2 acceptance review; keep A3 gated.
+---
