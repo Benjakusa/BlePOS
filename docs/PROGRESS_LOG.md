@@ -1012,3 +1012,25 @@
 - Status label(s) after this activity: VERIFIED (progress integrity).
 - Follow-ups / next action: Sync the test and progress files to `main`, inspect the diff, commit, push and verify the remote SHA.
 ---
+
+## L-0093 | 2026-11-22 18:38 UTC | 2026-11-22 21:38 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: COMPLETED
+- What and why: Pushed the full-catalogue Super Administrator role-creation acceptance test, proving a custom role can persist every currently seeded platform permission with an audit record.
+- Files created / modified: `tests/Feature/PlatformRoleBoundaryTest.php`, `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`; commit `9216e6416cc9ca433f2b62a66342daf1a64f0436`.
+- Migrations: None.
+- Commands run (secrets redacted): `git -C /tmp/BlePOS-push commit -m "test: cover full platform permission assignment"`; `git -C /tmp/BlePOS-push push origin main`; checked status and both refs.
+- Actual results (exit codes, counts, error summaries): Commit created and push exited 0, advancing `origin/main` from `133516c` to `9216e64`. `HEAD` and `origin/main` both resolve to `9216e6416cc9ca433f2b62a66342daf1a64f0436`; clone working tree is clean.
+- Status label(s) after this activity: VERIFIED (full-catalogue role creation acceptance increment pushed); A1/A2 remain PARTIAL pending remaining Annex evidence.
+- Follow-ups / next action: Continue review of remaining A1/A2 acceptance gaps; A3 remains gated until both tiers are verified.
+---
+
+## L-0094 | 2026-11-22 18:39 UTC | 2026-11-22 21:39 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Validated the progress ledger after recording the latest pushed Super Administrator permission assignment evidence.
+- Files created / modified: `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`.
+- Migrations: None.
+- Commands run (secrets redacted): `scripts/progress-check`.
+- Actual results (exit codes, counts, error summaries): Exit 0; all 93 numbered entries validated with no stale resume point, unmatched STARTED entry, unexplained downgrade, or unevidenced VERIFIED ledger row.
+- Status label(s) after this activity: VERIFIED (progress integrity).
+- Follow-ups / next action: Sync the progress files, commit and push the updated resume state.
+---
