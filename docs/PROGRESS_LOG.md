@@ -935,3 +935,47 @@
 - Status label(s) after this activity: VERIFIED (progress integrity).
 - Follow-ups / next action: Sync the final progress files, stage the reviewed source/test/docs paths, create the requested commit on `main`, and push it to the supplied remote.
 ---
+
+## L-0086 | 2026-11-22 18:27 UTC | 2026-11-22 21:27 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: COMPLETED
+- What and why: Committed and pushed the shared permission authorizer and controller-level permission enforcement requested for A2 service/action-boundary coverage.
+- Files created / modified: 13 source, test, and progress paths; commit `23ffb513e7a8bef8e2d9d8de0f7f87a64957065b`.
+- Migrations: None.
+- Commands run (secrets redacted): `git -C /tmp/BlePOS-push commit -m "fix: enforce platform permissions within actions"`; `git -C /tmp/BlePOS-push push origin main`; checked `git status --short --branch`, `HEAD`, and `origin/main`.
+- Actual results (exit codes, counts, error summaries): Commit created on `main`; push exited 0 and advanced `origin/main` from `cce1961` to `23ffb51`. Local and remote-tracking refs both resolve to `23ffb513e7a8bef8e2d9d8de0f7f87a64957065b`; clone working tree is clean.
+- Status label(s) after this activity: VERIFIED (commit pushed); A1/A2 remain PARTIAL pending remaining acceptance coverage.
+- Follow-ups / next action: Continue A2 by testing direct permission denials on protected mutation routes with route permission middleware removed. Do not start A3 before A1/A2 are verified.
+---
+
+## L-0087 | 2026-11-22 18:30 UTC | 2026-11-22 21:30 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Expanded the middleware-bypass integration test to call every permission-protected dashboard, user, role, approval, session, security-event and audit route, including every write route, as a user with no platform permissions. Added persisted-state assertions for the denied mutations.
+- Files created / modified: `tests/Feature/PlatformRouteAuthorizationTest.php`, `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`.
+- Migrations: None.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformRouteAuthorizationTest.php`; `vendor/bin/pint --format agent`; `php artisan test --compact`.
+- Actual results (exit codes, counts, error summaries): Focused suite passed: 4 tests, 221 assertions. Pint passed. Full suite passed: 81 tests, 584 assertions, 0 failures, duration 7.643 seconds.
+- Status label(s) after this activity: VERIFIED (route-middleware-bypass checks for all permission-protected platform actions and no-write assertions); A1/A2 remain PARTIAL pending full Annex matrix review.
+- Follow-ups / next action: Run progress integrity validation, sync the updated authorization test and evidence to the clean `main` clone, review the staged diff, commit, push and verify the new remote SHA.
+---
+
+## L-0088 | 2026-11-22 18:31 UTC | 2026-11-22 21:31 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Revalidated the progress files before the direct-mutation coverage commit.
+- Files created / modified: `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`.
+- Migrations: None.
+- Commands run (secrets redacted): `scripts/progress-check`; checked `/tmp/BlePOS-push` branch and status.
+- Actual results (exit codes, counts, error summaries): Progress check exited 0; all 87 numbered log entries validated. The temporary clone remained clean on `main` at `23ffb513e7a8bef8e2d9d8de0f7f87a64957065b` before syncing this increment.
+- Status label(s) after this activity: VERIFIED (progress integrity and prior checkpoint state).
+- Follow-ups / next action: Sync, review, commit and push the direct-mutation coverage and evidence.
+---
+
+## L-0089 | 2026-11-22 18:32 UTC | 2026-11-22 21:32 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Rechecked progress integrity after recording the all-mutation authorization matrix and updating the A2 feature status.
+- Files created / modified: `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`.
+- Migrations: None.
+- Commands run (secrets redacted): `scripts/progress-check`.
+- Actual results (exit codes, counts, error summaries): Exit 0; all 88 numbered log entries validated.
+- Status label(s) after this activity: VERIFIED (progress integrity).
+- Follow-ups / next action: Sync the final test and progress changes, commit them on `main`, push, and verify the remote SHA.
+---
