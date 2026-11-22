@@ -1,19 +1,19 @@
 # BlePOS Annex A Progress
 
 ## Session header
-- Last updated: 2026-11-22 18:32 UTC / 21:32 EAT
+- Last updated: 2026-11-22 18:37 UTC / 21:37 EAT
 - Last agent / session ID: codex-resume-2026-11-22
 - Current tier / phase: Tier A / A1–A2 acceptance completion
 - Build status: Not rerun this session
 - Last full test run: `php artisan test --compact` — 81 tests, 584 assertions (2026-11-22; see `PROGRESS_LOG.md` L-0087).
 - Resume verification: `vendor/bin/pint --format agent` passed (2026-11-22; see `PROGRESS_LOG.md` L-0005).
-- Git working branch / checkpoint: `main` contains pushed commit `23ffb513e7a8bef8e2d9d8de0f7f87a64957065b`; `/tmp/BlePOS-push` is clean and tracks `origin/main`. The workspace `.git` remains empty.
+- Git working branch / checkpoint: `main` contains pushed commit `133516cb801bde0c5635de2d3583a5b78ae6ec20`; `/tmp/BlePOS-push` is clean and tracks `origin/main`. The workspace `.git` remains empty.
 
 ## RESUME POINT
-- Next action (exact): Sync the verified direct-mutation authorization matrix and progress evidence to `/tmp/BlePOS-push`, inspect the diff, commit on `main`, and push to the supplied remote.
-- Preconditions / what must be true first: Direct permission denial is verified with route permission middleware removed for every protected listing and mutation route, including assertions that denied writes leave application data unchanged (L-0087). Commit `23ffb513e7a8bef8e2d9d8de0f7f87a64957065b` is pushed; `/tmp/BlePOS-push` tracks clean `main` before this increment.
-- Files in flight: `tests/Feature/PlatformRouteAuthorizationTest.php`, `docs/PROGRESS.md`, and `docs/PROGRESS_LOG.md` contain the direct-mutation coverage and evidence; they need syncing and a follow-up push.
-- First commands to run on resume: Sync the changed test and progress files, inspect the diff, commit and push `main`.
+- Next action (exact): Sync the verified full-catalogue Super Administrator role-creation case and progress evidence into `/tmp/BlePOS-push`, review the diff, commit on `main`, and push.
+- Preconditions / what must be true first: `PlatformRoleBoundaryTest` now submits every seeded permission ID in a Super Administrator role-creation request and asserts the complete permission set persisted. Focused and full suites pass at L-0091. Current pushed checkpoint is `133516cb801bde0c5635de2d3583a5b78ae6ec20`.
+- Files in flight: `tests/Feature/PlatformRoleBoundaryTest.php`, `docs/PROGRESS.md`, and `docs/PROGRESS_LOG.md` contain the verified full-catalogue role-creation evidence; sync and push are pending.
+- First commands to run on resume: Sync those three paths, review the staged diff, commit and push `main`.
 - Warnings: Do not start A3 before A1/A2 are verified. The workspace `.git` is empty; continue using the confirmed `/tmp/BlePOS-push` clone for commits and pushes.
 
 ## Latest session verification
@@ -38,9 +38,14 @@
 | Full PHPUnit suite | `php artisan test --compact` | 2026-11-22 | 81 | 0 | 0 | 558 assertions, exit 0; see `PROGRESS_LOG.md` L-0084. |
 | Progress integrity | `scripts/progress-check` | 2026-11-22 | Passed | — | — | 84 numbered log entries validated; see `PROGRESS_LOG.md` L-0085. |
 | Git synchronization | `git -C /tmp/BlePOS-push push origin main` | 2026-11-22 | Passed | — | — | Commit `23ffb513e7a8bef8e2d9d8de0f7f87a64957065b`; `origin/main` verified at the same SHA, see `PROGRESS_LOG.md` L-0086. |
+| Git synchronization | `git -C /tmp/BlePOS-push push origin main` | 2026-11-22 | Passed | — | — | Commit `133516cb801bde0c5635de2d3583a5b78ae6ec20`; `origin/main` verified at the same SHA, see `PROGRESS_LOG.md` L-0090. |
 | Route authorization | `php artisan test --compact tests/Feature/PlatformRouteAuthorizationTest.php` | 2026-11-22 | 4 | 0 | 0 | 221 assertions, exit 0; direct checks cover protected listing and mutation routes with route permission middleware removed, see `PROGRESS_LOG.md` L-0087. |
 | PHP style | `vendor/bin/pint --format agent` | 2026-11-22 | Passed | — | — | See `PROGRESS_LOG.md` L-0087. |
 | Full PHPUnit suite | `php artisan test --compact` | 2026-11-22 | 81 | 0 | 0 | 584 assertions, exit 0; see `PROGRESS_LOG.md` L-0087. |
+| Role boundary | `php artisan test --compact tests/Feature/PlatformRoleBoundaryTest.php` | 2026-11-22 | 10 | 0 | 0 | 27 assertions, exit 0; Super Administrator assigns all catalogued permissions in one custom role, see `PROGRESS_LOG.md` L-0091. |
+| PHP style | `vendor/bin/pint --format agent` | 2026-11-22 | Passed | — | — | See `PROGRESS_LOG.md` L-0091. |
+| Full PHPUnit suite | `php artisan test --compact` | 2026-11-22 | 81 | 0 | 0 | 584 assertions, exit 0; see `PROGRESS_LOG.md` L-0091. |
+| Progress integrity | `scripts/progress-check` | 2026-11-22 | Passed | — | — | 91 numbered log entries validated; see `PROGRESS_LOG.md` L-0092. |
 | Progress integrity | `scripts/progress-check` | 2026-11-22 | Passed | — | — | 87 numbered log entries validated; see `PROGRESS_LOG.md` L-0088. |
 | Progress integrity | `scripts/progress-check` | 2026-11-22 | Passed | — | — | 88 numbered log entries validated; see `PROGRESS_LOG.md` L-0089. |
 | Progress integrity | `scripts/progress-check` | 2026-11-22 | Passed | — | — | 82 numbered log entries validated; see `PROGRESS_LOG.md` L-0083. |
@@ -50,11 +55,11 @@
 ## A2 acceptance evidence — role creation denied for unprivileged built-in roles
 - Status: VERIFIED for the tested direct-request denial cases; overall A2 remains PARTIAL.
 - Test: `PlatformRoleBoundaryTest::test_roles_without_role_management_permission_cannot_create_roles` uses a data provider for operations administrator, billing administrator, support agent, compliance/eTIMS officer, and platform auditor. The existing Security Officer test separately verifies direct role-editor denial.
-- Positive-path test: `PlatformRoleBoundaryTest::test_super_administrator_can_create_a_role_with_permissions_and_audit_it` verifies the response, persisted custom role, permission pivot and audit record.
+- Positive-path test: `PlatformRoleBoundaryTest::test_super_administrator_can_create_a_role_with_each_catalogued_permission_and_audit_it` verifies the response, persisted custom role, complete permission-catalogue assignment and audit record.
 - Action-layer check: `PlatformPermissionAuthorizer` is shared by the route middleware and all role/role-assignment controller actions. `PlatformRoleBoundaryTest::test_role_creation_still_checks_permission_when_route_permission_middleware_is_missing` verifies a Support Agent is still denied when the permission middleware is bypassed.
-- Focused result: `php artisan test --compact tests/Feature/PlatformRoleBoundaryTest.php` — 10 tests, 27 assertions, passed (L-0082).
-- Full regression result: `php artisan test --compact` — 80 tests, 549 assertions, passed (L-0082).
-- Style: `vendor/bin/pint --format agent` passed (L-0082).
+- Focused result: `php artisan test --compact tests/Feature/PlatformRoleBoundaryTest.php` — 10 tests, 27 assertions, passed (L-0091).
+- Full regression result: `php artisan test --compact` — 81 tests, 584 assertions, passed (L-0091).
+- Style: `vendor/bin/pint --format agent` passed (L-0091).
 - Direct-action evidence: A request matrix with route permission middleware removed covers each permission-protected dashboard, user, role, approval, session, security-event and audit action. Denied writes leave invitations, user status, roles, approvals, sessions and audit records unchanged (L-0087).
 - Focused mutation result: `php artisan test --compact tests/Feature/PlatformRouteAuthorizationTest.php` — 4 tests, 221 assertions, passed (L-0087).
 - Full regression result: `php artisan test --compact` — 81 tests, 584 assertions, passed (L-0087).

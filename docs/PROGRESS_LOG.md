@@ -979,3 +979,36 @@
 - Status label(s) after this activity: VERIFIED (progress integrity).
 - Follow-ups / next action: Sync the final test and progress changes, commit them on `main`, push, and verify the remote SHA.
 ---
+
+## L-0090 | 2026-11-22 18:34 UTC | 2026-11-22 21:34 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: COMPLETED
+- What and why: Committed and pushed the direct-request matrix proving all named-permission-protected platform controller actions deny a zero-permission user even when route permission middleware is removed.
+- Files created / modified: `tests/Feature/PlatformRouteAuthorizationTest.php`, `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`; commit `133516cb801bde0c5635de2d3583a5b78ae6ec20`.
+- Migrations: None.
+- Commands run (secrets redacted): `git -C /tmp/BlePOS-push commit -m "test: verify direct platform action authorization"`; `git -C /tmp/BlePOS-push push origin main`; checked working-tree status, `HEAD`, and `origin/main`.
+- Actual results (exit codes, counts, error summaries): Commit created and push exited 0, advancing `origin/main` from `23ffb51` to `133516c`. `HEAD` and `origin/main` both resolve to `133516cb801bde0c5635de2d3583a5b78ae6ec20`; clone working tree is clean.
+- Status label(s) after this activity: VERIFIED (all permission-gated route actions have controller-level checks with direct-request bypass coverage); A1/A2 remain PARTIAL pending remaining Annex acceptance work.
+- Follow-ups / next action: Continue A1/A2 acceptance, starting with Super Administrator positive role creation across the permission matrix; do not start A3 before A1/A2 are verified.
+---
+
+## L-0091 | 2026-11-22 18:36 UTC | 2026-11-22 21:36 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Expanded the Super Administrator positive role-creation test to submit every seeded platform permission and assert the complete catalogue is assigned to the new custom role, alongside the response and audit record.
+- Files created / modified: `tests/Feature/PlatformRoleBoundaryTest.php`, `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`.
+- Migrations: None.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformRoleBoundaryTest.php`; `vendor/bin/pint --format agent`; `php artisan test --compact`.
+- Actual results (exit codes, counts, error summaries): Focused suite passed: 10 tests, 27 assertions. Pint passed. Full suite passed: 81 tests, 584 assertions, 0 failures, duration 8.302 seconds.
+- Status label(s) after this activity: VERIFIED (Super Administrator can create a role with every permission currently in the catalogue and audit the change); A1/A2 remain PARTIAL pending remaining Annex acceptance work.
+- Follow-ups / next action: Run progress integrity validation, sync the test and evidence to the clean `main` clone, review, commit and push.
+---
+
+## L-0092 | 2026-11-22 18:37 UTC | 2026-11-22 21:37 EAT | agent: codex-resume-2026-11-22 | tier/phase: Tier A / A2
+- Activity type: TEST
+- What and why: Revalidated progress tracking after recording full-catalogue Super Administrator role creation.
+- Files created / modified: `docs/PROGRESS.md`, `docs/PROGRESS_LOG.md`.
+- Migrations: None.
+- Commands run (secrets redacted): `scripts/progress-check`.
+- Actual results (exit codes, counts, error summaries): Exit 0; all 91 numbered entries validated with no stale resume point, unmatched STARTED entry, unexplained downgrade, or unevidenced VERIFIED ledger row.
+- Status label(s) after this activity: VERIFIED (progress integrity).
+- Follow-ups / next action: Sync the test and progress files to `main`, inspect the diff, commit, push and verify the remote SHA.
+---

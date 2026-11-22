@@ -96,10 +96,10 @@ class PlatformRoleBoundaryTest extends TestCase
         $this->assertDatabaseMissing('platform_roles', ['name' => $roleName]);
     }
 
-    public function test_super_administrator_can_create_a_role_with_permissions_and_audit_it(): void
+    public function test_super_administrator_can_create_a_role_with_each_catalogued_permission_and_audit_it(): void
     {
         [$superAdministrator, $sessionId] = $this->makePlatformUserWithRole('super-administrator');
-        $permission = PlatformPermission::query()->where('name', 'platform.tenants.view')->firstOrFail();
+        $permissionIds = PlatformPermission::query()->orderBy('id')->pluck('id')->all();
 
         $response = $this->actingAs($superAdministrator, 'platform')
             ->withSession([
@@ -111,7 +111,7 @@ class PlatformRoleBoundaryTest extends TestCase
             ->post(route('platform.roles.store'), [
                 'name' => 'Tenant Review Specialist',
                 'description' => 'Can review platform tenant metadata.',
-                'permission_ids' => [$permission->id],
+                'permission_ids' => $permissionIds,
                 'reason' => 'Needed for tenant review operations.',
             ]);
 
@@ -122,10 +122,10 @@ class PlatformRoleBoundaryTest extends TestCase
             'is_builtin' => false,
         ]);
         $role = PlatformRole::query()->where('slug', 'tenant-review-specialist')->firstOrFail();
-        $this->assertDatabaseHas('platform_permission_role', [
-            'platform_role_id' => $role->id,
-            'platform_permission_id' => $permission->id,
-        ]);
+        $this->assertSame(
+            $permissionIds,
+            $role->permissions()->orderBy('platform_permissions.id')->pluck('platform_permissions.id')->all(),
+        );
         $this->assertDatabaseHas('platform_audit_log', [
             'actor_id' => $superAdministrator->id,
             'action' => 'platform.role.created',
