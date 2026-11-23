@@ -1,0 +1,111 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$root = dirname(__DIR__);
+$progressPath = $root.'/docs/PROGRESS.md';
+$logPath = $root.'/docs/PROGRESS_LOG.md';
+$errors = [];
+
+foreach ([$progressPath, $logPath] as $path) {
+    if (! is_file($path)) {
+        $errors[] = 'Missing required file: '.substr($path, strlen($root) + 1);
+    }
+}
+
+if ($errors !== []) {
+    fwrite(STDERR, implode("\n", $errors)."\n");
+    exit(1);
+}
+
+$progress = file_get_contents($progressPath);
+$log = file_get_contents($logPath);
+
+if (! is_string($progress) || ! is_string($log)) {
+    fwrite(STDERR, "Unable to read progress files.\n");
+    exit(1);
+}
+
+foreach (['RESUME POINT', 'Feature status', 'Latest session verification'] as $heading) {
+    if (! str_contains($progress, $heading)) {
+        $errors[] = "Progress file is missing required section: {$heading}";
+    }
+}
+
+if (! str_contains($log, 'append-only; never edit or delete earlier entries')) {
+    $errors[] = 'Progress log is missing its append-only declaration.';
+}
+
+preg_match_all('/^## (L-\d{4}) \| (\d{4}-\d{2}-\d{2} \d{2}:\d{2}) UTC \|/m', $log, $matches, PREG_SET_ORDER);
+$logIds = array_column($matches, 1);
+$logTimes = array_column($matches, 2);
+
+if ($logIds === []) {
+    $errors[] = 'Progress log contains no numbered entries.';
+}
+
+foreach ($logIds as $index => $id) {
+    $expected = sprintf('L-%04d', $index + 1);
+    if ($id !== $expected) {
+        $errors[] = "Progress log sequence expected {$expected}, found {$id}.";
+        break;
+    }
+}
+
+$entries = preg_split('/(?=^## L-\d{4} \|)/m', $log, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+foreach ($entries as $entry) {
+    if (! preg_match('/^## L-\d{4} \|/m', $entry)) {
+        continue;
+    }
+
+    if (! preg_match('/^- Activity type: .+$/m', $entry)) {
+        $errors[] = 'A progress log entry is missing its activity type.';
+    }
+
+    if (preg_match('/\bSTARTED\b/', $entry, $started) && str_contains($entry, '- Activity type: STARTED')) {
+        preg_match('/^## (L-\d{4})/m', $entry, $startedId);
+        $id = $startedId[1] ?? 'unknown';
+        $completed = false;
+        foreach ($entries as $candidate) {
+            if (! str_contains($candidate, $id) || ! preg_match('/^- Activity type: (COMPLETED|FAILED)$/m', $candidate)) {
+                continue;
+            }
+
+            preg_match('/^## (L-\d{4})/m', $candidate, $candidateId);
+            if (($candidateId[1] ?? '') !== $id) {
+                $completed = true;
+                break;
+            }
+        }
+
+        if (! $completed) {
+            $errors[] = "Unmatched STARTED entry {$id}.";
+        }
+    }
+
+    if (preg_match('/^- Status downgrade:.*$/mi', $entry) && ! preg_match('/^- Downgrade explanation: \S.*$/mi', $entry)) {
+        $errors[] = 'A status downgrade is recorded without a downgrade explanation.';
+    }
+}
+
+preg_match('/^- Last updated: (\d{4}-\d{2}-\d{2} \d{2}:\d{2}) UTC/m', $progress, $resumeTimeMatch);
+if (! isset($resumeTimeMatch[1], $logTimes[array_key_last($logTimes)])) {
+    $errors[] = 'Cannot compare the progress update time with the newest log entry.';
+} elseif (strtotime($resumeTimeMatch[1].' UTC') < strtotime($logTimes[array_key_last($logTimes)].' UTC')) {
+    $errors[] = 'RESUME POINT is older than the newest progress log entry.';
+}
+
+preg_match_all('/^\|[^\n]*\| VERIFIED \|[^\n]*$/m', $progress, $verifiedRows);
+foreach ($verifiedRows[0] as $row) {
+    if (! preg_match('/L-\d{4}/', $row) || ! preg_match('/(?:php artisan test|vendor\/bin\/phpunit|phpunit|vitest|playwright)/i', $row)) {
+        $errors[] = 'A VERIFIED feature ledger row must cite a log entry and a test command.';
+    }
+}
+
+if ($errors !== []) {
+    fwrite(STDERR, implode("\n", array_unique($errors))."\n");
+    exit(1);
+}
+
+fwrite(STDOUT, sprintf("Progress files valid: %d numbered log entries; no stale resume point, unmatched STARTED entry, unexplained downgrade, or unevidenced VERIFIED ledger row.\n", count($logIds)));
