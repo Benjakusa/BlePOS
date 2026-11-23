@@ -48,6 +48,9 @@
                 @if(auth('platform')->user()->hasPermission('platform.provisioning.view'))
                     <a href="{{ route('platform.provisioning.index') }}">Provisioning</a>
                 @endif
+                @if(auth('platform')->user()->hasPermission('platform.infrastructure.view'))
+                    <a href="{{ route('platform.infrastructure.index') }}">Infrastructure</a>
+                @endif
                 @if(auth('platform')->user()->hasPermission('platform.billing.view'))
                     <a href="{{ route('platform.plans.index') }}">Plans</a>
                     <a href="{{ route('platform.invoices.index') }}">Invoices & Billing</a>
@@ -76,6 +79,9 @@
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.audit.view'))
                     <a href="{{ route('platform.audit.index') }}">Audit log</a>
+                @endif
+                @if(auth('platform')->user()->hasPermission('platform.support.view'))
+                    <a href="{{ route('platform.support.cases.index') }}">Support Centre</a>
                 @endif
             </nav>
         @endauth

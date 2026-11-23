@@ -1329,3 +1329,23 @@
 - Status label(s) after this activity: VERIFIED (Phase 6 / A5 expansion Platform billing, invoices, payments, refunds, dunning); A5 expansion transitioned to VERIFIED.
 - Follow-ups / next action: Update `docs/PROGRESS.md`, run `scripts/progress-check`, then proceed to Phase 7 (Announcements and support cases/tools - A10 / Tier B).
 ---
+
+## L-0120 | 2026-11-23 11:42 UTC | 2026-11-23 14:42 EAT | agent: antigravity | tier/phase: Phase 7 / Tier B (A10)
+- Activity type: IMPLEMENT
+- What and why: Implemented Phase 7 Announcements and Support Cases/Tools (A10 / Tier B). Created `SupportCase`, `SupportCaseNote`, `PlatformAnnouncement`, and `PlatformAnnouncementRead` models and database migrations. Implemented `SupportService` providing SLA calculation (urgent: 4h, high: 12h, medium: 24h, low: 72h per Annex A 13.1), ticket creation, agent assignment, resolution tracking, internal notes (hidden from tenant), non-impersonating tenant integrity diagnostic checks (reporting pass/fail counts only per Annex A 13.2 & 13.3), and announcement publishing/archiving. Created platform controllers `PlatformSupportCaseController`, `PlatformSupportAssistController`, and `PlatformAnnouncementController` with 13 routes protected by `platform.support.view` with `platform.step-up` on all mutation actions. Built Blade views for Support Centre ticket directory, ticket creation, ticket inspection with internal note feed, non-impersonating tenant assist diagnostics overview, announcements broadcast directory, and announcement publishing. Created `PlatformSupportAndAnnouncementsTest` covering ticket creation, SLA assignment, internal notes, agent assignment, resolution, integrity diagnostics, and announcement lifecycle. Extended `PlatformRouteAuthorizationTest` to enforce MFA, session, step-up, and permission invariants on all support and announcement routes.
+- Files created / modified:
+  - `database/migrations/2026_11_23_112230_create_support_and_announcements_tables.php` — schema for support cases, case notes, platform announcements, and announcement reads.
+  - `app/Models/SupportCase.php`, `SupportCaseNote.php`, `PlatformAnnouncement.php`, `PlatformAnnouncementRead.php` — Eloquent models with relations and status helpers.
+  - `app/Services/SupportService.php` — ticket lifecycle, SLA enforcement, internal notes, non-impersonating integrity check, and announcement publishing.
+  - `app/Http/Controllers/Platform/PlatformSupportCaseController.php`, `PlatformSupportAssistController.php`, `PlatformAnnouncementController.php` — platform support controllers with audit logging and step-up auth.
+  - `resources/views/platform/support/cases/index.blade.php`, `create.blade.php`, `show.blade.php`, `resources/views/platform/support/assist/overview.blade.php`, `resources/views/platform/support/announcements/index.blade.php`, `create.blade.php` — support and announcement UI views.
+  - `resources/views/platform/layout.blade.php` — added Support Centre navigation link under `platform.support.view`.
+  - `routes/web.php` — registered 13 platform support and announcement routes.
+  - `tests/Feature/PlatformRouteAuthorizationTest.php` — added support and announcement prefixes to authorization and mutation invariants.
+  - `tests/Feature/PlatformSupportAndAnnouncementsTest.php` — 8 feature tests verifying support cases, SLA calculation, internal notes, agent assignment, non-impersonating diagnostics, and announcements.
+- Migrations: `2026_11_23_112230_create_support_and_announcements_tables.php`.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformSupportAndAnnouncementsTest.php tests/Feature/PlatformRouteAuthorizationTest.php` → 12 tests, 610 assertions, exit 0; `php artisan test --compact` → 144 tests, 1318 assertions, exit 0; `vendor/bin/pint --format agent` → passed.
+- Actual results (exit codes, counts, error summaries): All tests passing, 0 failures, exit 0 throughout.
+- Status label(s) after this activity: VERIFIED (Phase 7 / A10 Announcements and support cases/tools); A10 transitioned to VERIFIED; Tier B complete.
+- Follow-ups / next action: Update `docs/PROGRESS.md`, run `scripts/progress-check`, then proceed to Tier C (Phase 8: Infrastructure, queues, scheduler, migrations, backups and restore - A7 / Tier C).
+---

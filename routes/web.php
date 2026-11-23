@@ -3,10 +3,12 @@
 use App\Http\Controllers\Platform\AuthController;
 use App\Http\Controllers\Platform\DashboardController;
 use App\Http\Controllers\Platform\MfaController;
+use App\Http\Controllers\Platform\PlatformAnnouncementController;
 use App\Http\Controllers\Platform\PlatformApprovalController;
 use App\Http\Controllers\Platform\PlatformAuditController;
 use App\Http\Controllers\Platform\PlatformDunningController;
 use App\Http\Controllers\Platform\PlatformIndustryTemplateController;
+use App\Http\Controllers\Platform\PlatformInfrastructureController;
 use App\Http\Controllers\Platform\PlatformInvoiceController;
 use App\Http\Controllers\Platform\PlatformModuleController;
 use App\Http\Controllers\Platform\PlatformPasswordResetController;
@@ -16,6 +18,8 @@ use App\Http\Controllers\Platform\PlatformRoleController;
 use App\Http\Controllers\Platform\PlatformSecurityEventController;
 use App\Http\Controllers\Platform\PlatformSessionController;
 use App\Http\Controllers\Platform\PlatformSubscriptionController;
+use App\Http\Controllers\Platform\PlatformSupportAssistController;
+use App\Http\Controllers\Platform\PlatformSupportCaseController;
 use App\Http\Controllers\Platform\PlatformTenantController;
 use App\Http\Controllers\Platform\PlatformTenantModuleController;
 use App\Http\Controllers\Platform\PlatformUserController;
@@ -188,6 +192,60 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
             Route::post('/tenants/{tenant}/templates/apply', [PlatformIndustryTemplateController::class, 'apply'])
                 ->middleware(['platform.permission:platform.modules.manage', 'platform.step-up'])
                 ->name('tenants.templates.apply');
+
+            // Support Centre & Cases
+            Route::get('/support/cases', [PlatformSupportCaseController::class, 'index'])
+                ->middleware('platform.permission:platform.support.view')->name('support.cases.index');
+            Route::get('/support/cases/create', [PlatformSupportCaseController::class, 'create'])
+                ->middleware('platform.permission:platform.support.view')->name('support.cases.create');
+            Route::post('/support/cases', [PlatformSupportCaseController::class, 'store'])
+                ->middleware(['platform.permission:platform.support.view', 'platform.step-up'])->name('support.cases.store');
+            Route::get('/support/cases/{case}', [PlatformSupportCaseController::class, 'show'])
+                ->middleware('platform.permission:platform.support.view')->name('support.cases.show');
+            Route::post('/support/cases/{case}/assign', [PlatformSupportCaseController::class, 'assign'])
+                ->middleware(['platform.permission:platform.support.view', 'platform.step-up'])->name('support.cases.assign');
+            Route::post('/support/cases/{case}/status', [PlatformSupportCaseController::class, 'updateStatus'])
+                ->middleware(['platform.permission:platform.support.view', 'platform.step-up'])->name('support.cases.status');
+            Route::post('/support/cases/{case}/notes', [PlatformSupportCaseController::class, 'addNote'])
+                ->middleware(['platform.permission:platform.support.view', 'platform.step-up'])->name('support.cases.notes.store');
+
+            // Non-impersonating Tenant Assist Diagnostics (Annex A 13.2, 13.3)
+            Route::get('/support/assist/{tenant}', [PlatformSupportAssistController::class, 'overview'])
+                ->middleware('platform.permission:platform.support.view')->name('support.assist.overview');
+            Route::post('/support/assist/{tenant}/integrity-check', [PlatformSupportAssistController::class, 'integrityCheck'])
+                ->middleware(['platform.permission:platform.support.view', 'platform.step-up'])->name('support.assist.integrity');
+
+            // Announcements & Bulletins
+            Route::get('/announcements', [PlatformAnnouncementController::class, 'index'])
+                ->middleware('platform.permission:platform.support.view')->name('announcements.index');
+            Route::get('/announcements/create', [PlatformAnnouncementController::class, 'create'])
+                ->middleware('platform.permission:platform.support.view')->name('announcements.create');
+            Route::post('/announcements', [PlatformAnnouncementController::class, 'store'])
+                ->middleware(['platform.permission:platform.support.view', 'platform.step-up'])->name('announcements.store');
+            Route::post('/announcements/{announcement}/archive', [PlatformAnnouncementController::class, 'archive'])
+                ->middleware(['platform.permission:platform.support.view', 'platform.step-up'])->name('announcements.archive');
+
+            // Infrastructure, Probes, Queues, Migrations & Recovery
+            Route::get('/infrastructure', [PlatformInfrastructureController::class, 'index'])
+                ->middleware('platform.permission:platform.infrastructure.view')->name('infrastructure.index');
+            Route::post('/infrastructure/probes', [PlatformInfrastructureController::class, 'runProbes'])
+                ->middleware(['platform.permission:platform.infrastructure.view', 'platform.step-up'])->name('infrastructure.probes');
+            Route::get('/infrastructure/queues', [PlatformInfrastructureController::class, 'queues'])
+                ->middleware('platform.permission:platform.infrastructure.view')->name('infrastructure.queues');
+            Route::post('/infrastructure/queues/{id}/retry', [PlatformInfrastructureController::class, 'retryFailedJob'])
+                ->middleware(['platform.permission:platform.infrastructure.view', 'platform.step-up'])->name('infrastructure.queues.retry');
+            Route::get('/infrastructure/migrations', [PlatformInfrastructureController::class, 'migrations'])
+                ->middleware('platform.permission:platform.infrastructure.view')->name('infrastructure.migrations');
+            Route::get('/infrastructure/backups', [PlatformInfrastructureController::class, 'backups'])
+                ->middleware('platform.permission:platform.infrastructure.view')->name('infrastructure.backups');
+            Route::post('/infrastructure/backups/trigger', [PlatformInfrastructureController::class, 'triggerBackup'])
+                ->middleware(['platform.permission:platform.infrastructure.view', 'platform.step-up'])->name('infrastructure.backups.trigger');
+            Route::get('/infrastructure/restores', [PlatformInfrastructureController::class, 'restoreRequests'])
+                ->middleware('platform.permission:platform.infrastructure.view')->name('infrastructure.restores');
+            Route::post('/infrastructure/restores', [PlatformInfrastructureController::class, 'storeRestoreRequest'])
+                ->middleware(['platform.permission:platform.infrastructure.view', 'platform.step-up'])->name('infrastructure.restores.store');
+            Route::post('/infrastructure/restores/{restore}/approve', [PlatformInfrastructureController::class, 'approveRestore'])
+                ->middleware(['platform.permission:platform.infrastructure.view', 'platform.step-up'])->name('infrastructure.restores.approve');
         });
     });
 });
