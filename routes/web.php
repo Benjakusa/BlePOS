@@ -5,12 +5,25 @@ use App\Http\Controllers\Platform\DashboardController;
 use App\Http\Controllers\Platform\MfaController;
 use App\Http\Controllers\Platform\PlatformApprovalController;
 use App\Http\Controllers\Platform\PlatformAuditController;
+use App\Http\Controllers\Platform\PlatformIndustryTemplateController;
+use App\Http\Controllers\Platform\PlatformModuleController;
 use App\Http\Controllers\Platform\PlatformPasswordResetController;
+use App\Http\Controllers\Platform\PlatformPlanController;
+use App\Http\Controllers\Platform\PlatformProvisioningController;
 use App\Http\Controllers\Platform\PlatformRoleController;
 use App\Http\Controllers\Platform\PlatformSecurityEventController;
 use App\Http\Controllers\Platform\PlatformSessionController;
+use App\Http\Controllers\Platform\PlatformSubscriptionController;
+use App\Http\Controllers\Platform\PlatformTenantController;
+use App\Http\Controllers\Platform\PlatformTenantModuleController;
 use App\Http\Controllers\Platform\PlatformUserController;
 use App\Http\Controllers\Platform\StepUpController;
+use App\Http\Controllers\Tenant\CashierShiftController;
+use App\Http\Controllers\Tenant\CategoryController;
+use App\Http\Controllers\Tenant\InventoryController;
+use App\Http\Controllers\Tenant\PosController;
+use App\Http\Controllers\Tenant\ProductController;
+use App\Http\Controllers\Tenant\TenantDashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/platform-console/login');
@@ -40,6 +53,46 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
             Route::get('/', DashboardController::class)
                 ->middleware('platform.permission:platform.dashboard.view')
                 ->name('dashboard');
+
+            Route::get('/tenants', [PlatformTenantController::class, 'index'])
+                ->middleware('platform.permission:platform.tenants.view')->name('tenants.index');
+            Route::get('/tenants/create', [PlatformTenantController::class, 'create'])
+                ->middleware('platform.permission:platform.tenants.create')->name('tenants.create');
+            Route::post('/tenants', [PlatformTenantController::class, 'store'])
+                ->middleware(['platform.permission:platform.tenants.create', 'platform.step-up'])->name('tenants.store');
+            Route::get('/tenants/{tenant}', [PlatformTenantController::class, 'show'])
+                ->middleware('platform.permission:platform.tenants.view')->name('tenants.show');
+            Route::post('/tenants/{tenant}/suspend', [PlatformTenantController::class, 'suspend'])
+                ->middleware(['platform.permission:platform.tenants.suspend', 'platform.step-up'])->name('tenants.suspend');
+            Route::post('/tenants/{tenant}/reactivate', [PlatformTenantController::class, 'reactivate'])
+                ->middleware(['platform.permission:platform.tenants.reactivate', 'platform.step-up'])->name('tenants.reactivate');
+
+            Route::get('/provisioning', [PlatformProvisioningController::class, 'index'])
+                ->middleware('platform.permission:platform.provisioning.view')->name('provisioning.index');
+            Route::get('/provisioning/{provisioningRun}', [PlatformProvisioningController::class, 'show'])
+                ->middleware('platform.permission:platform.provisioning.view')->name('provisioning.show');
+            Route::post('/provisioning/{provisioningRun}/retry', [PlatformProvisioningController::class, 'retry'])
+                ->middleware(['platform.permission:platform.provisioning.retry', 'platform.step-up'])->name('provisioning.retry');
+
+            // Plans Catalogue
+            Route::get('/plans', [PlatformPlanController::class, 'index'])
+                ->middleware('platform.permission:platform.billing.view')->name('plans.index');
+            Route::get('/plans/create', [PlatformPlanController::class, 'create'])
+                ->middleware('platform.permission:platform.billing.plans.manage')->name('plans.create');
+            Route::post('/plans', [PlatformPlanController::class, 'store'])
+                ->middleware(['platform.permission:platform.billing.plans.manage', 'platform.step-up'])->name('plans.store');
+            Route::get('/plans/{plan}/edit', [PlatformPlanController::class, 'edit'])
+                ->middleware('platform.permission:platform.billing.plans.manage')->name('plans.edit');
+            Route::put('/plans/{plan}', [PlatformPlanController::class, 'update'])
+                ->middleware(['platform.permission:platform.billing.plans.manage', 'platform.step-up'])->name('plans.update');
+            Route::post('/plans/{plan}/toggle', [PlatformPlanController::class, 'toggleStatus'])
+                ->middleware(['platform.permission:platform.billing.plans.manage', 'platform.step-up'])->name('plans.toggle');
+
+            // Tenant Subscription Assignment & Lifecycle
+            Route::post('/tenants/{tenant}/subscription', [PlatformSubscriptionController::class, 'assign'])
+                ->middleware(['platform.permission:platform.billing.subscriptions.manage', 'platform.step-up'])->name('tenants.subscription.assign');
+            Route::post('/tenants/{tenant}/subscription/{subscription}/transition', [PlatformSubscriptionController::class, 'transition'])
+                ->middleware(['platform.permission:platform.billing.subscriptions.manage', 'platform.step-up'])->name('tenants.subscription.transition');
 
             Route::get('/security/users', [PlatformUserController::class, 'index'])
                 ->middleware('platform.permission:platform.security.users.view')->name('users.index');
@@ -89,6 +142,62 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
             Route::get('/audit', [PlatformAuditController::class, 'index'])
                 ->middleware('platform.permission:platform.audit.view')
                 ->name('audit.index');
+
+            // Module Catalogue & Entitlements
+            Route::get('/modules', [PlatformModuleController::class, 'index'])
+                ->middleware('platform.permission:platform.modules.view')
+                ->name('modules.index');
+            Route::get('/modules/{module}', [PlatformModuleController::class, 'show'])
+                ->middleware('platform.permission:platform.modules.view')
+                ->name('modules.show');
+            Route::post('/tenants/{tenant}/modules/enable', [PlatformTenantModuleController::class, 'enable'])
+                ->middleware(['platform.permission:platform.modules.manage', 'platform.step-up'])
+                ->name('tenants.modules.enable');
+            Route::post('/tenants/{tenant}/modules/{module}/disable', [PlatformTenantModuleController::class, 'disable'])
+                ->middleware(['platform.permission:platform.modules.manage', 'platform.step-up'])
+                ->name('tenants.modules.disable');
+
+            // Industry Templates
+            Route::get('/templates', [PlatformIndustryTemplateController::class, 'index'])
+                ->middleware('platform.permission:platform.modules.view')
+                ->name('templates.index');
+            Route::post('/tenants/{tenant}/templates/apply', [PlatformIndustryTemplateController::class, 'apply'])
+                ->middleware(['platform.permission:platform.modules.manage', 'platform.step-up'])
+                ->name('tenants.templates.apply');
         });
     });
+});
+
+Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.resolve', 'tenant.isolate'])->group(function (): void {
+    Route::get('/', TenantDashboardController::class)->name('dashboard');
+
+    // Catalog - Categories
+    Route::resource('categories', CategoryController::class)->except(['show']);
+
+    // Catalog - Products
+    Route::get('/products/lookup', [ProductController::class, 'lookup'])->name('products.lookup');
+    Route::resource('products', ProductController::class);
+
+    // Point of Sale & Checkout
+    Route::get('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
+    Route::post('/pos/process', [PosController::class, 'processSale'])->name('pos.process');
+    Route::get('/pos/receipt/{sale}', [PosController::class, 'receipt'])->name('pos.receipt');
+    Route::get('/pos/sales', [PosController::class, 'sales'])->name('pos.sales');
+    Route::post('/pos/sales/{sale}/void', [PosController::class, 'voidSale'])->name('pos.void');
+
+    // Cashier Shifts
+    Route::get('/shifts', [CashierShiftController::class, 'index'])->name('shifts.index');
+    Route::get('/shifts/create', [CashierShiftController::class, 'create'])->name('shifts.create');
+    Route::post('/shifts', [CashierShiftController::class, 'store'])->name('shifts.store');
+    Route::get('/shifts/{shift}', [CashierShiftController::class, 'show'])->name('shifts.show');
+    Route::post('/shifts/{shift}/cash-movement', [CashierShiftController::class, 'cashMovement'])->name('shifts.cash-movement');
+    Route::post('/shifts/{shift}/close', [CashierShiftController::class, 'close'])->name('shifts.close');
+
+    // Inventory Stock & Movements
+    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::get('/inventory/adjust', [InventoryController::class, 'adjustForm'])->name('inventory.adjust');
+    Route::post('/inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust.store');
+    Route::get('/inventory/receive', [InventoryController::class, 'receiveForm'])->name('inventory.receive');
+    Route::post('/inventory/receive', [InventoryController::class, 'receive'])->name('inventory.receive.store');
+    Route::get('/inventory/movements', [InventoryController::class, 'movements'])->name('inventory.movements');
 });

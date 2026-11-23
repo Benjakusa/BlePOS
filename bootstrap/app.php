@@ -2,10 +2,13 @@
 
 use App\Http\Middleware\EnforcePlatformHttps;
 use App\Http\Middleware\EnforcePlatformIpAllowlist;
+use App\Http\Middleware\EnforceShopIsolation;
+use App\Http\Middleware\EnforceTenantIsolation;
 use App\Http\Middleware\EnsurePlatformMfa;
 use App\Http\Middleware\EnsurePlatformPermission;
 use App\Http\Middleware\EnsurePlatformStepUp;
 use App\Http\Middleware\PlatformSecurityHeaders;
+use App\Http\Middleware\ResolveTenantContext;
 use App\Http\Middleware\StartBleposSession;
 use App\Http\Middleware\TrackPlatformSession;
 use Illuminate\Foundation\Application;
@@ -40,6 +43,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'platform.headers' => PlatformSecurityHeaders::class,
             'platform.https' => EnforcePlatformHttps::class,
             'platform.ip-allowlist' => EnforcePlatformIpAllowlist::class,
+            'tenant.resolve' => ResolveTenantContext::class,
+            'tenant.isolate' => EnforceTenantIsolation::class,
+            'shop.isolate' => EnforceShopIsolation::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

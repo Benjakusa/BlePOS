@@ -53,6 +53,34 @@ class PlatformApprovalWorkflowTest extends TestCase
         });
     }
 
+    public function test_a_security_officer_cannot_approve_a_super_administrator_grant(): void
+    {
+        $this->seed(PlatformRoleSeeder::class);
+        $requester = PlatformUser::factory()->create();
+        $approver = PlatformUser::factory()->create(['mfa_confirmed_at' => now()]);
+        $target = PlatformUser::factory()->create(['mfa_confirmed_at' => now()]);
+        $securityOfficerRole = PlatformRole::query()->where('slug', 'security-officer')->firstOrFail();
+        $superAdministratorRole = PlatformRole::query()->where('slug', 'super-administrator')->firstOrFail();
+        $approver->roles()->attach($securityOfficerRole->id);
+        $approval = $this->makeApproval($requester, $target, $superAdministratorRole);
+        $sessionId = $this->makeTrackedSession($approver);
+
+        $response = $this->actingAs($approver, 'platform')
+            ->withSession([
+                'platform_mfa_verified_at' => now()->timestamp,
+                'platform_step_up_at' => now()->timestamp,
+            ])
+            ->withCookie(config('session.platform.cookie'), $sessionId)
+            ->post(route('platform.approvals.approve', $approval));
+
+        $response->assertForbidden();
+        $this->assertDatabaseHas('platform_approvals', ['id' => $approval->id, 'status' => 'pending']);
+        $this->assertDatabaseMissing('platform_role_user', [
+            'platform_user_id' => $target->id,
+            'platform_role_id' => $superAdministratorRole->id,
+        ]);
+    }
+
     public function test_an_approval_requester_cannot_approve_their_own_super_administrator_grant(): void
     {
         $this->seed(PlatformRoleSeeder::class);

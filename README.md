@@ -1,58 +1,90 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# BlePOS
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**BlePOS** is a multi-tenant, multi-shop, multi-industry Point of Sale (POS) and Business Management SaaS engineered for Kenya, East Africa, and global commercial operations.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Key Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Multi-Tenant Architecture**: Strict data isolation enforced via server-side session resolution, Eloquent global scopes, and separate storage boundaries.
+- **Multi-Shop & Multi-Register**: Manage multiple branch locations and checkout terminals under one business entity, with strict cashier branch isolation.
+- **Platform Control Plane (`/platform-console`)**: Isolated administrative environment with dedicated guard (`platform`), separate session cookie (`PLATFORM_SESSION_COOKIE`), progressive lockout, mandatory TOTP MFA, step-up authentication, and two-person approvals.
+- **Append-Only Cryptographic Audit Log**: Tamper-evident SHA-256 hash chaining with SQLite trigger locks and automated verification commands.
+- **Multi-Industry Engine**: Deep operational support for General Retail, Supermarkets, Pharmacies, Restaurants & Bars, Hotels & Hospitality, Wholesale, Salons, and Fuel Stations.
+- **East African Payment & Compliance Rails**:
+  - Safaricom M-Pesa Daraja 2.0 (STK Push, C2B Paybill/Till, and automated reconciliation).
+  - KRA eTIMS (Electronic Tax Invoice Management System) fiscal compliance and QR code receipt signing.
+- **Enterprise Financial Ledger**: Integrated double-entry accounting with automated general ledger entries from POS sales, inventory receipts, and expenses.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## System Requirements
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **PHP**: 8.3 or higher
+- **Database**: SQLite (local/testing), MySQL 8.0+, MariaDB 10.11+, or PostgreSQL 15+
+- **Extensions**: `bcmath`, `curl`, `mbstring`, `openssl`, `pdo`, `xml`, `zip`, `redis`
+- **Node.js**: 20+ with NPM for frontend asset compilation
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Quick Start & Local Setup
 
 ```bash
-composer require laravel/boost --dev
+# 1. Clone repository & install PHP dependencies
+composer install
 
-php artisan boost:install
+# 2. Environment configuration
+cp .env.example .env
+php artisan key:generate
+
+# 3. Database migrations & seeders
+php artisan migrate --seed
+
+# 4. Create initial Platform Super Administrator via CLI
+php artisan platform:create-superadmin --name="Admin User" --email="admin@blepos.co.ke"
+
+# 5. Build frontend assets
+npm install
+npm run build
+
+# 6. Start local development server
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## Verification & Quality Assurance
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+# Run complete test suite
+php artisan test --compact
 
-## Code of Conduct
+# Code style formatting (Laravel Pint)
+vendor/bin/pint --format agent
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Validate progress and integrity ledger
+./scripts/progress-check
 
-## Security Vulnerabilities
+# Verify cryptographic audit chain integrity
+php artisan platform:audit-verify
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## Documentation
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Detailed architectural and operational specifications are available in `docs/`:
+
+- [Architecture Specification](docs/ARCHITECTURE.md)
+- [Multi-Tenancy & Isolation](docs/MULTITENANCY.md)
+- [Security Architecture](docs/SECURITY.md)
+- [Module Catalogue](docs/MODULES.md)
+- [Platform Administration](docs/PLATFORM_ADMIN.md)
+- [Dashboards & KPIs](docs/DASHBOARDS.md)
+- [Industry Modules](docs/INDUSTRIES.md)
+- [Integrations (M-Pesa & eTIMS)](docs/INTEGRATIONS.md)
+- [Backups & Disaster Recovery](docs/BACKUPS_AND_RECOVERY.md)
+- [Testing & Quality Assurance](docs/TESTING.md)
+- [Production Deployment](docs/DEPLOYMENT.md)
+- [Engineering Roadmap](docs/ROADMAP.md)
+- [Development Progress Ledger](docs/PROGRESS.md)

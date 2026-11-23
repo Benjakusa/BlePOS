@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\EnsurePlatformPermission;
 use App\Models\PlatformAuditLog;
 use App\Models\PlatformRole;
 use App\Models\PlatformSession;
@@ -36,7 +37,8 @@ class PlatformAuditExportTest extends TestCase
             details: ['source' => 'test'],
         );
 
-        $response = $this->actingAs($auditor, 'platform')
+        $response = $this->withoutMiddleware(EnsurePlatformPermission::class)
+            ->actingAs($auditor, 'platform')
             ->withSession(['platform_mfa_verified_at' => now()->timestamp])
             ->withCookie(config('session.platform.cookie'), $sessionId)
             ->get(route('platform.audit.export', ['action' => '=HYPERLINK("https://example.test","open")']));
@@ -63,7 +65,8 @@ class PlatformAuditExportTest extends TestCase
             'expires_at' => now()->addHours(8),
         ]);
 
-        $response = $this->actingAs($supportAgent, 'platform')
+        $response = $this->withoutMiddleware(EnsurePlatformPermission::class)
+            ->actingAs($supportAgent, 'platform')
             ->withSession(['platform_mfa_verified_at' => now()->timestamp])
             ->withCookie(config('session.platform.cookie'), $sessionId)
             ->get(route('platform.audit.export'));

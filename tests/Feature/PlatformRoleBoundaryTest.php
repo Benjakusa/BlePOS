@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\EnsurePlatformPermission;
+use App\Models\PlatformApproval;
 use App\Models\PlatformPermission;
 use App\Models\PlatformRole;
 use App\Models\PlatformSession;
@@ -72,6 +73,96 @@ class PlatformRoleBoundaryTest extends TestCase
         ])->assertForbidden();
 
         $this->assertDatabaseMissing('platform_roles', ['name' => 'Unauthorized Role']);
+    }
+
+    public function test_security_officer_cannot_assign_roles_or_require_password_resets_when_permission_middleware_is_missing(): void
+    {
+        [$securityOfficer, $sessionId] = $this->makePlatformUserWithRole('security-officer');
+        $supportRole = PlatformRole::query()->where('slug', 'support-agent')->firstOrFail();
+        $auditorRole = PlatformRole::query()->where('slug', 'platform-auditor')->firstOrFail();
+        $targetUser = PlatformUser::factory()->create();
+        $targetUser->roles()->attach($supportRole->id);
+
+        $authenticated = $this->withoutMiddleware(EnsurePlatformPermission::class)
+            ->actingAs($securityOfficer, 'platform')
+            ->withSession([
+                'platform_mfa_verified_at' => now()->timestamp,
+                'platform_step_up_at' => now()->timestamp,
+            ])
+            ->withCookie(config('session.platform.cookie'), $sessionId);
+
+        $authenticated->get(route('platform.roles.index'))->assertForbidden();
+        $authenticated->post(route('platform.users.roles.assign', $targetUser), [
+            'platform_role_id' => $auditorRole->id,
+            'reason' => 'Testing role assignment beyond security permissions.',
+        ])->assertForbidden();
+        $authenticated->delete(route('platform.users.roles.remove', [$targetUser, $supportRole]), [
+            'reason' => 'Testing role removal beyond security permissions.',
+        ])->assertForbidden();
+        $authenticated->post(route('platform.users.password-reset', $targetUser), [
+            'reason' => 'Testing password reset beyond security permissions.',
+        ])->assertForbidden();
+
+        $this->assertDatabaseHas('platform_role_user', [
+            'platform_user_id' => $targetUser->id,
+            'platform_role_id' => $supportRole->id,
+        ]);
+        $this->assertDatabaseMissing('platform_role_user', [
+            'platform_user_id' => $targetUser->id,
+            'platform_role_id' => $auditorRole->id,
+        ]);
+        $this->assertFalse($targetUser->fresh()->must_reset_password);
+    }
+
+    public function test_platform_auditor_cannot_mutate_users_roles_approvals_or_sessions_when_permission_middleware_is_missing(): void
+    {
+        [$auditor, $sessionId] = $this->makePlatformUserWithRole('platform-auditor');
+        $targetUser = PlatformUser::factory()->create();
+        $supportRole = PlatformRole::query()->where('slug', 'support-agent')->firstOrFail();
+        $targetUser->roles()->attach($supportRole->id);
+        $targetSession = PlatformSession::query()->create([
+            'platform_user_id' => $targetUser->id,
+            'session_hash' => hash('sha256', 'auditor-boundary-session'),
+            'session_identifier' => 'auditor-boundary-session',
+            'logged_in_at' => now(),
+            'last_activity_at' => now(),
+            'expires_at' => now()->addHours(8),
+        ]);
+        $approval = PlatformApproval::query()->create([
+            'action_type' => 'platform.superadmin.grant',
+            'target_type' => PlatformUser::class,
+            'target_id' => (string) $targetUser->id,
+            'requested_by' => $targetUser->id,
+            'status' => 'pending',
+            'reason' => 'Grant administrative access after independent review.',
+            'payload' => ['platform_role_id' => PlatformRole::query()->where('slug', 'super-administrator')->value('id')],
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $authenticated = $this->withoutMiddleware(EnsurePlatformPermission::class)
+            ->actingAs($auditor, 'platform')
+            ->withSession([
+                'platform_mfa_verified_at' => now()->timestamp,
+                'platform_step_up_at' => now()->timestamp,
+            ])
+            ->withCookie(config('session.platform.cookie'), $sessionId);
+
+        $authenticated->patch(route('platform.users.status', $targetUser), [
+            'status' => 'disabled',
+            'reason' => 'Attempted account status change from a read-only account.',
+        ])->assertForbidden();
+        $authenticated->delete(route('platform.roles.destroy', $supportRole), [
+            'reason' => 'Attempted role deletion from a read-only account.',
+        ])->assertForbidden();
+        $authenticated->post(route('platform.approvals.cancel', $approval), [
+            'reason' => 'Attempted approval cancellation from a read-only account.',
+        ])->assertForbidden();
+        $authenticated->delete(route('platform.sessions.destroy', $targetSession))->assertForbidden();
+
+        $this->assertDatabaseHas('platform_users', ['id' => $targetUser->id, 'status' => 'active']);
+        $this->assertDatabaseHas('platform_roles', ['id' => $supportRole->id, 'slug' => 'support-agent']);
+        $this->assertDatabaseHas('platform_approvals', ['id' => $approval->id, 'status' => 'pending']);
+        $this->assertDatabaseHas('platform_sessions', ['id' => $targetSession->id, 'revoked_at' => null]);
     }
 
     #[DataProvider('rolesWithoutRoleManagementPermission')]

@@ -42,6 +42,21 @@
                 @if(auth('platform')->user()->hasPermission('platform.dashboard.view'))
                     <a class="active" href="{{ route('platform.dashboard') }}">Dashboard</a>
                 @endif
+                @if(auth('platform')->user()->hasPermission('platform.tenants.view'))
+                    <a href="{{ route('platform.tenants.index') }}">Tenants</a>
+                @endif
+                @if(auth('platform')->user()->hasPermission('platform.provisioning.view'))
+                    <a href="{{ route('platform.provisioning.index') }}">Provisioning</a>
+                @endif
+                @if(auth('platform')->user()->hasPermission('platform.billing.view'))
+                    <a href="{{ route('platform.plans.index') }}">Plans & Billing</a>
+                @endif
+                @if(auth('platform')->user()->hasPermission('platform.modules.view'))
+                    <a href="{{ route('platform.modules.index') }}">Module Catalogue</a>
+                @endif
+                @if(auth('platform')->user()->hasPermission('platform.modules.view'))
+                    <a href="{{ route('platform.templates.index') }}">Industry Templates</a>
+                @endif
                 @if(auth('platform')->user()->hasPermission('platform.security.users.view'))
                     <a href="{{ route('platform.users.index') }}">Platform users</a>
                 @endif

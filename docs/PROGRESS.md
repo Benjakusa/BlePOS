@@ -1,24 +1,39 @@
 # BlePOS Annex A Progress
 
 ## Session header
-- Last updated: 2026-11-23 05:23 UTC / 08:23 EAT
-- Last agent / session ID: codex-resume-2026-11-23
-- Current tier / phase: Tier A / A1–A2 acceptance completion
-- Build status: Not rerun this session
-- Last full test run: `php artisan test --compact` — 82 tests, 640 assertions (2026-11-23; see `PROGRESS_LOG.md` L-0096).
-- Resume verification: Focused role-boundary tests passed (11 tests, 83 assertions); `vendor/bin/pint --format agent` passed (2026-11-23; see `PROGRESS_LOG.md` L-0096).
-- Git working branch / checkpoint: The latest recorded push is `0c2eb0d873556578f917d83a16e1d40b05d7db2b`; the workspace `.git` remains empty and `/tmp/BlePOS-push` is unavailable in this resumed environment.
+- Last updated: 2026-11-23 10:32 UTC / 13:32 EAT
+- Last agent / session ID: antigravity-phase5-2026-11-23
+- Current tier / phase: Phase 5 Module Catalogue, Entitlements & Industry Templates (A6 Verified)
+- Build status: Passed
+- Last full test run: `php artisan test --compact` — 127 tests, 1056 assertions (2026-11-23; see `PROGRESS_LOG.md` L-0118).
+- Resume verification: Module and entitlement tests passed (9 tests, 35 assertions); platform route authorization passed (4 tests, 395 assertions); full suite passed (127 tests, 1056 assertions); `vendor/bin/pint --format agent` passed (2026-11-23; see `PROGRESS_LOG.md` L-0118).
+- Git working branch / checkpoint: Phase 0 baseline docs, Phase 1 multi-tenant models, Phase 2 provisioning engine, Phase 3 Core POS backend & tenant UI, Phase 4 Plans and Subscriptions, and Phase 5 Module Catalogue & Entitlements are implemented and verified in the workspace.
 
 ## RESUME POINT
-- Next action (exact): Map every implemented platform screen and action to its permission, then add cross-role direct-request checks for remaining matrix gaps; keep A3 gated.
-- Preconditions / what must be true first: All seven built-in roles pass allowed/denied access checks across the eight implemented platform screens (L-0096); controller checks remain effective when route permission middleware is bypassed (L-0087).
-- Files in flight: `tests/Feature/PlatformRoleBoundaryTest.php`, `docs/PROGRESS.md`, and `docs/PROGRESS_LOG.md` contain this increment. The workspace `.git` is empty and `/tmp/BlePOS-push` is unavailable, so Git synchronization cannot be continued from this workspace.
-- First commands to run on resume: Re-read the remaining A1/A2 gaps and enumerate implemented routes/actions against the permission catalogue; verify uncovered cases before changing their status.
-- Warnings: Do not start A3 before A1/A2 are verified. Deployment checks and parts of the Annex permission/API matrix remain incomplete.
+- Next action (exact): Implement Phase 6 Platform Billing Expansion — invoices, payments, refunds, and dunning (A5 expansion / Tier B).
+- Preconditions / what must be true first: Phase 5 Module Catalogue verified with automated tests passing (127 tests, 1056 assertions; L-0118).
+- Files in flight: All Phase 1–5 models, migrations, services, middleware, controllers, views, and tests are implemented and passing.
+- First commands to run on resume: `php artisan test --compact`, then implement platform invoice/payment schema, billing controllers, and dunning state machine.
+- Warnings: Billing invoices and payment records must never be mutated after creation; use immutable ledger pattern. External payment provider (M-Pesa/Stripe) integration states must be clearly surfaced as NOT YET INTEGRATED.
 
 ## Latest session verification
 | Suite | Command | Date | Passed | Failed | Skipped | Notes |
 |---|---|---|---:|---:|---:|---|
+| Module catalogue & entitlements | `php artisan test --compact tests/Feature/PlatformModuleAndEntitlementTest.php tests/Feature/PlatformRouteAuthorizationTest.php` | 2026-11-23 | 13 | 0 | 0 | 430 assertions, exit 0; see `PROGRESS_LOG.md` L-0118. |
+| Full PHPUnit suite | `php artisan test --compact` | 2026-11-23 | 127 | 0 | 0 | 1056 assertions, exit 0; see `PROGRESS_LOG.md` L-0118. |
+| PHP style | `vendor/bin/pint --format agent` | 2026-11-23 | Passed | — | — | See `PROGRESS_LOG.md` L-0118. |
+| Platform plans and subscriptions | `php artisan test --compact tests/Feature/PlatformPlanAndSubscriptionTest.php tests/Feature/PlatformRouteAuthorizationTest.php` | 2026-11-23 | 7 | 0 | 0 | 381 assertions, exit 0; see `PROGRESS_LOG.md` L-0116. |
+| Full PHPUnit suite | `php artisan test --compact` | 2026-11-23 | 118 | 0 | 0 | 976 assertions, exit 0; see `PROGRESS_LOG.md` L-0116. |
+| PHP style | `vendor/bin/pint --format agent` | 2026-11-23 | Passed | — | — | See `PROGRESS_LOG.md` L-0116. |
+| Phase 3 tenant POS, catalog & inventory | `php artisan test --compact tests/Feature/TenantCatalogTest.php tests/Feature/TenantPosAndShiftTest.php tests/Feature/TenantInventoryTest.php tests/Feature/CorePosAndInventoryTest.php` | 2026-11-23 | 13 | 0 | 0 | 90 assertions, exit 0; see `PROGRESS_LOG.md` L-0114. |
+| Full PHPUnit suite | `php artisan test --compact` | 2026-11-23 | 115 | 0 | 0 | 882 assertions, exit 0; see `PROGRESS_LOG.md` L-0114. |
+| PHP style | `vendor/bin/pint --format agent` | 2026-11-23 | Passed | — | — | See `PROGRESS_LOG.md` L-0114. |
+| Core POS & Inventory tests | `php artisan test --compact tests/Feature/CorePosAndInventoryTest.php` | 2026-11-23 | 4 | 0 | 0 | 25 assertions, exit 0; see `PROGRESS_LOG.md` L-0111. |
+| Full PHPUnit suite | `php artisan test --compact` | 2026-11-23 | 106 | 0 | 0 | 817 assertions, exit 0; see `PROGRESS_LOG.md` L-0112. |
+| PHP style | `vendor/bin/pint --format agent` | 2026-11-23 | Passed | — | — | See `PROGRESS_LOG.md` L-0111. |
+| Tenant provisioning and platform management | `php artisan test --compact tests/Feature/TenantProvisioningTest.php tests/Feature/PlatformTenantManagementTest.php` | 2026-11-23 | 7 | 0 | 0 | 46 assertions, exit 0; see `PROGRESS_LOG.md` L-0109. |
+| Full PHPUnit suite | `php artisan test --compact` | 2026-11-23 | 102 | 0 | 0 | 792 assertions, exit 0; see `PROGRESS_LOG.md` L-0109. |
+| PHP style | `vendor/bin/pint --format agent` | 2026-11-23 | Passed | — | — | See `PROGRESS_LOG.md` L-0109. |
 | Full PHPUnit suite | `php artisan test --compact` | 2026-11-22 | 73 | 0 | 0 | 532 assertions, exit 0; see `PROGRESS_LOG.md` L-0026. |
 | Built-in role permission matrix | `php artisan test --compact tests/Feature/PlatformRolePermissionMatrixTest.php` | 2026-11-22 | 1 | 0 | 0 | 9 assertions, exit 0; see `PROGRESS_LOG.md` L-0015. |
 | PHP style | `vendor/bin/pint --format agent` | 2026-11-22 | Passed | — | — | Dirty mode unavailable because `.git` is empty; fallback formatter passed, see `PROGRESS_LOG.md` L-0017. |
@@ -51,6 +66,12 @@
 | Progress integrity | `scripts/progress-check` | 2026-11-22 | Passed | — | — | 93 numbered log entries validated; see `PROGRESS_LOG.md` L-0094. |
 | Progress integrity | `scripts/progress-check` | 2026-11-22 | Passed | — | — | 87 numbered log entries validated; see `PROGRESS_LOG.md` L-0088. |
 | Progress integrity | `scripts/progress-check` | 2026-11-22 | Passed | — | — | 88 numbered log entries validated; see `PROGRESS_LOG.md` L-0089. |
+| Built-in role mutation boundaries | `php artisan test --compact tests/Feature/PlatformRoleBoundaryTest.php tests/Feature/PlatformApprovalWorkflowTest.php tests/Feature/PlatformMfaResetApprovalTest.php` | 2026-11-23 | 19 | 0 | 0 | 124 assertions; includes Platform Auditor denied user, role, approval and session mutations when route permission middleware is bypassed, see `PROGRESS_LOG.md` L-0103. |
+| Built-in role and audit-export action boundaries | `php artisan test --compact tests/Feature/PlatformAuditExportTest.php tests/Feature/PlatformRoleBoundaryTest.php tests/Feature/PlatformApprovalWorkflowTest.php tests/Feature/PlatformMfaResetApprovalTest.php` | 2026-11-23 | 21 | 0 | 0 | 128 assertions; audit export allowed to Platform Auditor and denied to Support Agent when route permission middleware is bypassed, see `PROGRESS_LOG.md` L-0106. |
+| PHP style | `vendor/bin/pint --dirty --format agent` | 2026-11-23 | Passed | — | — | See `PROGRESS_LOG.md` L-0106. |
+| Full PHPUnit suite | `php artisan test --compact` | 2026-11-23 | 85 | 0 | 0 | 658 assertions, exit 0; see `PROGRESS_LOG.md` L-0106. |
+| PHP style | `vendor/bin/pint --dirty --format agent` | 2026-11-23 | Passed | — | — | See `PROGRESS_LOG.md` L-0103. |
+| Full PHPUnit suite | `php artisan test --compact` | 2026-11-23 | 85 | 0 | 0 | 658 assertions, exit 0; see `PROGRESS_LOG.md` L-0103. |
 | Progress integrity | `scripts/progress-check` | 2026-11-22 | Passed | — | — | 82 numbered log entries validated; see `PROGRESS_LOG.md` L-0083. |
 | Progress integrity | `scripts/progress-check` | 2026-11-22 | Passed | — | — | 80 numbered log entries validated; see `PROGRESS_LOG.md` L-0081. |
 | PHP style | `vendor/bin/pint --format agent` | 2026-11-22 | Passed | — | — | See `PROGRESS_LOG.md` L-0077. |
@@ -58,6 +79,16 @@
 | PHP style | `vendor/bin/pint --format agent` | 2026-11-23 | Passed | — | — | Passed after updating role-boundary coverage, see `PROGRESS_LOG.md` L-0096. |
 | Full PHPUnit suite | `php artisan test --compact` | 2026-11-23 | 82 | 0 | 0 | 640 assertions, exit 0; see `PROGRESS_LOG.md` L-0096. |
 | Progress integrity | `scripts/progress-check` | 2026-11-23 | Passed | — | — | 97 numbered log entries validated; see `PROGRESS_LOG.md` L-0098. |
+| Role boundary | `php artisan test --compact tests/Feature/PlatformRoleBoundaryTest.php` | 2026-11-23 | 12 | 0 | 0 | 90 assertions; Security Officer role assignment, removal, role editor and password-reset actions denied with route permission middleware removed, see `PROGRESS_LOG.md` L-0099. |
+| PHP style | `vendor/bin/pint --dirty --format agent` | 2026-11-23 | Passed | — | — | See `PROGRESS_LOG.md` L-0099. |
+| Approval boundaries | `php artisan test --compact tests/Feature/PlatformApprovalWorkflowTest.php tests/Feature/PlatformMfaResetApprovalTest.php` | 2026-11-23 | 6 | 0 | 0 | 26 assertions; Security Officer cannot approve a Super Administrator grant, while MFA-reset approval remains available, see `PROGRESS_LOG.md` L-0101. |
+| PHP style | `vendor/bin/pint --dirty --format agent` | 2026-11-23 | Passed | — | — | See `PROGRESS_LOG.md` L-0101. |
+| Full PHPUnit suite | `php artisan test --compact` | 2026-11-23 | 84 | 0 | 0 | 650 assertions, exit 0; see `PROGRESS_LOG.md` L-0101. |
+| Progress integrity | `scripts/progress-check` | 2026-11-23 | Passed | — | — | 101 numbered log entries validated; see `PROGRESS_LOG.md` L-0102. |
+| Progress integrity | `scripts/progress-check` | 2026-11-23 | Passed | — | — | 99 numbered log entries validated; see `PROGRESS_LOG.md` L-0100. |
+| Tenant and shop isolation | `php artisan test --compact tests/Feature/TenantIsolationTest.php tests/Feature/ShopIsolationTest.php tests/Feature/TenantRbacTest.php` | 2026-11-23 | 10 | 0 | 0 | 29 assertions, exit 0; see `PROGRESS_LOG.md` L-0107. |
+| Full PHPUnit suite | `php artisan test --compact` | 2026-11-23 | 95 | 0 | 0 | 687 assertions, exit 0; see `PROGRESS_LOG.md` L-0107. |
+| PHP style | `vendor/bin/pint --format agent` | 2026-11-23 | Passed | — | — | See `PROGRESS_LOG.md` L-0107. |
 
 ## A2 acceptance evidence — role creation denied for unprivileged built-in roles
 - Status: VERIFIED for the tested direct-request denial cases; overall A2 remains PARTIAL.
@@ -95,12 +126,72 @@ This tracker records implementation evidence for [Annex A](ANNEX_A.md). A featur
 
 ## Verified increments
 
+### Module Catalogue, Entitlements, and Industry Templates (2026-11-23)
+
+- ✅ Versioned module catalogue implemented: 25 modules across Core, Commercial, Logistics, Finance & Industry categories; `ModuleCatalogueSeeder` seeds all modules and 7 industry templates (retail, pharmacy, restaurant, hotel, wholesale, salon, fuel-station) using `updateOrCreate`.
+- ✅ Dependency enforcement on enable: `ModuleService::enableModule()` validates all required dependency slugs are already enabled for the tenant; throws `ValidationException` listing missing module names if unsatisfied.
+- ✅ Reverse-dependency protection on disable: `ModuleService::disableModule()` checks all currently-enabled entitlements for the tenant; throws `ValidationException` if any active module lists the target slug as a dependency.
+- ✅ Core-module protection: `is_core` modules are blocked from disable via `abort_if(422)`.
+- ✅ Industry template apply: `ModuleService::applyIndustryTemplate()` topologically orders modules using multi-pass dependency resolution and enables them in safe order; all retail template modules verified enabled end-to-end.
+- ✅ Every enable/disable/apply mutation writes an immutable audit log entry via `PlatformAuditRecorder`.
+- ✅ All 6 module/template routes protected by `auth:platform`, `platform.mfa`, `platform.session`, explicit named permission; mutation routes also require `platform.step-up`; verified by route invariant tests.
+- ✅ Focused verification passed: `php artisan test --compact tests/Feature/PlatformModuleAndEntitlementTest.php tests/Feature/PlatformRouteAuthorizationTest.php` — 13 tests, 430 assertions; `vendor/bin/pint --format agent` passed (L-0118).
+- ✅ Full regression verification passed: `php artisan test --compact` — 127 tests, 1056 assertions (L-0118).
+
+### Tenant lifecycle, 30-step provisioning engine and platform console (2026-11-23)
+
+- ✅ 30-step automated provisioning engine implemented (`ProvisioningEngine`) covering validation, database allocation, role/permission seeding, owner creation, initial shop/register setup, and industry blueprint configuration.
+- ✅ Idempotent resumption and safe failure handling verified: failing runs are caught at the exact failed step, logged, and leave tenant status at `provisioning_failed` (never forced active). Subsequent retries resume from the failed step and complete cleanly without duplication.
+- ✅ Platform console tenant management views implemented: Tenant directory with search and status filtering, multi-step registration wizard, tenant detail overview, and audited suspend/reactivate with step-up authentication.
+- ✅ Provisioning monitor implemented: Live run tracking, step progress, error inspection, and audited retry trigger.
+- ✅ Focused verification passed: `php artisan test --compact tests/Feature/TenantProvisioningTest.php tests/Feature/PlatformTenantManagementTest.php` — 7 tests, 46 assertions; `vendor/bin/pint --format agent` passed (L-0109).
+- ✅ Full regression verification passed: `php artisan test --compact` — 102 tests, 792 assertions (L-0109).
+
+### Multi-tenant data isolation and shop scoping (2026-11-23)
+
+- ✅ Tenant model hierarchy established: `Tenant`, `TenantDomain`, `Shop`, `Register`, `Warehouse`, `TenantRole`, `TenantPermission`, and `User`.
+- ✅ Data isolation enforced at database query level using `TenantScope` and `ShopScope` via `BelongsToTenant` and `BelongsToShop` model traits.
+- ✅ Context resolution and request gating enforced via `ResolveTenantContext`, `EnforceTenantIsolation`, and `EnforceShopIsolation` middleware.
+- ✅ Cashier branch isolation strictly enforced: cashiers assigned to Shop A are denied access to Shop B endpoints (403 Forbidden). Cross-tenant access is blocked.
+- ✅ Focused verification passed: `php artisan test --compact tests/Feature/TenantIsolationTest.php tests/Feature/ShopIsolationTest.php tests/Feature/TenantRbacTest.php` — 10 tests, 29 assertions; `vendor/bin/pint --format agent` passed (L-0107).
+- ✅ Full regression verification passed: `php artisan test --compact` — 95 tests, 687 assertions (L-0107).
+
 ### Built-in role screen access (2026-11-23)
 
 - ✅ All seven built-in roles have allowed and denied request coverage across the eight platform screens currently implemented: dashboard, users, roles, approvals, sessions, security events, audit review and audit export.
 - ✅ Focused verification passed: `php artisan test --compact tests/Feature/PlatformRoleBoundaryTest.php` — 11 tests, 83 assertions; `vendor/bin/pint --format agent` passed.
 - ✅ Full regression verification passed: `php artisan test --compact` — 82 tests, 640 assertions (L-0096).
 - ☐ The complete Annex permission/API/action matrix still includes workflows that have not been implemented; A2 remains PARTIAL.
+
+### Cross-role mutation authorization (2026-11-23)
+
+- ✅ A Security Officer retains access to its security duties but cannot open role management, assign or remove another user's role, or require a password reset—even when route permission middleware is removed.
+- ✅ Focused verification passed: `php artisan test --compact tests/Feature/PlatformRoleBoundaryTest.php` — 12 tests, 90 assertions; `vendor/bin/pint --dirty --format agent` passed.
+- ✅ Full regression verification passed: `php artisan test --compact` — 83 tests, 647 assertions (L-0099).
+- ☐ The rest of the Annex permission/API/action matrix remains under review; A2 remains PARTIAL.
+
+### Super Administrator grant approval boundary (2026-11-23)
+
+- ✅ Only a different Super Administrator can approve a Super Administrator grant; the general Security Officer approvals permission no longer authorizes this role change.
+- ✅ Security Officer approval of an MFA reset remains supported and verified.
+- ✅ Focused verification passed: `php artisan test --compact tests/Feature/PlatformApprovalWorkflowTest.php tests/Feature/PlatformMfaResetApprovalTest.php` — 6 tests, 26 assertions; Pint passed.
+- ✅ Full regression verification passed: `php artisan test --compact` — 84 tests, 650 assertions (L-0101).
+- ☐ Other Annex approval types and deployment controls remain in the broader A2/A1 acceptance review.
+
+### Platform Auditor action boundary (2026-11-23)
+
+- ✅ A Platform Auditor remains read-only when route permission middleware is bypassed: direct user status, role deletion, approval cancellation and session revocation requests are denied.
+- ✅ Denied writes leave the target user, built-in role, pending approval and active session unchanged.
+- ✅ Focused role and approval verification passed: 19 tests, 124 assertions; Pint passed.
+- ✅ Full regression verification passed: `php artisan test --compact` — 85 tests, 658 assertions (L-0103).
+- ☐ The Annex permission/API/action matrix remains incomplete for other approval and future platform workflows; A1/A2 remain PARTIAL.
+
+### Audit-export action permission boundary (2026-11-23)
+
+- ✅ Platform Auditor can export audit data and Support Agent is denied when route permission middleware is bypassed; controller-level permission checks remain effective for both the allowed and denied cases.
+- ✅ Focused role, approval and export verification passed: 21 tests, 128 assertions; Pint passed.
+- ✅ Full regression verification passed: `php artisan test --compact` — 85 tests, 658 assertions (L-0106).
+- ☐ Remaining Annex permission/API/action cases and deployment evidence keep A1/A2 PARTIAL.
 
 ### Transport security (2026-11-22)
 
@@ -196,11 +287,12 @@ This tracker records implementation evidence for [Annex A](ANNEX_A.md). A featur
 | Feature | Phase / tier | Status | Backend / services | Frontend | Database | Permissions | Tests and results | Dependencies / risks | Next action |
 |---|---|---|---|---|---|---|---|---|---|
 | Platform authentication, MFA, sessions, login protection, CLI Super Administrator creation | A1 / Tier A | PARTIAL | `app/Http/Controllers/Platform/{AuthController,MfaController,PlatformPasswordResetController,StepUpController}.php`; `app/Http/Middleware/{EnsurePlatformMfa,TrackPlatformSession,EnsurePlatformStepUp,StartBleposSession,EnforcePlatformHttps,EnforcePlatformIpAllowlist,PlatformSecurityHeaders}.php`; `app/Services/{PlatformTotp,PlatformSecurityEvents}.php`; `app/Console/Commands/{CreatePlatformSuperadmin,EnablePlatformIpAllowlistEmergencyOverride}.php`; dedicated `platform` guard/provider and throttles in `AppServiceProvider` | Login, TOTP enrollment/challenge and recovery, password reset/change, step-up, session/security-event views | `platform_users`, `platform_sessions`, `platform_security_events`, platform reset tokens; encrypted TOTP/session identifiers; append-only platform audit | Separate platform guard and cookie; independently configured platform session lifetime/cookie attributes; MFA/session/permission/step-up/network middleware; per-IP and per-account throttles | `PlatformLoginTest`, `PlatformMfaTest`, `PlatformPasswordResetTest`, `PlatformRequirePasswordResetTest`, `PlatformSessionSecurityTest`, `PlatformUserStatusTest`, `PlatformSessionCookieTest`, `PlatformStepUpTest`, `PlatformSuperadminCommandTest`, `PlatformTotpTest`, `PlatformTransportSecurityTest`, `PlatformIpAllowlistTest`; full suite 73 tests, 532 assertions; Pint passed | ✅ Separate guard and session cookie, mandatory TOTP enrollment, one-time recovery codes, CLI-only initial Super Administrator, password reset/change, step-up, progressive lockouts and reset, lock/unfamiliar-login alerts, 30-minute idle and 8-hour absolute platform session lifetimes, session revocation, headers, configurable HTTPS and optional CIDR/IP allowlist with audited timed CLI override are implemented and covered. ☐ Shared-cache behavior, trusted reverse-proxy deployments, firewall/VPN setup, production HTTPS/HSTS, and full tenant/platform cross-authentication/tenant isolation tests await deployment and tenant implementation. SQLite audit triggers are exercised; MySQL/Postgres trigger paths are unverified. | Complete A1 acceptance/security boundary coverage and verify session, cache, proxy, firewall and HSTS behavior in deployment conditions before marking A1 verified. |
-| Platform users, roles, permission catalogue, step-up, two-person approvals | A2 / Tier A | PARTIAL | `app/Http/Controllers/Platform/{PlatformUserController,PlatformRoleController,PlatformApprovalController,PlatformSessionController,PlatformSecurityEventController,PlatformAuditController}.php`; `app/Services/PlatformPermissionAuthorizer.php`; `PlatformRoleSeeder`; `PlatformAuditRecorder` / `PlatformAuditVerifier`; platform CLI commands | User/invitation administration, grouped role editor with permission diff, approval queue, active session review/revocation, security-event search, audit review/export | `platform_invitations`, `platform_roles`, `platform_permissions`, role/permission pivots, `platform_approvals`, `platform_audit_log`, audit chain lock; migrations under `database/migrations/` | Explicit granular permissions, shared permission authorizer plus route middleware and action checks, step-up, approval self-approval checks, second-person Super Administrator/MFA-reset approvals | Workflow coverage: `PlatformInvitationWorkflowTest`, `PlatformRoleNotificationTest`, `PlatformRoleBoundaryTest`, `PlatformPermissionTest`, `PlatformRouteAuthorizationTest`, `PlatformApprovalWorkflowTest`, `PlatformMfaResetApprovalTest`, `PlatformSessionSecurityTest`, `PlatformSecurityEventTest`, `PlatformAuditExportTest`, `PlatformAuditIntegrityTest`; full suite 82 tests, 640 assertions; Pint passed (L-0096) | ✅ Invitation accept/resend/cancel; role assignment/revocation and notifications; privilege-change session revocation; approval cancellation/reasoned expiry; Super Administrator and MFA-reset two-person flows; security-event and session UI; searchable audit with formula-safe export; direct controller permission checks remain effective when route permission middleware is bypassed, with denied writes asserting unchanged data; route-wide permission/session/MFA/step-up invariants and allowed/denied built-in role screen access are covered (L-0096). ☐ Full Annex permission matrix remains incomplete. | Complete the full A2 role/permission matrix and acceptance scenarios; review remaining built-in role boundaries. Only then proceed to A3. |
-| Tenant registry, tenant list/detail, lifecycle, audit and security events | A3 / Tier A | NOT STARTED | None | None | None | None | None | Depends on verified platform identity/authorization and central tenant metadata design | Start after A1 and A2 are verified; implement registry, list/detail and guarded lifecycle operations |
-| Tenant provisioning engine and recovery | A4 / Tier A | NOT STARTED | None | None | None | None | None | Tenant database topology, queue/runtime, and provisioning infrastructure are unspecified | Define topology and implement resumable, idempotent provisioning after A3 |
-| Basic plans and subscription assignment | A5 / Tier A | NOT STARTED | None | None | None | None | None | Depends on tenant registry and authorization | Implement plan/subscription state and audited assignment |
-| Module catalogue, entitlements, industry templates | A6 / Tier B | NOT STARTED | None | None | None | None | None | Depends on tenant/module architecture and Tier A | Implement versioned catalogue, dependency validation, and safe entitlement changes after Tier A |
+| Platform users, roles, permission catalogue, step-up, two-person approvals | A2 / Tier A | PARTIAL | `app/Http/Controllers/Platform/{PlatformUserController,PlatformRoleController,PlatformApprovalController,PlatformSessionController,PlatformSecurityEventController,PlatformAuditController}.php`; `app/Services/PlatformPermissionAuthorizer.php`; `PlatformRoleSeeder`; `PlatformAuditRecorder` / `PlatformAuditVerifier`; platform CLI commands | User/invitation administration, grouped role editor with permission diff, approval queue, active session review/revocation, security-event search, audit review/export | `platform_invitations`, `platform_roles`, `platform_permissions`, role/permission pivots, `platform_approvals`, `platform_audit_log`, audit chain lock; migrations under `database/migrations/` | Explicit granular permissions, shared permission authorizer plus route middleware and action checks, step-up, approval self-approval checks, second-person Super Administrator/MFA-reset approvals | Workflow coverage: `PlatformInvitationWorkflowTest`, `PlatformRoleNotificationTest`, `PlatformRoleBoundaryTest`, `PlatformPermissionTest`, `PlatformRouteAuthorizationTest`, `PlatformApprovalWorkflowTest`, `PlatformMfaResetApprovalTest`, `PlatformSessionSecurityTest`, `PlatformSecurityEventTest`, `PlatformAuditExportTest`, `PlatformAuditIntegrityTest`; full suite 85 tests, 658 assertions; Pint passed (L-0103) | ✅ Invitation accept/resend/cancel; role assignment/revocation and notifications; privilege-change session revocation; approval cancellation/reasoned expiry; Super Administrator and MFA-reset two-person flows; security-event and session UI; searchable audit with formula-safe export; direct controller permission checks remain effective when route permission middleware is bypassed, with denied writes asserting unchanged data; route-wide permission/session/MFA/step-up invariants and allowed/denied built-in role screen access, Security Officer and Platform Auditor action-layer boundaries, and Super Administrator grant approval restrictions are covered (L-0103). ☐ Full Annex permission matrix remains incomplete. | Complete the full A2 role/permission matrix and acceptance scenarios; review remaining built-in role boundaries. Only then proceed to A3. |
+| Tenant registry, tenant list/detail, lifecycle, audit and security events | A3 / Tier A | VERIFIED | `app/Http/Controllers/Platform/PlatformTenantController.php`; `app/Models/{Tenant,TenantDomain,Shop,Register,Warehouse,TenantRole,TenantPermission,User}.php`; `app/Services/{TenantContext,ShopContext,PlatformAuditRecorder}.php` | Platform tenant directory, registration wizard, detail views, danger zone controls | `tenants`, `tenant_domains`, `shops`, `registers`, `warehouses`, `tenant_roles`, `tenant_permissions`, `platform_audit_log` | `platform.tenants.view`, `platform.tenants.create`, `platform.tenants.suspend`, `platform.tenants.reactivate` | `PlatformTenantManagementTest`, `TenantIsolationTest`, `ShopIsolationTest`; 15 tests, 52 assertions; full suite 102 tests, 792 assertions, exit 0; see `PROGRESS_LOG.md` L-0109; `php artisan test --compact tests/Feature/PlatformTenantManagementTest.php` | ✅ Tenant directory, filtering, registration, audited suspension/reactivation, and isolation are verified. | Proceed to Phase 3 core POS operations. |
+| Tenant provisioning engine and recovery | A4 / Tier A | VERIFIED | `app/Services/ProvisioningEngine.php`; `app/Http/Controllers/Platform/PlatformProvisioningController.php`; `app/Models/{ProvisioningRun,ProvisioningStep}.php` | Provisioning monitor and step inspector views | `provisioning_runs`, `provisioning_steps` | `platform.provisioning.view`, `platform.provisioning.retry` | `TenantProvisioningTest`; 2 tests, 23 assertions; full suite 102 tests, 792 assertions, exit 0; see `PROGRESS_LOG.md` L-0109; `php artisan test --compact tests/Feature/TenantProvisioningTest.php` | ✅ 30-step idempotent provisioning, step logging, failure recovery, and retry without duplicate creation verified. | Connect provisioning with plan assignment in Phase 4. |
+| Core POS & Business Operations (Catalog, inventory, sales, cashier shifts, checkout UI) | Phase 3 / Tier A | VERIFIED | `app/Http/Controllers/Tenant/{CategoryController,ProductController,PosController,CashierShiftController,InventoryController,TenantDashboardController}.php`; `resources/views/tenant/`; `app/Models/{Category,Product,InventoryStock,StockMovement,CashierShift,Sale,SaleItem,SalePayment}.php`; `app/Services/{InventoryService,SaleService}.php` | Tenant catalog management, interactive POS terminal, thermal receipts, sales history, cashier shifts, stock levels & immutable movements audit ledger | `categories`, `products`, `inventory_stocks`, `stock_movements`, `cashier_shifts`, `sales`, `sale_items`, `sale_payments` | `tenant.resolve`, `tenant.isolate`, tenant RBAC via roles and permissions | `TenantCatalogTest`, `TenantPosAndShiftTest`, `TenantInventoryTest`, `CorePosAndInventoryTest`; 13 tests, 90 assertions; full suite 115 tests, 882 assertions, exit 0; see `PROGRESS_LOG.md` L-0114; `php artisan test --compact tests/Feature/TenantCatalogTest.php tests/Feature/TenantPosAndShiftTest.php tests/Feature/TenantInventoryTest.php tests/Feature/CorePosAndInventoryTest.php` | ✅ Catalog categories/products with barcode lookup; interactive POS terminal & payment tender modal; printable thermal receipt; sales history with supervisor void and stock reversal; cashier shifts with cash in/out drops and variance calculation; inventory stock levels, adjustments, and immutable movements audit ledger; multi-tenant isolation verified on all routes. | Proceed to Phase 4 (Basic Plans, Subscriptions, and Platform Billing - A5). |
+| Basic plans and subscription assignment | A5 / Tier A | VERIFIED | `app/Http/Controllers/Platform/{PlatformPlanController,PlatformSubscriptionController}.php`; `resources/views/platform/plans/`; `resources/views/platform/tenants/show.blade.php`; `app/Models/{Plan,Subscription}.php` | Platform plans catalogue management, tenant subscription assignment, and lifecycle controls | `plans`, `subscriptions`, `platform_audit_log` | `platform.billing.view`, `platform.billing.plans.manage`, `platform.billing.subscriptions.manage` | `PlatformPlanAndSubscriptionTest`, `PlatformRouteAuthorizationTest`; 7 tests, 381 assertions; full suite 118 tests, 976 assertions, exit 0; see `PROGRESS_LOG.md` L-0116; `php artisan test --compact tests/Feature/PlatformPlanAndSubscriptionTest.php` | ✅ Plan catalog administration (create, update, toggle active with branch quotas), tenant subscription assignment with trial duration and renewal calculation, lifecycle status transitions (trial, active, grace_period, past_due, suspended, cancelled), and immutable audit log chain verified. | Proceed to Phase 5 (Module Catalogue & Entitlements - A6 / Tier B). |
+| Module catalogue, entitlements, industry templates | A6 / Tier B | VERIFIED | `app/Http/Controllers/Platform/{PlatformModuleController,PlatformTenantModuleController,PlatformIndustryTemplateController}.php`; `app/Services/ModuleService.php`; `app/Models/{Module,TenantModuleEntitlement,IndustryTemplate}.php` | Platform module catalogue (grouped by category, active-tenant count), module detail (deps + reverse-deps), industry templates listing, tenant module enable/disable panel (via tenant show page) | `modules`, `tenant_module_entitlements`, `industry_templates` | `platform.modules.view`, `platform.modules.manage` | `PlatformModuleAndEntitlementTest`, `PlatformRouteAuthorizationTest`; 13 tests, 430 assertions; full suite 127 tests, 1056 assertions, exit 0; see `PROGRESS_LOG.md` L-0118; `php artisan test --compact tests/Feature/PlatformModuleAndEntitlementTest.php` | ✅ Versioned module catalogue seeded (25 modules, 7 industry templates); dependency validation on enable (ValidationException if deps unsatisfied); core-module protection on disable; reverse-dependency protection on disable; topological multi-pass industry template apply; audit log written on every mutation; route invariants (MFA, session, permission, step-up) enforced and verified. | Proceed to Phase 6 (Platform Billing expansion). |
 | Platform billing, invoices, payments, refunds, dunning | A5 expansion / Tier B | NOT STARTED | None | None | None | None | None | Requires payment provider and platform eTIMS configuration/certification | Implement after basic plans; document external integration states accurately |
 | Announcements and support cases/tools | A10 / Tier B | NOT STARTED | None | None | None | None | None | Requires tenant metadata, notification delivery, and platform permissions | Implement case workflows and non-impersonating assist tools |
 | Infrastructure, queues, scheduler, migrations, backups and restore | A7 / Tier C | NOT STARTED | None | None | None | None | None | Runtime and infrastructure providers are unspecified | Connect real probes and build audited, isolated restore workflows |

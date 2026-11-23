@@ -40,6 +40,12 @@ class PlatformApprovalController extends Controller
             abort_if($approval->requested_by === $request->user('platform')->id, 403);
 
             if ($approval->action_type === 'platform.superadmin.grant') {
+                $approver = PlatformUser::query()->whereKey($request->user('platform')->id)->lockForUpdate()->firstOrFail();
+                abort_unless(
+                    $approver->roles()->where('slug', 'super-administrator')->exists(),
+                    403,
+                    'A different Super Administrator must approve this role grant.',
+                );
                 $target = PlatformUser::query()->findOrFail((int) $approval->target_id);
                 abort_unless($target->status === 'active', 409, 'The target platform user is not active.');
                 $role = PlatformRole::query()->where('slug', 'super-administrator')->findOrFail($approval->payload['platform_role_id']);
