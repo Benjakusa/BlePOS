@@ -35,6 +35,8 @@ class PlatformRouteAuthorizationTest extends TestCase
             'platform.plans.',
             'platform.modules.',
             'platform.templates.',
+            'platform.invoices.',
+            'platform.dunning.',
         ];
         $protectedRoutes = collect(Route::getRoutes())
             ->filter(fn ($route): bool => collect($protectedPrefixes)->contains(
@@ -67,6 +69,8 @@ class PlatformRouteAuthorizationTest extends TestCase
             'platform.plans.',
             'platform.modules.',
             'platform.templates.',
+            'platform.invoices.',
+            'platform.dunning.',
         ];
         $mutations = collect(Route::getRoutes())
             ->filter(fn ($route): bool => collect($actionPrefixes)->contains(
@@ -104,6 +108,8 @@ class PlatformRouteAuthorizationTest extends TestCase
             'platform.plans.',
             'platform.modules.',
             'platform.templates.',
+            'platform.invoices.',
+            'platform.dunning.',
         ];
         $protectedRoutes = collect(Route::getRoutes())
             ->filter(fn ($route): bool => collect($protectedPrefixes)->contains(

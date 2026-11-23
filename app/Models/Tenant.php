@@ -59,6 +59,16 @@ class Tenant extends Model
         return $this->hasMany(TenantModuleEntitlement::class);
     }
 
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(PlatformInvoice::class);
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
     public function primaryDomain(): ?TenantDomain
     {
         return $this->domains()->where('is_primary', true)->first();

@@ -5,7 +5,9 @@ use App\Http\Controllers\Platform\DashboardController;
 use App\Http\Controllers\Platform\MfaController;
 use App\Http\Controllers\Platform\PlatformApprovalController;
 use App\Http\Controllers\Platform\PlatformAuditController;
+use App\Http\Controllers\Platform\PlatformDunningController;
 use App\Http\Controllers\Platform\PlatformIndustryTemplateController;
+use App\Http\Controllers\Platform\PlatformInvoiceController;
 use App\Http\Controllers\Platform\PlatformModuleController;
 use App\Http\Controllers\Platform\PlatformPasswordResetController;
 use App\Http\Controllers\Platform\PlatformPlanController;
@@ -93,6 +95,28 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
                 ->middleware(['platform.permission:platform.billing.subscriptions.manage', 'platform.step-up'])->name('tenants.subscription.assign');
             Route::post('/tenants/{tenant}/subscription/{subscription}/transition', [PlatformSubscriptionController::class, 'transition'])
                 ->middleware(['platform.permission:platform.billing.subscriptions.manage', 'platform.step-up'])->name('tenants.subscription.transition');
+
+            // Platform Invoices & Billing
+            Route::get('/invoices', [PlatformInvoiceController::class, 'index'])
+                ->middleware('platform.permission:platform.billing.view')->name('invoices.index');
+            Route::get('/invoices/create', [PlatformInvoiceController::class, 'create'])
+                ->middleware('platform.permission:platform.billing.subscriptions.manage')->name('invoices.create');
+            Route::post('/invoices', [PlatformInvoiceController::class, 'store'])
+                ->middleware(['platform.permission:platform.billing.subscriptions.manage', 'platform.step-up'])->name('invoices.store');
+            Route::get('/invoices/{invoice}', [PlatformInvoiceController::class, 'show'])
+                ->middleware('platform.permission:platform.billing.view')->name('invoices.show');
+            Route::post('/invoices/{invoice}/payments', [PlatformInvoiceController::class, 'recordPayment'])
+                ->middleware(['platform.permission:platform.billing.subscriptions.manage', 'platform.step-up'])->name('invoices.payment');
+            Route::post('/invoices/{invoice}/payments/{payment}/refund', [PlatformInvoiceController::class, 'recordRefund'])
+                ->middleware(['platform.permission:platform.billing.subscriptions.manage', 'platform.step-up'])->name('invoices.refund');
+            Route::post('/invoices/{invoice}/void', [PlatformInvoiceController::class, 'void'])
+                ->middleware(['platform.permission:platform.billing.subscriptions.manage', 'platform.step-up'])->name('invoices.void');
+
+            // Platform Dunning Engine
+            Route::get('/dunning', [PlatformDunningController::class, 'index'])
+                ->middleware('platform.permission:platform.billing.view')->name('dunning.index');
+            Route::post('/dunning/trigger', [PlatformDunningController::class, 'trigger'])
+                ->middleware(['platform.permission:platform.billing.subscriptions.manage', 'platform.step-up'])->name('dunning.trigger');
 
             Route::get('/security/users', [PlatformUserController::class, 'index'])
                 ->middleware('platform.permission:platform.security.users.view')->name('users.index');

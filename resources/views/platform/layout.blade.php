@@ -49,7 +49,9 @@
                     <a href="{{ route('platform.provisioning.index') }}">Provisioning</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.billing.view'))
-                    <a href="{{ route('platform.plans.index') }}">Plans & Billing</a>
+                    <a href="{{ route('platform.plans.index') }}">Plans</a>
+                    <a href="{{ route('platform.invoices.index') }}">Invoices & Billing</a>
+                    <a href="{{ route('platform.dunning.index') }}">Dunning</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.modules.view'))
                     <a href="{{ route('platform.modules.index') }}">Module Catalogue</a>

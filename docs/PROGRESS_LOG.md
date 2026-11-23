@@ -1289,20 +1289,43 @@
 ---
 
 ## L-0118 | 2026-11-23 10:32 UTC | 2026-11-23 13:32 EAT | agent: antigravity | tier/phase: Phase 5 / Tier B (A6)
-- Activity: Module Catalogue, Entitlements, and Industry Templates — full implementation, routes, tests, and verification.
-- Files created or modified:
+- Activity type: IMPLEMENT
+- What and why: Module Catalogue, Entitlements, and Industry Templates — full implementation, routes, views, audit logging, tests, and verification.
+- Files created / modified:
   - `routes/web.php` — added 6 module/template routes with correct permission middleware and step-up guards; added controller imports.
   - `resources/views/platform/templates/index.blade.php` — industry templates listing view.
   - `resources/views/platform/layout.blade.php` — added Module Catalogue and Industry Templates nav links under `platform.modules.view`.
   - `tests/Feature/PlatformRouteAuthorizationTest.php` — added `platform.modules.` and `platform.templates.` to all three route invariant prefix arrays.
   - `tests/Feature/PlatformModuleAndEntitlementTest.php` — 9 tests covering: catalogue index/show renders, templates index renders, enable with satisfied deps (audit written), enable with unsatisfied deps (redirect + session errors), disable core module (422), disable with reverse dependency (redirect + session errors), disable non-core with no dependents (audit written), apply industry template (all retail modules enabled, audit written).
   - `app/Services/ModuleService.php` — Pint style fixes (operator spacing).
-  - `app/Models/Module.php`, `app/Models/TenantModuleEntitlement.php`, `app/Models/IndustryTemplate.php` — created in prior session (unchanged this batch).
-  - `app/Http/Controllers/Platform/PlatformModuleController.php`, `PlatformTenantModuleController.php`, `PlatformIndustryTemplateController.php` — created in prior session (unchanged this batch).
+  - `app/Models/Module.php`, `app/Models/TenantModuleEntitlement.php`, `app/Models/IndustryTemplate.php` — created in prior session.
+  - `app/Http/Controllers/Platform/PlatformModuleController.php`, `PlatformTenantModuleController.php`, `PlatformIndustryTemplateController.php` — created in prior session.
   - `database/migrations/2026_11_23_000004_create_modules_and_entitlements_tables.php` — created in prior session; migration confirmed clean.
   - `database/seeders/ModuleCatalogueSeeder.php` — created in prior session; 25 modules + 7 industry templates; seeded and used by tests.
-- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformModuleAndEntitlementTest.php` → 9 tests, 35 assertions, exit 0. `php artisan test --compact tests/Feature/PlatformRouteAuthorizationTest.php` → 4 tests, 395 assertions, exit 0. `php artisan test --compact` → 127 tests, 1056 assertions, exit 0. `vendor/bin/pint --format agent` → fixed 3 files (ordered_imports, no_unused_imports, operator spacing).
+- Migrations: `2026_11_23_000004_create_modules_and_entitlements_tables.php`.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformModuleAndEntitlementTest.php` → 9 tests, 35 assertions, exit 0. `php artisan test --compact tests/Feature/PlatformRouteAuthorizationTest.php` → 4 tests, 395 assertions, exit 0. `php artisan test --compact` → 127 tests, 1056 assertions, exit 0. `vendor/bin/pint --format agent` → fixed 3 files.
 - Actual results (exit codes, counts, error summaries): All green; exit 0 throughout.
 - Status label(s) after this activity: VERIFIED (A6 Module Catalogue, Entitlements, Industry Templates); Phase 5 complete.
 - Follow-ups / next action: Update PROGRESS.md, run progress-check, then implement Phase 6 (Platform Billing expansion — invoices, payments, refunds, dunning).
+---
+
+## L-0119 | 2026-11-23 11:15 UTC | 2026-11-23 14:15 EAT | agent: antigravity | tier/phase: Phase 6 / Tier B (A5 expansion)
+- Activity type: IMPLEMENT
+- What and why: Implemented Phase 6 Platform Billing Expansion (invoices, payments, refunds, and dunning engine). Created `PlatformInvoice`, `PlatformInvoiceItem`, `PlatformPayment`, `PlatformRefund`, and `PlatformDunningEvent` models and database migrations. Implemented `PlatformBillingService` providing transaction-safe invoice generation with line items and Kenyan VAT (16%), payment recording with invoice balance adjustment and automated overdue subscription reactivation, payment refunding with over-refund prevention, unpaid invoice voiding, automated dunning scheduling (upcoming, overdue_1d, overdue_3d, overdue_7d, and suspension with strict anti-duplicate suspension guarantees per Annex A 8.9), and aggregate collections reporting. Built platform console controllers `PlatformInvoiceController` and `PlatformDunningController` with 9 routes protected by `platform.billing.view` and `platform.billing.subscriptions.manage` plus `platform.step-up` on all mutation actions. Built Blade views for invoice directory, invoice issuance, invoice inspection with payment/refund ledger and eTIMS certification status notice (`BLOCKED-ON-CERTIFICATION`), and dunning overview. Created `PlatformBillingAndDunningTest` covering full invoice lifecycle, payment, refund, voiding, dunning escalation, and non-duplicate suspension. Extended `PlatformRouteAuthorizationTest` to enforce MFA, session, step-up, and permission invariants on all new billing endpoints.
+- Files created / modified:
+  - `database/migrations/2026_11_23_105345_create_platform_billing_tables.php` — schema for platform invoices, items, payments, refunds, and dunning events.
+  - `app/Models/PlatformInvoice.php`, `PlatformInvoiceItem.php`, `PlatformPayment.php`, `PlatformRefund.php`, `PlatformDunningEvent.php` — Eloquent models with bcmath casts and inverse relationships.
+  - `app/Models/Tenant.php`, `app/Models/Subscription.php` — added `invoices()` and `subscriptions()` relationships.
+  - `app/Services/PlatformBillingService.php` — invoice generation, payments, refunds, voiding, dunning lifecycle engine, and collections summary.
+  - `app/Http/Controllers/Platform/PlatformInvoiceController.php`, `PlatformDunningController.php` — platform billing controllers with audit logging and step-up auth.
+  - `resources/views/platform/billing/invoices/index.blade.php`, `create.blade.php`, `show.blade.php`, `resources/views/platform/billing/dunning/index.blade.php` — administrative billing UI.
+  - `resources/views/platform/layout.blade.php` — added Invoices & Billing and Dunning nav links.
+  - `routes/web.php` — registered 9 platform invoice and dunning routes.
+  - `tests/Feature/PlatformRouteAuthorizationTest.php` — added invoice and dunning prefixes to authorization and mutation invariants.
+  - `tests/Feature/PlatformBillingAndDunningTest.php` — 9 feature tests verifying billing, payments, refunds, voiding, and dunning lifecycle.
+- Migrations: `2026_11_23_105345_create_platform_billing_tables.php`.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformBillingAndDunningTest.php tests/Feature/PlatformRouteAuthorizationTest.php` → 13 tests, 511 assertions, exit 0; `php artisan test --compact` → 136 tests, 1172 assertions, exit 0; `vendor/bin/pint --format agent` → passed.
+- Actual results (exit codes, counts, error summaries): All tests passing, 0 failures, exit 0 throughout.
+- Status label(s) after this activity: VERIFIED (Phase 6 / A5 expansion Platform billing, invoices, payments, refunds, dunning); A5 expansion transitioned to VERIFIED.
+- Follow-ups / next action: Update `docs/PROGRESS.md`, run `scripts/progress-check`, then proceed to Phase 7 (Announcements and support cases/tools - A10 / Tier B).
 ---
