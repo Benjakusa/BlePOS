@@ -30,6 +30,32 @@ class EnforceShopIsolation
             $shop = Shop::query()->where('code', $request->header('X-Shop-Code'))->first();
         }
 
+        if ($request->input('shop_id') === 'all' && $request->user()?->hasRole('owner')) {
+            ShopContext::clear();
+            if ($request->hasSession()) {
+                $request->session()->forget('active_shop_id');
+            }
+            $shop = null;
+        } elseif (! $shop && $request->filled('shop_id')) {
+            $shopInput = $request->input('shop_id');
+            if (is_numeric($shopInput)) {
+                $shop = Shop::query()->find($shopInput);
+            }
+        }
+
+        if (! $shop && $request->hasSession() && $request->session()->has('active_shop_id')) {
+            $sessionShopId = $request->session()->get('active_shop_id');
+            if (is_numeric($sessionShopId)) {
+                $shop = Shop::query()->find($sessionShopId);
+            }
+        }
+
+        if (! $shop && $request->user()) {
+            if ($request->user()->shops()->count() === 1) {
+                $shop = $request->user()->shops()->first();
+            }
+        }
+
         if ($shop) {
             abort_unless((int) $shop->tenant_id === (int) $tenantId, 403, 'Shop does not belong to the active business entity.');
 
@@ -38,6 +64,10 @@ class EnforceShopIsolation
             }
 
             ShopContext::setShop($shop);
+
+            if ($request->hasSession()) {
+                $request->session()->put('active_shop_id', $shop->id);
+            }
         }
 
         try {

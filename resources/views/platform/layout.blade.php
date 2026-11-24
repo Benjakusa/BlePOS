@@ -40,52 +40,53 @@
         @auth('platform')
             <nav aria-label="Platform navigation">
                 @if(auth('platform')->user()->hasPermission('platform.dashboard.view'))
-                    <a class="active" href="{{ route('platform.dashboard') }}">Dashboard</a>
+                    <a class="{{ request()->routeIs('platform.dashboard') ? 'active' : '' }}" href="{{ route('platform.dashboard') }}">Dashboard</a>
+                    <a class="{{ request()->routeIs('platform.analytics.*') ? 'active' : '' }}" href="{{ route('platform.analytics.index') }}">Analytics & Reports</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.tenants.view'))
-                    <a href="{{ route('platform.tenants.index') }}">Tenants</a>
+                    <a class="{{ request()->routeIs('platform.tenants.*') ? 'active' : '' }}" href="{{ route('platform.tenants.index') }}">Tenants</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.provisioning.view'))
-                    <a href="{{ route('platform.provisioning.index') }}">Provisioning</a>
+                    <a class="{{ request()->routeIs('platform.provisioning.*') ? 'active' : '' }}" href="{{ route('platform.provisioning.index') }}">Provisioning</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.infrastructure.view'))
-                    <a href="{{ route('platform.infrastructure.index') }}">Infrastructure</a>
+                    <a class="{{ request()->routeIs('platform.infrastructure.*') ? 'active' : '' }}" href="{{ route('platform.infrastructure.index') }}">Infrastructure</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.billing.view'))
-                    <a href="{{ route('platform.plans.index') }}">Plans</a>
-                    <a href="{{ route('platform.invoices.index') }}">Invoices & Billing</a>
-                    <a href="{{ route('platform.dunning.index') }}">Dunning</a>
+                    <a class="{{ request()->routeIs('platform.plans.*') ? 'active' : '' }}" href="{{ route('platform.plans.index') }}">Plans</a>
+                    <a class="{{ request()->routeIs('platform.invoices.*') ? 'active' : '' }}" href="{{ route('platform.invoices.index') }}">Invoices & Billing</a>
+                    <a class="{{ request()->routeIs('platform.dunning.*') ? 'active' : '' }}" href="{{ route('platform.dunning.index') }}">Dunning</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.modules.view'))
-                    <a href="{{ route('platform.modules.index') }}">Module Catalogue</a>
+                    <a class="{{ request()->routeIs('platform.modules.*') ? 'active' : '' }}" href="{{ route('platform.modules.index') }}">Module Catalogue</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.modules.view'))
-                    <a href="{{ route('platform.templates.index') }}">Industry Templates</a>
+                    <a class="{{ request()->routeIs('platform.templates.*') ? 'active' : '' }}" href="{{ route('platform.templates.index') }}">Industry Templates</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.security.users.view'))
-                    <a href="{{ route('platform.users.index') }}">Platform users</a>
+                    <a class="{{ request()->routeIs('platform.users.*') ? 'active' : '' }}" href="{{ route('platform.users.index') }}">Platform users</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.security.roles.manage'))
-                    <a href="{{ route('platform.roles.index') }}">Roles & permissions</a>
+                    <a class="{{ request()->routeIs('platform.roles.*') ? 'active' : '' }}" href="{{ route('platform.roles.index') }}">Roles & permissions</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.security.approvals.review'))
-                    <a href="{{ route('platform.approvals.index') }}">Approvals</a>
+                    <a class="{{ request()->routeIs('platform.approvals.*') ? 'active' : '' }}" href="{{ route('platform.approvals.index') }}">Approvals</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.security.sessions.revoke'))
-                    <a href="{{ route('platform.sessions.index') }}">Sessions</a>
+                    <a class="{{ request()->routeIs('platform.sessions.*') ? 'active' : '' }}" href="{{ route('platform.sessions.index') }}">Sessions</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.security.view'))
-                    <a href="{{ route('platform.security.index') }}">Security Centre</a>
-                    <a href="{{ route('platform.security.events.index') }}">Security events</a>
+                    <a class="{{ request()->routeIs('platform.security.index') ? 'active' : '' }}" href="{{ route('platform.security.index') }}">Security Centre</a>
+                    <a class="{{ request()->routeIs('platform.security.events.*') ? 'active' : '' }}" href="{{ route('platform.security.events.index') }}">Security events</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.audit.view'))
-                    <a href="{{ route('platform.audit.index') }}">Audit log</a>
+                    <a class="{{ request()->routeIs('platform.audit.*') ? 'active' : '' }}" href="{{ route('platform.audit.index') }}">Audit log</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.support.view'))
-                    <a href="{{ route('platform.support.cases.index') }}">Support Centre</a>
+                    <a class="{{ request()->routeIs('platform.support.*') ? 'active' : '' }}" href="{{ route('platform.support.cases.index') }}">Support Centre</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.compliance.view'))
-                    <a href="{{ route('platform.compliance.index') }}">Compliance & eTIMS</a>
+                    <a class="{{ request()->routeIs('platform.compliance.*') ? 'active' : '' }}" href="{{ route('platform.compliance.index') }}">Compliance & eTIMS</a>
                 @endif
             </nav>
         @endauth

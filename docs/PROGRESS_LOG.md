@@ -1390,3 +1390,81 @@
 - Status label(s) after this activity: VERIFIED (Phase 9 / A8 Security centre, IP rules, key management, incident workflows); A8 transitioned to VERIFIED.
 - Follow-ups / next action: Update `docs/PROGRESS.md`, run `scripts/progress-check`, then proceed to Phase 10 (Compliance, eTIMS oversight, data-protection requests, legal documents - A9 / Tier C).
 ---
+
+## L-0123 | 2026-11-24 09:25 UTC | 2026-11-24 12:25 EAT | agent: antigravity | tier/phase: Phase 10 / Tier C (A9)
+- Activity type: IMPLEMENT
+- What and why: Implemented Phase 10 Compliance, eTIMS Oversight, Data-Protection Requests, and Legal Documents (A9 / Tier C). Created `PlatformEtimsCertification`, `PlatformDataProtectionRequest`, and `PlatformLegalDocument` models and database migrations. Implemented `ComplianceService` providing eTIMS certification status tracking (with placeholder for live regulatory clearance, surfacing true `BLOCKED-ON-CERTIFICATION` status per Annex A 8.8 & Part 9), KRA eTIMS specification checklist verification (VAT calculation, cryptographic signing, offline buffering, VSCU simulation, and gateway clearance), data-protection request workflow (Kenya Data Protection Act 2019 / GDPR DSAR) with automatic 30-day statutory deadline calculation, status progression (`pending`, `under_review`, `processing`, `completed`, `rejected`), resolution tracking, and platform legal document versioning with changelog history. Created platform controllers `PlatformComplianceController`, `PlatformDataProtectionController`, and `PlatformLegalDocumentController` with 11 routes protected by `platform.compliance.view` with `platform.step-up` on all mutation actions. Built Blade views for Compliance & eTIMS console, Data Protection request directory, DSAR logging wizard, DSAR inspection and resolution view, legal documents index, legal document version publisher, and policy viewer. Created `PlatformComplianceAndEtimsTest` covering compliance dashboard, eTIMS checklist updating, DSAR full lifecycle, legal document publishing, and unprivileged user denial. Extended `PlatformRouteAuthorizationTest` to enforce MFA, session, step-up, and permission invariants on all compliance routes.
+- Files created / modified:
+  - `database/migrations/2026_11_23_130000_create_compliance_and_etims_tables.php` — schema for eTIMS certifications, data protection requests, and legal documents.
+  - `app/Models/PlatformEtimsCertification.php`, `PlatformDataProtectionRequest.php`, `PlatformLegalDocument.php` — Eloquent models with relations and casts.
+  - `app/Services/ComplianceService.php` — compliance overview, eTIMS checklist seeding, DSAR lifecycle, and legal document publishing.
+  - `app/Http/Controllers/Platform/PlatformComplianceController.php`, `PlatformDataProtectionController.php`, `PlatformLegalDocumentController.php` — platform compliance controllers with audit logging and step-up auth.
+  - `resources/views/platform/compliance/index.blade.php`, `dpa/index.blade.php`, `dpa/create.blade.php`, `dpa/show.blade.php`, `legal/index.blade.php`, `legal/create.blade.php`, `legal/show.blade.php` — compliance views.
+  - `resources/views/platform/layout.blade.php` — added Compliance & eTIMS navigation link.
+  - `routes/web.php` — registered 11 platform compliance routes.
+  - `tests/Feature/PlatformRouteAuthorizationTest.php` — updated protected prefixes and mutation invariants.
+  - `tests/Feature/PlatformComplianceAndEtimsTest.php` — 5 feature tests verifying console, eTIMS checklist updates, DSAR lifecycle, legal document versioning, and authorization boundaries.
+- Migrations: `2026_11_23_130000_create_compliance_and_etims_tables.php`.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformComplianceAndEtimsTest.php tests/Feature/PlatformRouteAuthorizationTest.php` → 9 tests, 859 assertions, exit 0; `php artisan test --compact` → 161 tests, 1700 assertions, exit 0; `vendor/bin/pint --format agent` → passed.
+- Actual results (exit codes, counts, error summaries): All tests passing, 0 failures, exit 0 throughout.
+- Status label(s) after this activity: VERIFIED (Phase 10 / A9 Compliance, eTIMS oversight, data-protection requests, legal documents); A9 transitioned to VERIFIED; Tier C Complete.
+- Follow-ups / next action: Update `docs/PROGRESS.md`, run `scripts/progress-check`, then proceed to Tier D (Phase 11 Platform Analytics and Reports - A11 / Tier D).
+---
+
+## L-0124 | 2026-11-24 09:45 UTC | 2026-11-24 12:45 EAT | agent: antigravity | tier/phase: Phase 11 / Tier D (A11)
+- Activity type: IMPLEMENT
+- What and why: Implemented Phase 11 Platform Analytics and Reports (A11 / Tier D). Built `PlatformAnalyticsService` executing privacy-preserving aggregate computations against real database records (no mocked charts or fabricated metrics): Monthly Recurring Revenue (MRR) calculated via `bcmath` across active plan subscriptions, sequential VAT (16%) and invoicing aggregates, collection efficiency rates, tenant lifecycle tracking (new, active, suspended, retention rate), plan tier distribution, module catalogue adoption percentages across all 25 modules, industry blueprint breakdown across 7 industry templates, operational support SLA compliance metrics, and formula-safe CSV reporting (`revenue`, `tenants`, `modules`, `growth`) with leading formula character sanitization (`=`, `+`, `-`, `@`) and immutable audit log tracking via `PlatformAuditRecorder`. Built `PlatformAnalyticsController` and Blade console UI with period selector (`7d`, `30d`, `90d`, `12m`), KPI summary cards, plan distribution breakdown, module adoption penetration progress bars, and CSV export downloader. Created `PlatformAnalyticsTest` verifying analytics computation, date filtering, formula-safe CSV export generation, and audit logging. Extended `PlatformRouteAuthorizationTest` to enforce MFA, session, step-up, and permission invariants on all analytics routes.
+- Files created / modified:
+  - `app/Services/PlatformAnalyticsService.php` — analytics aggregator, financial computation, module adoption calculator, and formula-safe CSV exporter.
+  - `app/Http/Controllers/Platform/PlatformAnalyticsController.php` — platform analytics controller with period filtering and CSV streaming.
+  - `resources/views/platform/analytics/index.blade.php` — platform analytics and operations reporting console view.
+  - `resources/views/platform/layout.blade.php` — added Analytics & Reports navigation link.
+  - `routes/web.php` — registered platform analytics routes.
+  - `tests/Feature/PlatformRouteAuthorizationTest.php` — updated protected prefixes and mutation invariants.
+  - `tests/Feature/PlatformAnalyticsTest.php` — 4 feature tests verifying analytics metrics, date filtering, formula-safe CSV export, and audit logging.
+- Migrations: None.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformAnalyticsTest.php tests/Feature/PlatformRouteAuthorizationTest.php` → 8 tests, 853 assertions, exit 0; `php artisan test --compact` → 165 tests, 1738 assertions, exit 0; `vendor/bin/pint --format agent` → passed.
+- Actual results (exit codes, counts, error summaries): All tests passing, 0 failures, exit 0 throughout.
+- Status label(s) after this activity: VERIFIED (Phase 11 / A11 Platform analytics and reports); A11 transitioned to VERIFIED.
+- Follow-ups / next action: Update `docs/PROGRESS.md`, run `scripts/progress-check`, then proceed to Phase 12 (Platform Dashboard integrated widgets - A12 / Tier D).
+---
+
+## L-0125 | 2026-11-24 10:15 UTC | 2026-11-24 13:15 EAT | agent: antigravity | tier/phase: Phase 12 / Tier D (A12)
+- Activity type: IMPLEMENT
+- What and why: Implemented Phase 12 Platform Dashboard integrated widgets (A12 / Tier D). Transformed the control plane dashboard from a static placeholder into a fully integrated, live operational command center adhering strictly to Annex A Part 5 and Part 39.8. Integrated real data sources across all subsystem services (with zero fabricated or mock figures): Executive headline KPIs (Row A) computing tenant totals, active counts, suspended counts, retention rate, bcmath-calculated MRR and ARR, collection efficiency, subsystem health states, and open support cases. Integrated live subsystem health probes (Row E & H) displaying database, cache, storage, and queue latency and diagnostic metrics alongside automated encrypted backup records (type, SHA-256 checksum, status) and migration versioning. Integrated commercial and module insights (Row C & D) showcasing active subscription plan distributions, top catalogue modules deployed, and industry template blueprint breakdowns. Integrated Security Centre and threat intelligence (Row N) highlighting open incidents, critical events, active blocked denylist IPs, and envelope encryption key versions. Integrated Regulatory Compliance and eTIMS console (Row L) showcasing KRA checklist validation progress, honest regulatory placeholder state (`BLOCKED-ON-CERTIFICATION` pending KRA clearance), and statutory Data Protection (DPA/GDPR) DSAR request tracking. Integrated Needs-Attention and Quick Operational Action Inbox (Row P) alerting administrators to provisioning failures, open security incidents, statutory DPA deadlines, pending two-person approvals, and degraded health probes with direct drill-down links. Created `PlatformDashboardTest` verifying guest redirect, MFA protection, authorization boundaries, integrated widget rendering, and needs-attention alerts.
+- Files created / modified:
+  - `app/Http/Controllers/Platform/DashboardController.php` — injected analytics, infrastructure, security, compliance, support services, and approval/backup queries.
+  - `resources/views/platform/dashboard.blade.php` — unified operational dashboard view with real subsystem widgets, KPI cards, and alert banners.
+  - `resources/views/platform/layout.blade.php` — dynamic route-aware active navigation highlighting.
+  - `app/Services/PlatformAnalyticsService.php` — added ARR computation consistent with MRR (ARR = 12 * MRR).
+  - `app/Services/ComplianceService.php` — corrected tenant relation column selection from `subdomain` to `slug`.
+  - `tests/Feature/PlatformDashboardTest.php` — 5 feature tests verifying authentication, MFA enforcement, permission gates, widget data binding, and alert rendering.
+- Migrations: None.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformDashboardTest.php` → 5 tests, 22 assertions, exit 0; `php artisan test --compact` → 170 tests, 1760 assertions, exit 0; `vendor/bin/pint --format agent` → passed.
+- Actual results (exit codes, counts, error summaries): All tests passing, 0 failures, exit 0 throughout.
+- Status label(s) after this activity: VERIFIED (Phase 12 / A12 Platform dashboard); A12 transitioned to VERIFIED.
+- Follow-ups / next action: Update `docs/PROGRESS.md` and `README.md`, run `scripts/progress-check`, then proceed to Phase 13 (A13 Tenant Dashboards - Tier D).
+---
+
+## L-0126 | 2026-11-24 10:58 UTC | 2026-11-24 13:58 EAT | agent: antigravity | tier/phase: Phase 13 / Tier D (A13)
+- Activity type: IMPLEMENT
+- What and why: Implemented Phase 13 Tenant role and industry dashboards (A13 / Tier D) adhering strictly to Annex A Parts 18, 19, 20, 21, and 27. Elevated `TenantDashboardController` to deliver tailored operational perspectives:
+  1. Cashier Perspective (Part 21): Scoped strictly to the active cashier and shop register, showing shift status, opening float, cash and M-Pesa sales, completed shift transactions count, recent sales receipts, and open shift prompts, with strict restrictions enforcing that cashiers cannot view gross margins, cost prices, other cashiers' totals, or multi-shop analytics.
+  2. Shop Manager Perspective (Part 20): Scoped to assigned shop location, showing sales totals, average basket size, cash vs M-Pesa payment split, active registers & cashiers on duty, closed shift cash variances (`expected_cash != actual_cash`), branch low-stock items (< 5) and out-of-stock items, and shop quick operations.
+  3. Tenant Owner / Business Manager Perspective (Part 19): Multi-shop executive overview or shop-filtered view, computing gross sales, net sales (excluding tax), 16% VAT collected, average basket size, cash/M-Pesa payment split, loss prevention and voided sales alerts (count & total amount), branch performance comparison matrix across all locations, top products by sales volume, inventory health, and subscription plan status.
+  4. Industry Blueprint Additions (Part 27): Contextual alerts and notices for Pharmacy (controlled substances dispensing and batch expiry compliance) and Hospitality (table folios, open tabs, order queues).
+  5. Shop Scope & Switching (Part 18): Updated `EnforceShopIsolation` middleware and `routes/web.php` to resolve active shop via headers, route parameters, request inputs (`shop_id`), or session (`active_shop_id`), allowing authorized multi-shop users and owners to switch branches seamlessly while maintaining strict isolation for branch-bound staff.
+  Created `TenantRoleDashboardTest` covering unauthenticated denial, owner executive dashboard & multi-branch comparison, shop manager scoped dashboard, cashier restricted terminal view, shift prompt, shop switching, and industry blueprint alerts.
+- Files created / modified:
+  - `app/Http/Controllers/Tenant/TenantDashboardController.php` — multi-perspective role-based tenant dashboard controller.
+  - `resources/views/tenant/dashboard.blade.php` — comprehensive role-based dashboard view (Cashier, Shop Manager, Owner) with industry banners, KPI cards, and data tables.
+  - `resources/views/tenant/layout.blade.php` — added branch badge in sidebar brand.
+  - `app/Http/Middleware/EnforceShopIsolation.php` — enhanced shop resolution via input, session, and single-shop assignment.
+  - `routes/web.php` — attached `shop.isolate` middleware to `tenant.` route group.
+  - `tests/Feature/TenantRoleDashboardTest.php` — 7 feature tests verifying cashier, shop manager, owner, shop switching, and industry perspectives.
+- Migrations: None.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/TenantRoleDashboardTest.php` → 7 tests, 38 assertions, exit 0; `php artisan test --compact` → 177 tests, 1798 assertions, exit 0; `vendor/bin/pint --format agent` → passed.
+- Actual results (exit codes, counts, error summaries): All tests passing, 0 failures, exit 0 throughout.
+- Status label(s) after this activity: VERIFIED (Phase 13 / A13 Tenant role and industry dashboards); A13 transitioned to VERIFIED.
+- Follow-ups / next action: Update `docs/PROGRESS.md`, run `scripts/progress-check`, then proceed to Phase 14 (A14 Hardening and Release Readiness - Tier D).
+---

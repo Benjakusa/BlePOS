@@ -50,7 +50,7 @@ class ComplianceService
             ->count();
 
         $recentDpa = PlatformDataProtectionRequest::query()
-            ->with(['tenant:id,name,subdomain', 'assignedOfficer:id,name,email'])
+            ->with(['tenant:id,name,slug', 'assignedOfficer:id,name,email'])
             ->orderByDesc('id')
             ->limit(5)
             ->get();

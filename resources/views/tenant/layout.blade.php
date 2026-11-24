@@ -78,6 +78,11 @@
             <div class="brand">
                 BlePOS
                 <small>{{ $tenant->name ?? 'Tenant Workspace' }}</small>
+                @if(\App\Services\ShopContext::hasShop())
+                    <span style="display: inline-block; font-size: 11px; background: #1b4332; color: #86efac; padding: 2px 8px; border-radius: 4px; margin-top: 6px; font-weight: normal;">
+                        Branch: {{ \App\Services\ShopContext::getShop()->name }}
+                    </span>
+                @endif
             </div>
             <nav aria-label="Tenant navigation">
                 <a href="{{ route('tenant.dashboard') }}" class="{{ request()->routeIs('tenant.dashboard') ? 'active' : '' }}">Dashboard</a>

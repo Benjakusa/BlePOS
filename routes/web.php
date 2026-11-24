@@ -3,6 +3,7 @@
 use App\Http\Controllers\Platform\AuthController;
 use App\Http\Controllers\Platform\DashboardController;
 use App\Http\Controllers\Platform\MfaController;
+use App\Http\Controllers\Platform\PlatformAnalyticsController;
 use App\Http\Controllers\Platform\PlatformAnnouncementController;
 use App\Http\Controllers\Platform\PlatformApprovalController;
 use App\Http\Controllers\Platform\PlatformAuditController;
@@ -66,6 +67,14 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
             Route::get('/', DashboardController::class)
                 ->middleware('platform.permission:platform.dashboard.view')
                 ->name('dashboard');
+
+            // Platform Analytics & Reports (Annex A Part 32)
+            Route::get('/analytics', [PlatformAnalyticsController::class, 'index'])
+                ->middleware('platform.permission:platform.dashboard.view')
+                ->name('analytics.index');
+            Route::post('/analytics/export', [PlatformAnalyticsController::class, 'export'])
+                ->middleware(['platform.permission:platform.dashboard.view', 'platform.step-up'])
+                ->name('analytics.export');
 
             Route::get('/tenants', [PlatformTenantController::class, 'index'])
                 ->middleware('platform.permission:platform.tenants.view')->name('tenants.index');
@@ -332,7 +341,7 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
     });
 });
 
-Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.resolve', 'tenant.isolate'])->group(function (): void {
+Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.resolve', 'tenant.isolate', 'shop.isolate'])->group(function (): void {
     Route::get('/', TenantDashboardController::class)->name('dashboard');
 
     // Catalog - Categories
