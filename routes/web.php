@@ -6,16 +6,23 @@ use App\Http\Controllers\Platform\MfaController;
 use App\Http\Controllers\Platform\PlatformAnnouncementController;
 use App\Http\Controllers\Platform\PlatformApprovalController;
 use App\Http\Controllers\Platform\PlatformAuditController;
+use App\Http\Controllers\Platform\PlatformComplianceController;
+use App\Http\Controllers\Platform\PlatformDataProtectionController;
 use App\Http\Controllers\Platform\PlatformDunningController;
 use App\Http\Controllers\Platform\PlatformIndustryTemplateController;
 use App\Http\Controllers\Platform\PlatformInfrastructureController;
 use App\Http\Controllers\Platform\PlatformInvoiceController;
+use App\Http\Controllers\Platform\PlatformLegalDocumentController;
 use App\Http\Controllers\Platform\PlatformModuleController;
 use App\Http\Controllers\Platform\PlatformPasswordResetController;
 use App\Http\Controllers\Platform\PlatformPlanController;
 use App\Http\Controllers\Platform\PlatformProvisioningController;
 use App\Http\Controllers\Platform\PlatformRoleController;
+use App\Http\Controllers\Platform\PlatformSecurityController;
 use App\Http\Controllers\Platform\PlatformSecurityEventController;
+use App\Http\Controllers\Platform\PlatformSecurityIncidentController;
+use App\Http\Controllers\Platform\PlatformSecurityIpRuleController;
+use App\Http\Controllers\Platform\PlatformSecurityKeyController;
 use App\Http\Controllers\Platform\PlatformSessionController;
 use App\Http\Controllers\Platform\PlatformSubscriptionController;
 use App\Http\Controllers\Platform\PlatformSupportAssistController;
@@ -160,6 +167,53 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
                 Route::delete('/security/users/{platformUser}/sessions', [PlatformSessionController::class, 'revokeAll'])->middleware('platform.step-up')->name('users.sessions.revoke-all');
             });
 
+            // Security Centre Console
+            Route::get('/security', [PlatformSecurityController::class, 'index'])
+                ->middleware('platform.permission:platform.security.view')
+                ->name('security.index');
+
+            // Security Incidents
+            Route::get('/security/incidents', [PlatformSecurityIncidentController::class, 'index'])
+                ->middleware('platform.permission:platform.security.view')
+                ->name('security.incidents.index');
+            Route::get('/security/incidents/create', [PlatformSecurityIncidentController::class, 'create'])
+                ->middleware('platform.permission:platform.security.view')
+                ->name('security.incidents.create');
+            Route::post('/security/incidents', [PlatformSecurityIncidentController::class, 'store'])
+                ->middleware(['platform.permission:platform.security.view', 'platform.step-up'])
+                ->name('security.incidents.store');
+            Route::get('/security/incidents/{incident}', [PlatformSecurityIncidentController::class, 'show'])
+                ->middleware('platform.permission:platform.security.view')
+                ->name('security.incidents.show');
+            Route::post('/security/incidents/{incident}/status', [PlatformSecurityIncidentController::class, 'updateStatus'])
+                ->middleware(['platform.permission:platform.security.view', 'platform.step-up'])
+                ->name('security.incidents.status');
+            Route::post('/security/incidents/{incident}/notes', [PlatformSecurityIncidentController::class, 'addNote'])
+                ->middleware(['platform.permission:platform.security.view', 'platform.step-up'])
+                ->name('security.incidents.notes');
+
+            // IP & Abuse Rules
+            Route::get('/security/ip-rules', [PlatformSecurityIpRuleController::class, 'index'])
+                ->middleware('platform.permission:platform.security.view')
+                ->name('security.ip-rules.index');
+            Route::post('/security/ip-rules', [PlatformSecurityIpRuleController::class, 'store'])
+                ->middleware(['platform.permission:platform.security.view', 'platform.step-up'])
+                ->name('security.ip-rules.store');
+            Route::post('/security/ip-rules/{rule}/toggle', [PlatformSecurityIpRuleController::class, 'toggle'])
+                ->middleware(['platform.permission:platform.security.view', 'platform.step-up'])
+                ->name('security.ip-rules.toggle');
+            Route::delete('/security/ip-rules/{rule}', [PlatformSecurityIpRuleController::class, 'destroy'])
+                ->middleware(['platform.permission:platform.security.view', 'platform.step-up'])
+                ->name('security.ip-rules.destroy');
+
+            // Cryptographic Key Management
+            Route::get('/security/keys', [PlatformSecurityKeyController::class, 'index'])
+                ->middleware('platform.permission:platform.security.view')
+                ->name('security.keys.index');
+            Route::post('/security/keys/{key}/rotate', [PlatformSecurityKeyController::class, 'rotate'])
+                ->middleware(['platform.permission:platform.security.view', 'platform.step-up'])
+                ->name('security.keys.rotate');
+
             Route::get('/security/events', [PlatformSecurityEventController::class, 'index'])
                 ->middleware('platform.permission:platform.security.view')
                 ->name('security.events.index');
@@ -246,6 +300,34 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
                 ->middleware(['platform.permission:platform.infrastructure.view', 'platform.step-up'])->name('infrastructure.restores.store');
             Route::post('/infrastructure/restores/{restore}/approve', [PlatformInfrastructureController::class, 'approveRestore'])
                 ->middleware(['platform.permission:platform.infrastructure.view', 'platform.step-up'])->name('infrastructure.restores.approve');
+
+            // Compliance & eTIMS Console (Annex A Part 9, 15)
+            Route::get('/compliance', [PlatformComplianceController::class, 'index'])
+                ->middleware('platform.permission:platform.compliance.view')->name('compliance.index');
+            Route::post('/compliance/etims-certifications/{item}', [PlatformComplianceController::class, 'updateCertification'])
+                ->middleware(['platform.permission:platform.compliance.view', 'platform.step-up'])->name('compliance.etims-cert.update');
+
+            // Data Protection Requests (DSAR / Kenya DPA 2019)
+            Route::get('/compliance/data-protection', [PlatformDataProtectionController::class, 'index'])
+                ->middleware('platform.permission:platform.compliance.view')->name('compliance.dpa.index');
+            Route::get('/compliance/data-protection/create', [PlatformDataProtectionController::class, 'create'])
+                ->middleware('platform.permission:platform.compliance.view')->name('compliance.dpa.create');
+            Route::post('/compliance/data-protection', [PlatformDataProtectionController::class, 'store'])
+                ->middleware(['platform.permission:platform.compliance.view', 'platform.step-up'])->name('compliance.dpa.store');
+            Route::get('/compliance/data-protection/{dpa}', [PlatformDataProtectionController::class, 'show'])
+                ->middleware('platform.permission:platform.compliance.view')->name('compliance.dpa.show');
+            Route::post('/compliance/data-protection/{dpa}/status', [PlatformDataProtectionController::class, 'updateStatus'])
+                ->middleware(['platform.permission:platform.compliance.view', 'platform.step-up'])->name('compliance.dpa.status');
+
+            // Legal & Policy Documents
+            Route::get('/compliance/legal', [PlatformLegalDocumentController::class, 'index'])
+                ->middleware('platform.permission:platform.compliance.view')->name('compliance.legal.index');
+            Route::get('/compliance/legal/create', [PlatformLegalDocumentController::class, 'create'])
+                ->middleware('platform.permission:platform.compliance.view')->name('compliance.legal.create');
+            Route::post('/compliance/legal', [PlatformLegalDocumentController::class, 'store'])
+                ->middleware(['platform.permission:platform.compliance.view', 'platform.step-up'])->name('compliance.legal.store');
+            Route::get('/compliance/legal/{legal}', [PlatformLegalDocumentController::class, 'show'])
+                ->middleware('platform.permission:platform.compliance.view')->name('compliance.legal.show');
         });
     });
 });

@@ -1349,3 +1349,44 @@
 - Status label(s) after this activity: VERIFIED (Phase 7 / A10 Announcements and support cases/tools); A10 transitioned to VERIFIED; Tier B complete.
 - Follow-ups / next action: Update `docs/PROGRESS.md`, run `scripts/progress-check`, then proceed to Tier C (Phase 8: Infrastructure, queues, scheduler, migrations, backups and restore - A7 / Tier C).
 ---
+
+## L-0121 | 2026-11-23 12:25 UTC | 2026-11-23 15:25 EAT | agent: antigravity | tier/phase: Phase 8 / Tier C (A7)
+- Activity type: IMPLEMENT
+- What and why: Implemented Phase 8 Infrastructure, Queues, Scheduler, Migrations, Backups and Restore (A7 / Tier C). Created `PlatformHealthProbe`, `PlatformBackupRun`, and `PlatformRestoreRequest` models and database migrations. Implemented `InfrastructureService` providing real-time subsystem health probes (database ping, cache read/write, storage disk accessibility, queue driver status), queues and failed job statistics, migration file and batch inspection, backup execution with SHA-256 integrity checksum, isolated tenant restore request workflow, and two-person rule enforcement (preventing the requesting administrator from approving their own restore request per Annex A 11.4 & 31). Created platform controller `PlatformInfrastructureController` with 9 routes protected by `platform.operations.view` and `platform.operations.manage` with `platform.step-up` on all mutation actions. Built Blade views for system health console with real subsystem probe latency, queues status and failed jobs monitor, migration history and pending batches, backups console with on-demand run trigger and integrity hashes, and restore request workflow with two-person approval actions. Created `PlatformInfrastructureAndBackupTest` covering probe execution, queue inspection, migration ledger, backup execution with SHA-256 checksum, isolated restore workflow, and strict two-person rule approval enforcement. Extended `PlatformRouteAuthorizationTest` to enforce MFA, session, step-up, and permission invariants on all infrastructure routes.
+- Files created / modified:
+  - `database/migrations/2026_11_23_115336_create_platform_infrastructure_and_backup_tables.php` — schema for health probes, backup runs, and restore requests.
+  - `app/Models/PlatformHealthProbe.php`, `PlatformBackupRun.php`, `PlatformRestoreRequest.php` — Eloquent models for infrastructure and backup records.
+  - `app/Services/InfrastructureService.php` — subsystem health probing, queue monitoring, migration inspection, backup creation with SHA-256 checksum, restore workflow, and two-person approval rule.
+  - `app/Http/Controllers/Platform/PlatformInfrastructureController.php` — platform infrastructure controller with audit logging and step-up auth.
+  - `resources/views/platform/infrastructure/index.blade.php`, `queues.blade.php`, `migrations.blade.php`, `backups.blade.php`, `restores.blade.php` — infrastructure views.
+  - `resources/views/platform/layout.blade.php` — added Infrastructure console navigation link.
+  - `routes/web.php` — registered 9 platform infrastructure routes.
+  - `tests/Feature/PlatformRouteAuthorizationTest.php` — added infrastructure prefix to authorization and mutation invariants.
+  - `tests/Feature/PlatformInfrastructureAndBackupTest.php` — 7 feature tests verifying health probes, queue inspection, migrations, backup creation with SHA-256 hash, and two-person rule restore workflow.
+- Migrations: `2026_11_23_115336_create_platform_infrastructure_and_backup_tables.php`.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformInfrastructureAndBackupTest.php tests/Feature/PlatformRouteAuthorizationTest.php` → 11 tests, 677 assertions, exit 0; `php artisan test --compact` → 151 tests, 1432 assertions, exit 0; `vendor/bin/pint --format agent` → passed.
+- Actual results (exit codes, counts, error summaries): All tests passing, 0 failures, exit 0 throughout.
+- Status label(s) after this activity: VERIFIED (Phase 8 / A7 Infrastructure, queues, scheduler, migrations, backups and restore); A7 transitioned to VERIFIED.
+- Follow-ups / next action: Update `docs/PROGRESS.md`, run `scripts/progress-check`, then proceed to Phase 9 (Security centre, IP rules, key management, incident workflows - A8 / Tier C).
+---
+
+## L-0122 | 2026-11-23 17:25 UTC | 2026-11-23 20:25 EAT | agent: antigravity | tier/phase: Phase 9 / Tier C (A8)
+- Activity type: IMPLEMENT
+- What and why: Implemented Phase 9 Security Centre, IP Rules, Key Management, and Incident Workflows (A8 / Tier C). Created `PlatformSecurityIncident`, `PlatformSecurityIncidentNote`, `PlatformIpRule`, and `PlatformSecurityKey` models and database migrations. Implemented `PlatformSecurityService` providing aggregate threat overview metrics (active incidents, 24h critical events, blocked IPs, active sessions), incident lifecycle management (new -> acknowledged -> investigating -> escalated -> resolved -> closed) with resolution notes and containment action timeline notes, dynamic IP abuse management (allowlist, denylist, CIDR networks, temporary durations, and activation toggling) integrated directly into `EnforcePlatformIpAllowlist` middleware, and cryptographic key governance (envelope encryption hierarchy, versioning, SHA-256 fingerprints, rotation scheduling, and audited rotation). Created platform controllers `PlatformSecurityController`, `PlatformSecurityIncidentController`, `PlatformSecurityIpRuleController`, and `PlatformSecurityKeyController` with 13 routes protected by `platform.security.view` with `platform.step-up` on all mutation actions. Built Blade views for Security Centre dashboard, incident directory, incident registration wizard, incident inspection with timeline and containment steps, IP & abuse rules directory, and cryptographic key management console. Created `PlatformSecurityCentreTest` covering dashboard metrics, incident lifecycle, dynamic IP enforcement and toggle, cryptographic key rotation, and unprivileged user denial. Extended `PlatformRouteAuthorizationTest` to enforce MFA, session, step-up, and permission invariants on all security routes.
+- Files created / modified:
+  - `database/migrations/2026_11_23_123000_create_security_centre_tables.php` — schema for security incidents, notes, dynamic IP rules, and cryptographic keys.
+  - `app/Models/PlatformSecurityIncident.php`, `PlatformSecurityIncidentNote.php`, `PlatformIpRule.php`, `PlatformSecurityKey.php` — Eloquent models with relations and casts.
+  - `app/Services/PlatformSecurityService.php` — security metrics, incident lifecycle, dynamic IP rule management, and cryptographic key rotation.
+  - `app/Http/Middleware/EnforcePlatformIpAllowlist.php` — integrated dynamic denylist and allowlist rule evaluation from database.
+  - `app/Http/Controllers/Platform/PlatformSecurityController.php`, `PlatformSecurityIncidentController.php`, `PlatformSecurityIpRuleController.php`, `PlatformSecurityKeyController.php` — platform security controllers with audit logging and step-up auth.
+  - `resources/views/platform/security/index.blade.php`, `incidents/index.blade.php`, `create.blade.php`, `show.blade.php`, `ip_rules/index.blade.php`, `keys/index.blade.php` — security centre views.
+  - `resources/views/platform/layout.blade.php` — added Security Centre navigation link.
+  - `routes/web.php` — registered 13 platform security routes.
+  - `tests/Feature/PlatformRouteAuthorizationTest.php` — updated protected prefixes and mutation invariants.
+  - `tests/Feature/PlatformSecurityCentreTest.php` — 5 feature tests verifying dashboard, incident lifecycle, dynamic IP rule enforcement, key rotation, and authorization boundaries.
+- Migrations: `2026_11_23_123000_create_security_centre_tables.php`.
+- Commands run (secrets redacted): `php artisan test --compact tests/Feature/PlatformSecurityCentreTest.php tests/Feature/PlatformRouteAuthorizationTest.php` → 9 tests, 784 assertions, exit 0; `php artisan test --compact` → 156 tests, 1578 assertions, exit 0; `vendor/bin/pint --format agent` → passed.
+- Actual results (exit codes, counts, error summaries): All tests passing, 0 failures, exit 0 throughout.
+- Status label(s) after this activity: VERIFIED (Phase 9 / A8 Security centre, IP rules, key management, incident workflows); A8 transitioned to VERIFIED.
+- Follow-ups / next action: Update `docs/PROGRESS.md`, run `scripts/progress-check`, then proceed to Phase 10 (Compliance, eTIMS oversight, data-protection requests, legal documents - A9 / Tier C).
+---

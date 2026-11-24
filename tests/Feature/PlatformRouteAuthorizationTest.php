@@ -26,7 +26,7 @@ class PlatformRouteAuthorizationTest extends TestCase
             'platform.dashboard',
             'platform.audit.',
             'platform.approvals.',
-            'platform.security.events.',
+            'platform.security.',
             'platform.roles.',
             'platform.sessions.',
             'platform.users.',
@@ -40,6 +40,7 @@ class PlatformRouteAuthorizationTest extends TestCase
             'platform.support.',
             'platform.announcements.',
             'platform.infrastructure.',
+            'platform.compliance.',
         ];
         $protectedRoutes = collect(Route::getRoutes())
             ->filter(fn ($route): bool => collect($protectedPrefixes)->contains(
@@ -64,6 +65,7 @@ class PlatformRouteAuthorizationTest extends TestCase
     {
         $actionPrefixes = [
             'platform.approvals.',
+            'platform.security.',
             'platform.roles.',
             'platform.users.',
             'platform.sessions.',
@@ -77,6 +79,7 @@ class PlatformRouteAuthorizationTest extends TestCase
             'platform.support.',
             'platform.announcements.',
             'platform.infrastructure.',
+            'platform.compliance.',
         ];
         $mutations = collect(Route::getRoutes())
             ->filter(fn ($route): bool => collect($actionPrefixes)->contains(
@@ -105,7 +108,7 @@ class PlatformRouteAuthorizationTest extends TestCase
             'platform.dashboard',
             'platform.audit.',
             'platform.approvals.',
-            'platform.security.events.',
+            'platform.security.',
             'platform.roles.',
             'platform.sessions.',
             'platform.users.',
@@ -119,6 +122,7 @@ class PlatformRouteAuthorizationTest extends TestCase
             'platform.support.',
             'platform.announcements.',
             'platform.infrastructure.',
+            'platform.compliance.',
         ];
         $protectedRoutes = collect(Route::getRoutes())
             ->filter(fn ($route): bool => collect($protectedPrefixes)->contains(

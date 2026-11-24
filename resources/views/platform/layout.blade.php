@@ -75,6 +75,7 @@
                     <a href="{{ route('platform.sessions.index') }}">Sessions</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.security.view'))
+                    <a href="{{ route('platform.security.index') }}">Security Centre</a>
                     <a href="{{ route('platform.security.events.index') }}">Security events</a>
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.audit.view'))
@@ -82,6 +83,9 @@
                 @endif
                 @if(auth('platform')->user()->hasPermission('platform.support.view'))
                     <a href="{{ route('platform.support.cases.index') }}">Support Centre</a>
+                @endif
+                @if(auth('platform')->user()->hasPermission('platform.compliance.view'))
+                    <a href="{{ route('platform.compliance.index') }}">Compliance & eTIMS</a>
                 @endif
             </nav>
         @endauth
