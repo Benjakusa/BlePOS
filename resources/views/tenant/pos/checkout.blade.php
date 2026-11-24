@@ -171,7 +171,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ request()->attributes->get('csp_nonce') }}">
     const shiftId = {{ $openShift->id }};
     const shopId = {{ $openShift->shop_id }};
     let cart = [];

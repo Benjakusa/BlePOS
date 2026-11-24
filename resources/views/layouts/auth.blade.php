@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Welcome') · BlePOS</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     @vite(['resources/css/app.css'])
     @stack('styles')
 
@@ -258,9 +257,9 @@
             margin-bottom: 20px;
         }
 
-        .ath-alert.info    { background: #DBEAFE; color: #1E40AF; }
-        .ath-alert.success { background: #DCFCE7; color: #166534; }
-        .ath-alert.danger  { background: #FEE2E2; color: #991B1B; }
+        .ath-alert.info    { background: #DBEAFE; color: #1D4ED8; }
+        .ath-alert.success { background: #EAEEF3; color: #16A34A; }
+        .ath-alert.danger  { background: #EAEEF3; color: #DC2626; }
 
         /* ── Back link ─────────────────────────────────────────── */
         .ath-back {
@@ -327,7 +326,7 @@
 </div>
 
 @stack('scripts')
-<script>
+<script nonce="{{ request()->attributes->get('csp_nonce') }}">
 (function () {
     'use strict';
     document.querySelectorAll('.ath-alert').forEach(function (el) {

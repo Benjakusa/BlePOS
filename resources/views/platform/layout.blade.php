@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Platform Console') · BlePOS</title>
-    {{-- Bootstrap Icons CDN --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    {{-- Global design system --}}
+    {{-- Global design system (includes bundled Bootstrap Icons) --}}
     @vite(['resources/css/app.css'])
     @stack('styles')
 </head>
@@ -303,7 +301,7 @@
 
 @stack('scripts')
 
-<script>
+<script nonce="{{ request()->attributes->get('csp_nonce') }}">
 (function () {
     'use strict';
     // ── Sidebar toggle ─────────────────────────────────────────

@@ -225,7 +225,7 @@
             <div id="tenant-bp-already-enabled" style="color: var(--color-neutral-600);"></div>
         </div>
 
-        <script>
+        <script nonce="{{ request()->attributes->get('csp_nonce') }}">
         document.addEventListener('DOMContentLoaded', function() {
             const bpSelect = document.getElementById('blueprint-select');
             const previewBox = document.getElementById('tenant-bp-preview');

@@ -198,7 +198,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ request()->attributes->get('csp_nonce') }}">
 document.addEventListener('DOMContentLoaded', function() {
     const tenantSelect = document.getElementById('target-tenant-select');
     const previewBox = document.getElementById('preview-box');

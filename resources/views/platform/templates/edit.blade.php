@@ -162,7 +162,7 @@
     </div>
 </form>
 
-<script>
+<script nonce="{{ request()->attributes->get('csp_nonce') }}">
 document.addEventListener('DOMContentLoaded', function () {
     const dependencies = @json($moduleDependencies);
     const coreModules = @json($coreModules);
