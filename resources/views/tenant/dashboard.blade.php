@@ -57,7 +57,10 @@
             </form>
         @endif
 
-        <a href="{{ route('tenant.pos.checkout') }}" class="btn">Open POS Terminal</a>
+        <a href="{{ route('tenant.pos.checkout') }}" class="btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+            <span>Open POS Terminal</span>
+        </a>
     </div>
 </header>
 
@@ -90,8 +93,14 @@
                 <strong>Active Shift Open:</strong> Till register <strong>{{ $shift->register?->name ?? 'Register #'.$shift->register_id }}</strong> &bull; Opened at {{ $shift->opened_at?->format('H:i') }}
             </div>
             <div style="display: flex; gap: 8px;">
-                <a href="{{ route('tenant.pos.checkout') }}" class="btn btn-sm">Enter Register</a>
-                <a href="{{ route('tenant.shifts.show', $shift) }}" class="btn btn-sm btn-secondary">Manage Shift</a>
+                <a href="{{ route('tenant.pos.checkout') }}" class="btn btn-sm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    <span>Enter Register</span>
+                </a>
+                <a href="{{ route('tenant.shifts.show', $shift) }}" class="btn btn-sm btn-secondary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Manage Shift</span>
+                </a>
             </div>
         </div>
 
@@ -138,7 +147,12 @@
                                     <td style="font-weight: bold; color: #15803d;">KES {{ number_format((float) $sale->grand_total, 2) }}</td>
                                     <td><span class="badge badge-secondary">{{ strtoupper($sale->payment_status ?? 'PAID') }}</span></td>
                                     <td class="muted">{{ $sale->created_at?->format('H:i:s') }}</td>
-                                    <td><a href="{{ route('tenant.pos.receipt', $sale) }}" class="btn btn-sm btn-secondary">Receipt</a></td>
+                                    <td>
+                                        <a href="{{ route('tenant.pos.receipt', $sale) }}" class="btn btn-sm btn-secondary">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                                            <span>Receipt</span>
+                                        </a>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -153,13 +167,19 @@
             <div>
                 <strong>No Active Cashier Shift:</strong> You must open a shift with an initial cash float before processing register sales.
             </div>
-            <a href="{{ route('tenant.shifts.create') }}" class="btn btn-sm">Open New Shift</a>
+            <a href="{{ route('tenant.shifts.create') }}" class="btn btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>Open New Shift</span>
+            </a>
         </div>
 
         <div class="panel" style="text-align: center; padding: 40px 20px;">
             <h2 style="margin-top: 0;">Register Terminal Ready</h2>
             <p class="muted" style="max-width: 500px; margin: 0 auto 20px;">Select your assigned cash register drawer, enter the opening float, and begin cashier operations.</p>
-            <a href="{{ route('tenant.shifts.create') }}" class="btn" style="padding: 12px 24px; font-size: 15px;">Open Shift &amp; Start Register</a>
+            <a href="{{ route('tenant.shifts.create') }}" class="btn" style="padding: 12px 24px; font-size: 15px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+                <span>Open Shift &amp; Start Register</span>
+            </a>
         </div>
     @endif
 
@@ -217,7 +237,12 @@
                                     <td>KES {{ number_format((float) $os->opening_float, 2) }}</td>
                                     <td style="color: #15803d; font-weight: bold;">KES {{ number_format((float) $os->cash_sales, 2) }}</td>
                                     <td class="muted">{{ $os->opened_at?->format('H:i') }}</td>
-                                    <td><a href="{{ route('tenant.shifts.show', $os) }}" class="btn btn-sm btn-secondary">Review</a></td>
+                                    <td>
+                                        <a href="{{ route('tenant.shifts.show', $os) }}" class="btn btn-sm btn-secondary">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            <span>Review</span>
+                                        </a>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -254,7 +279,10 @@
             @endif
 
             <div style="margin-top: 14px;">
-                <a href="{{ route('tenant.inventory.receive') }}" class="btn btn-sm btn-secondary" style="width: 100%;">Receive Stock</a>
+                <a href="{{ route('tenant.inventory.receive') }}" class="btn btn-sm btn-secondary" style="width: 100%;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+                    <span>Receive Stock</span>
+                </a>
             </div>
         </div>
     </div>
