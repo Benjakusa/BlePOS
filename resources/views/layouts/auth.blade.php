@@ -15,7 +15,9 @@
 
         html, body {
             margin: 0; padding: 0; height: 100%;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-family: Calibri, "Segoe UI", Arial, sans-serif;
+            font-size: 13.5px;
+            font-weight: 400;
             background: #ffffff;
         }
 
@@ -66,12 +68,12 @@
 
         /* ── Typography ────────────────────────────────────────── */
         .ath-heading {
-            font-size: 32px;
-            font-weight: 700;
+            font-size: 21px;
+            font-weight: 600;
             color: #0F172A;
             margin: 0 0 6px;
-            letter-spacing: -0.5px;
-            line-height: 1.2;
+            letter-spacing: -0.2px;
+            line-height: 1.25;
         }
 
         .ath-subhead {
