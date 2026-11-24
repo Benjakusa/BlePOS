@@ -3,79 +3,102 @@
 @section('title', 'Chart of Accounts')
 
 @section('content')
-<header>
-    <div>
-        <h1>Chart of Accounts</h1>
-        <div class="muted">Standard double-entry accounts ledger for financial accounting and reporting</div>
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <h2 class="section-title" style="font-size: 18px;">Chart of Accounts</h2>
+            <p class="muted" style="margin-top: 2px;">Standard double-entry accounts ledger for financial accounting and reporting</p>
+        </div>
+        <div>
+            <a href="{{ route('tenant.accounting.accounts.create') }}" class="btn btn-primary" aria-label="New Account">
+                <i class="bi bi-plus-lg"></i>
+                <span>New Account</span>
+            </a>
+        </div>
     </div>
-    <div>
-        <a href="{{ route('tenant.accounting.accounts.create') }}" class="btn">+ New Account</a>
-    </div>
-</header>
 
-<div class="panel" style="margin-bottom: 20px;">
-    <form method="GET" action="{{ route('tenant.accounting.accounts.index') }}" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-        <input type="text" name="q" value="{{ $q ?? '' }}" placeholder="Search by code or account name..." style="max-width: 280px;">
-        <select name="type" style="max-width: 180px;">
-            <option value="">All Account Types</option>
-            <option value="asset" {{ ($type ?? '') === 'asset' ? 'selected' : '' }}>Assets</option>
-            <option value="liability" {{ ($type ?? '') === 'liability' ? 'selected' : '' }}>Liabilities</option>
-            <option value="equity" {{ ($type ?? '') === 'equity' ? 'selected' : '' }}>Equity</option>
-            <option value="revenue" {{ ($type ?? '') === 'revenue' ? 'selected' : '' }}>Revenue</option>
-            <option value="expense" {{ ($type ?? '') === 'expense' ? 'selected' : '' }}>Expenses</option>
-        </select>
-        <button type="submit" class="btn btn-secondary">Filter</button>
+    <form method="GET" action="{{ route('tenant.accounting.accounts.index') }}" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 24px;">
+        <div style="flex: 1; min-width: 220px; max-width: 360px;">
+            <input type="text" name="q" value="{{ $q ?? '' }}" placeholder="Search by code or account name..." style="width: 100%;">
+        </div>
+        <div>
+            <select name="type">
+                <option value="">All Account Types</option>
+                <option value="asset" {{ ($type ?? '') === 'asset' ? 'selected' : '' }}>Assets</option>
+                <option value="liability" {{ ($type ?? '') === 'liability' ? 'selected' : '' }}>Liabilities</option>
+                <option value="equity" {{ ($type ?? '') === 'equity' ? 'selected' : '' }}>Equity</option>
+                <option value="revenue" {{ ($type ?? '') === 'revenue' ? 'selected' : '' }}>Revenue</option>
+                <option value="expense" {{ ($type ?? '') === 'expense' ? 'selected' : '' }}>Expenses</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">
+            <i class="bi bi-funnel"></i>
+            <span>Filter</span>
+        </button>
         @if(!empty($q) || !empty($type))
-            <a href="{{ route('tenant.accounting.accounts.index') }}" class="btn btn-secondary">Clear</a>
+            <a href="{{ route('tenant.accounting.accounts.index') }}" class="btn btn-ghost" aria-label="Clear filters">
+                <i class="bi bi-x-circle"></i>
+                <span>Clear</span>
+            </a>
         @endif
     </form>
-</div>
 
-<div class="table-container">
-    <table>
-        <thead>
-            <tr>
-                <th>Code</th>
-                <th>Account Name</th>
-                <th>Type</th>
-                <th>Sub-Type</th>
-                <th>Currency</th>
-                <th style="text-align: right;">Current Balance</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($accounts as $account)
-                <tr>
-                    <td><strong>{{ $account->code }}</strong></td>
-                    <td>
-                        {{ $account->name }}
-                        @if($account->is_system)
-                            <span class="badge badge-secondary" style="margin-left: 6px;">System</span>
-                        @endif
-                    </td>
-                    <td>
-                        <span class="badge badge-{{ match($account->type) { 'asset' => 'info', 'liability' => 'warning', 'equity' => 'success', 'revenue' => 'success', default => 'secondary' } }}">
-                            {{ ucfirst($account->type) }}
-                        </span>
-                    </td>
-                    <td class="muted">{{ ucwords(str_replace('_', ' ', $account->sub_type ?? '—')) }}</td>
-                    <td><code>{{ $account->currency }}</code></td>
-                    <td style="text-align: right; font-weight: 650; font-family: monospace;">
-                        {{ number_format((float) $account->current_balance, 2) }}
-                    </td>
-                    <td>
-                        <span class="badge badge-{{ $account->is_active ? 'success' : 'secondary' }}">
-                            {{ $account->is_active ? 'Active' : 'Archived' }}
-                        </span>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="7" class="muted" style="text-align: center; padding: 24px;">No accounts found.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+    <div class="table-container">
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Account Name</th>
+                        <th>Type</th>
+                        <th>Sub-Type</th>
+                        <th>Currency</th>
+                        <th style="text-align: right;">Current Balance</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($accounts as $account)
+                        <tr>
+                            <td title="{{ $account->code }}">
+                                <code style="background: var(--clr-grey-tint); padding: 3px 6px; border-radius: var(--radius-sm); font-size: 12px;">{{ $account->code }}</code>
+                            </td>
+                            <td title="{{ $account->name }}">
+                                <strong>{{ $account->name }}</strong>
+                                @if($account->is_system)
+                                    <span class="chip" style="margin-left: 6px;">System</span>
+                                @endif
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ match($account->type) { 'asset' => 'info', 'liability' => 'warning', 'equity' => 'success', 'revenue' => 'success', default => 'secondary' } }}">
+                                    {{ ucfirst($account->type) }}
+                                </span>
+                            </td>
+                            <td title="{{ ucwords(str_replace('_', ' ', $account->sub_type ?? '—')) }}" class="muted">
+                                {{ ucwords(str_replace('_', ' ', $account->sub_type ?? '—')) }}
+                            </td>
+                            <td><code>{{ $account->currency }}</code></td>
+                            <td style="text-align: right; font-weight: 600;" class="{{ (float) $account->current_balance < 0 ? 'text-red' : 'text-green' }}" title="{{ number_format((float) $account->current_balance, 2) }}">
+                                {{ number_format((float) $account->current_balance, 2) }}
+                            </td>
+                            <td>
+                                <span class="badge {{ $account->is_active ? 'badge-success' : 'badge-secondary' }}">
+                                    <i class="bi bi-{{ $account->is_active ? 'check-circle' : 'dash-circle' }}"></i>
+                                    {{ $account->is_active ? 'Active' : 'Archived' }}
+                                </span>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="muted" style="text-align: center; padding: 32px;">
+                                <i class="bi bi-journal-bookmark" style="font-size: 32px; display: block; margin-bottom: 8px;"></i>
+                                No accounts found.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 @endsection

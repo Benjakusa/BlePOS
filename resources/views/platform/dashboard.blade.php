@@ -3,15 +3,47 @@
 @section('title', 'Platform Control Plane Dashboard')
 
 @section('content')
+
+{{-- Top Header --}}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <h1 class="page-title">Platform Control Plane</h1>
+            <span class="badge badge-success">
+                <i class="bi bi-shield-check"></i>
+                <span>Super Admin</span>
+            </span>
+        </div>
+        <p class="muted" style="margin-top: 4px;">Executive oversight, real-time subsystem diagnostics, and multi-tenant operational status</p>
+    </div>
+
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="{{ route('platform.tenants.create') }}" class="btn btn-primary" aria-label="Register Tenant">
+            <i class="bi bi-plus-lg"></i>
+            <span>Register Tenant</span>
+        </a>
+        <a href="{{ route('platform.analytics.index') }}" class="btn btn-secondary" aria-label="View Analytics">
+            <i class="bi bi-bar-chart-line"></i>
+            <span>Analytics</span>
+        </a>
+    </div>
+</div>
+
 @if (session('platform_recovery_codes'))
-    <section class="panel" style="margin-bottom: 24px; border-left: 4px solid #146b4d;">
-        <h2>Save your recovery codes</h2>
-        <p>These codes are shown once. Each code works once and resets your authenticator enrollment.</p>
-        <ul>@foreach(session('platform_recovery_codes') as $code)<li><code>{{ $code }}</code></li>@endforeach</ul>
-    </section>
+    <div class="alert alert-warning" style="margin-bottom: 24px;">
+        <i class="bi bi-key-fill" style="font-size: 20px;"></i>
+        <div>
+            <strong>Save your recovery codes:</strong> These codes are shown once. Each code works once and resets your authenticator enrollment.
+            <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+                @foreach(session('platform_recovery_codes') as $code)
+                    <code style="background: var(--clr-surface); padding: 4px 8px; border-radius: 4px; font-weight: 600;">{{ $code }}</code>
+                @endforeach
+            </div>
+        </div>
+    </div>
 @endif
 
-<!-- Needs-Attention Alerts & Quick Operational Action Inbox (Row P) -->
+<!-- Needs-Attention Alerts (Row P) — Strict: NO pale red or pale green backgrounds -->
 @php
     $hasAlerts = ($growth['provisioning_failed'] > 0)
         || ($security['metrics']['active_incidents'] > 0)
@@ -21,321 +53,368 @@
 @endphp
 
 @if($hasAlerts)
-    <div style="display: grid; gap: 10px; margin-bottom: 24px;">
+    <div style="display: grid; gap: 12px; margin-bottom: 24px;">
         @if($growth['provisioning_failed'] > 0)
-            <div style="background: #fdf2f2; border: 1px solid #f8b4b4; color: #9b1c1c; padding: 12px 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <span><strong>Provisioning Failure Alert:</strong> {{ $growth['provisioning_failed'] }} tenant(s) encountered failed provisioning runs requiring administrative recovery.</span>
-                <a href="{{ route('platform.provisioning.index') }}" style="color: #9b1c1c; font-weight: bold; text-decoration: underline;">Review Provisioning &rarr;</a>
+            <div class="alert alert-danger" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="bi bi-exclamation-octagon" style="font-size: 18px;"></i>
+                    <span><strong>Provisioning Failure Alert:</strong> {{ $growth['provisioning_failed'] }} tenant(s) encountered failed provisioning runs requiring administrative recovery.</span>
+                </div>
+                <a href="{{ route('platform.provisioning.index') }}" class="btn btn-sm btn-danger">
+                    <span>Review Provisioning &rarr;</span>
+                </a>
             </div>
         @endif
 
         @if($security['metrics']['active_incidents'] > 0)
-            <div style="background: #fef8f1; border: 1px solid #fbd5b5; color: #9a3412; padding: 12px 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <span><strong>Security Incident Alert:</strong> {{ $security['metrics']['active_incidents'] }} open security incident(s) currently being investigated.</span>
-                <a href="{{ route('platform.security.index') }}" style="color: #9a3412; font-weight: bold; text-decoration: underline;">Security Centre &rarr;</a>
+            <div class="alert alert-danger" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="bi bi-shield-slash" style="font-size: 18px;"></i>
+                    <span><strong>Security Incident Alert:</strong> {{ $security['metrics']['active_incidents'] }} open security incident(s) currently being investigated.</span>
+                </div>
+                <a href="{{ route('platform.security.index') }}" class="btn btn-sm btn-danger">
+                    <span>Security Centre &rarr;</span>
+                </a>
             </div>
         @endif
 
         @if($compliance['metrics']['dpa_overdue'] > 0)
-            <div style="background: #fdf2f2; border: 1px solid #f8b4b4; color: #9b1c1c; padding: 12px 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <span><strong>Statutory Deadline Alert:</strong> {{ $compliance['metrics']['dpa_overdue'] }} Data Protection DSAR request(s) have passed statutory response time limits.</span>
-                <a href="{{ route('platform.compliance.index') }}" style="color: #9b1c1c; font-weight: bold; text-decoration: underline;">Compliance Console &rarr;</a>
+            <div class="alert alert-danger" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="bi bi-clock-history" style="font-size: 18px;"></i>
+                    <span><strong>Statutory Deadline Alert:</strong> {{ $compliance['metrics']['dpa_overdue'] }} Data Protection DSAR request(s) have passed statutory response time limits.</span>
+                </div>
+                <a href="{{ route('platform.compliance.index') }}" class="btn btn-sm btn-danger">
+                    <span>Compliance Console &rarr;</span>
+                </a>
             </div>
         @endif
 
         @if($pendingApprovals->isNotEmpty())
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 12px 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <span><strong>Two-Person Rule Signoff Required:</strong> {{ $pendingApprovals->count() }} high-risk administrative action(s) await secondary authorization.</span>
-                <a href="{{ route('platform.approvals.index') }}" style="color: #1e40af; font-weight: bold; text-decoration: underline;">Review Approvals &rarr;</a>
+            <div class="alert alert-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="bi bi-person-check" style="font-size: 18px;"></i>
+                    <span><strong>Two-Person Rule Signoff Required:</strong> {{ $pendingApprovals->count() }} high-risk administrative action(s) await secondary authorization.</span>
+                </div>
+                <a href="{{ route('platform.approvals.index') }}" class="btn btn-sm btn-secondary">
+                    <span>Review Approvals &rarr;</span>
+                </a>
             </div>
         @endif
 
         @if($health['overall'] !== 'healthy')
-            <div style="background: #fef8f1; border: 1px solid #fbd5b5; color: #9a3412; padding: 12px 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <span><strong>Infrastructure Degraded:</strong> One or more subsystem health probes reported degraded or unhealthy responses.</span>
-                <a href="{{ route('platform.infrastructure.index') }}" style="color: #9a3412; font-weight: bold; text-decoration: underline;">Infrastructure Probes &rarr;</a>
+            <div class="alert alert-warning" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="bi bi-activity" style="font-size: 18px;"></i>
+                    <span><strong>Infrastructure Degraded:</strong> One or more subsystem health probes reported degraded or unhealthy responses.</span>
+                </div>
+                <a href="{{ route('platform.infrastructure.index') }}" class="btn btn-sm btn-secondary">
+                    <span>Infrastructure Probes &rarr;</span>
+                </a>
             </div>
         @endif
     </div>
 @endif
 
 <!-- eTIMS Technical Regulatory Status Banner -->
-<div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 12px 16px; border-radius: 6px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
-    <div>
-        <strong>eTIMS Fiscal Subsystem:</strong> Status is <span style="display: inline-block; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">{{ $compliance['metrics']['etims_status'] }}</span>
-        <span class="muted" style="margin-left: 8px; font-size: 13px;">(Regulatory compliance placeholder active; certified KRA checklist tracking {{ $compliance['metrics']['cert_passed'] }}/{{ $compliance['metrics']['cert_total'] }} requirements)</span>
+<div class="alert alert-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <i class="bi bi-receipt" style="font-size: 18px;"></i>
+        <div>
+            <strong>eTIMS Fiscal Subsystem:</strong> Status is <span class="badge badge-warning">{{ $compliance['metrics']['etims_status'] }}</span>
+            <span class="muted" style="margin-left: 8px;">(Regulatory compliance certified checklist tracking {{ $compliance['metrics']['cert_passed'] }}/{{ $compliance['metrics']['cert_total'] }} requirements)</span>
+        </div>
     </div>
-    <a href="{{ route('platform.compliance.index') }}" style="color: #166534; font-weight: bold; text-decoration: underline;">Checklist &rarr;</a>
+    <a href="{{ route('platform.compliance.index') }}" class="btn btn-sm btn-secondary">
+        <span>Checklist &rarr;</span>
+    </a>
 </div>
 
-<!-- Row A: Headline Executive KPIs -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
+<!-- Row A: Headline Executive KPIs (Section 6) -->
+<div class="grid-cards">
     <!-- Tenants KPI -->
-    <div class="panel" style="padding: 18px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="muted" style="font-size: 12px; text-transform: uppercase; font-weight: 600;">Tenants</span>
-            <a href="{{ route('platform.tenants.index') }}" style="font-size: 12px;">View All &rarr;</a>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <i class="bi bi-buildings"></i>
         </div>
-        <div style="font-size: 28px; font-weight: bold; margin-top: 6px; color: #102b22;">
-            {{ number_format($growth['total_tenants']) }}
-        </div>
-        <div style="font-size: 13px; margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap;">
-            <span style="color: #146b4d; font-weight: 600;">{{ $growth['active_tenants'] }} active</span>
-            <span style="color: #9a3412;">{{ $growth['suspended_tenants'] }} suspended</span>
-            <span class="muted">{{ $growth['retention_rate'] }}% retention</span>
+        <div class="stat-body">
+            <div class="stat-label">Tenants</div>
+            <div class="stat-value" data-count-up="{{ $growth['total_tenants'] }}">{{ number_format($growth['total_tenants']) }}</div>
+            <div class="stat-trend up">
+                <i class="bi bi-check-circle"></i>
+                <span class="text-green">{{ $growth['active_tenants'] }} active</span> &bull; <span class="{{ $growth['suspended_tenants'] > 0 ? 'text-red' : 'muted' }}">{{ $growth['suspended_tenants'] }} suspended</span>
+            </div>
         </div>
     </div>
 
     <!-- Revenue KPI -->
-    <div class="panel" style="padding: 18px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="muted" style="font-size: 12px; text-transform: uppercase; font-weight: 600;">Monthly Recurring Revenue</span>
-            <a href="{{ route('platform.analytics.index') }}" style="font-size: 12px;">Analytics &rarr;</a>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <i class="bi bi-currency-dollar"></i>
         </div>
-        <div style="font-size: 28px; font-weight: bold; margin-top: 6px; color: #146b4d;">
-            KES {{ number_format((float) $revenue['mrr'], 2) }}
-        </div>
-        <div style="font-size: 13px; margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap;">
-            <span class="muted">ARR: KES {{ number_format((float) $revenue['arr'], 2) }}</span>
-            <span style="color: #146b4d; font-weight: 600;">{{ $revenue['collection_rate'] }}% collected</span>
+        <div class="stat-body">
+            <div class="stat-label">Monthly Recurring Revenue</div>
+            <div class="stat-value text-green">KES {{ number_format((float) $revenue['mrr'], 2) }}</div>
+            <div class="caption">ARR: KES {{ number_format((float) $revenue['arr'], 2) }} &bull; {{ $revenue['collection_rate'] }}% collected</div>
         </div>
     </div>
 
     <!-- Infrastructure & Probes KPI -->
-    <div class="panel" style="padding: 18px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="muted" style="font-size: 12px; text-transform: uppercase; font-weight: 600;">Subsystems Health</span>
-            <a href="{{ route('platform.infrastructure.index') }}" style="font-size: 12px;">Probes &rarr;</a>
+    <div class="stat-card">
+        <div class="stat-icon {{ $health['overall'] === 'healthy' ? 'green' : 'red' }}">
+            <i class="bi bi-heart-pulse"></i>
         </div>
-        <div style="font-size: 28px; font-weight: bold; margin-top: 6px; color: {{ $health['overall'] === 'healthy' ? '#146b4d' : '#dc2626' }};">
-            {{ strtoupper($health['overall']) }}
-        </div>
-        <div style="font-size: 13px; margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap;">
-            <span>DB: {{ $health['probes']['database']['latency_ms'] }}ms</span>
-            <span>Cache: {{ $health['probes']['cache']['latency_ms'] }}ms</span>
-            <span>Queues: {{ $health['probes']['queues']['latency_ms'] }}ms</span>
+        <div class="stat-body">
+            <div class="stat-label">Subsystems Health</div>
+            <div class="stat-value {{ $health['overall'] === 'healthy' ? 'text-green' : 'text-red' }}">
+                {{ strtoupper($health['overall']) }}
+            </div>
+            <div class="caption">DB: {{ $health['probes']['database']['latency_ms'] }}ms &bull; Cache: {{ $health['probes']['cache']['latency_ms'] }}ms</div>
         </div>
     </div>
 
     <!-- Support & Security KPI -->
-    <div class="panel" style="padding: 18px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="muted" style="font-size: 12px; text-transform: uppercase; font-weight: 600;">Support & Security</span>
-            <a href="{{ route('platform.security.index') }}" style="font-size: 12px;">Security &rarr;</a>
+    <div class="stat-card">
+        <div class="stat-icon {{ $support['urgent_cases'] > 0 ? 'red' : 'blue' }}">
+            <i class="bi bi-headset"></i>
         </div>
-        <div style="font-size: 28px; font-weight: bold; margin-top: 6px; color: #102b22;">
-            {{ $support['open_cases'] }} <span style="font-size: 16px; font-weight: normal; color: #63736b;">open cases</span>
-        </div>
-        <div style="font-size: 13px; margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap;">
-            <span style="color: {{ $support['urgent_cases'] > 0 ? '#dc2626' : '#146b4d' }}; font-weight: 600;">{{ $support['urgent_cases'] }} urgent</span>
-            <span class="muted">{{ $security['metrics']['blocked_ips'] }} blocked IPs</span>
-            <span class="muted">{{ $security['metrics']['active_sessions'] }} active sessions</span>
+        <div class="stat-body">
+            <div class="stat-label">Support Cases</div>
+            <div class="stat-value">{{ $support['open_cases'] }} <span style="font-size: 14px; font-weight: normal; color: var(--clr-muted);">open</span></div>
+            <div class="stat-trend {{ $support['urgent_cases'] > 0 ? 'down' : 'up' }}">
+                <span class="{{ $support['urgent_cases'] > 0 ? 'text-red' : 'text-green' }}">{{ $support['urgent_cases'] }} urgent</span> &bull; {{ $security['metrics']['blocked_ips'] }} blocked IPs
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Row E, H & K: Operational Health, Subsystems & Backups -->
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px;">
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px;">
     <!-- Live Health Probes -->
-    <div class="panel" style="max-width: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-            <h3 style="margin: 0; font-size: 16px;">Live Subsystem Probes</h3>
-            <span class="muted" style="font-size: 12px;">Probed at: {{ now()->format('Y-m-d H:i:s') }}</span>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 class="section-title">Live Subsystem Probes</h3>
+            <span class="caption">Updated: {{ now()->format('H:i:s') }}</span>
         </div>
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-            <thead>
-                <tr style="border-bottom: 1px solid #dce5df; text-align: left;">
-                    <th style="padding: 8px 6px;">Subsystem</th>
-                    <th style="padding: 8px 6px;">Status</th>
-                    <th style="padding: 8px 6px;">Latency</th>
-                    <th style="padding: 8px 6px;">Diagnostic Details</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($health['probes'] as $probeName => $probe)
-                    <tr style="border-bottom: 1px solid #f0f4f2;">
-                        <td style="padding: 8px 6px; font-weight: 600; text-transform: capitalize;">{{ $probeName }}</td>
-                        <td style="padding: 8px 6px;">
-                            <span style="display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; background: {{ $probe['status'] === 'healthy' ? '#e7f4eb' : ($probe['status'] === 'degraded' ? '#fef3c7' : '#fee2e2') }}; color: {{ $probe['status'] === 'healthy' ? '#146b4d' : ($probe['status'] === 'degraded' ? '#92400e' : '#991b1b') }};">
-                                {{ strtoupper($probe['status']) }}
-                            </span>
-                        </td>
-                        <td style="padding: 8px 6px;">{{ $probe['latency_ms'] }} ms</td>
-                        <td style="padding: 8px 6px; color: #555;">
-                            @foreach($probe['details'] as $k => $v)
-                                <span>{{ $k }}: <strong>{{ is_scalar($v) ? $v : json_encode($v) }}</strong></span>@if(!$loop->last), @endif
-                            @endforeach
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+        <div class="table-container">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subsystem</th>
+                            <th>Status</th>
+                            <th>Latency</th>
+                            <th>Diagnostic Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($health['probes'] as $probeName => $probe)
+                            <tr>
+                                <td title="{{ ucfirst($probeName) }}"><strong>{{ ucfirst($probeName) }}</strong></td>
+                                <td>
+                                    <span class="badge {{ $probe['status'] === 'healthy' ? 'badge-success' : ($probe['status'] === 'degraded' ? 'badge-warning' : 'badge-danger') }}">
+                                        <i class="bi bi-{{ $probe['status'] === 'healthy' ? 'check-circle' : 'exclamation-circle' }}"></i>
+                                        {{ strtoupper($probe['status']) }}
+                                    </span>
+                                </td>
+                                <td>{{ $probe['latency_ms'] }} ms</td>
+                                <td title="@foreach($probe['details'] as $k => $v){{ $k }}: {{ is_scalar($v) ? $v : json_encode($v) }} @endforeach" class="muted">
+                                    @foreach($probe['details'] as $k => $v)
+                                        <span>{{ $k }}: <strong>{{ is_scalar($v) ? $v : json_encode($v) }}</strong></span>@if(!$loop->last), @endif
+                                    @endforeach
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- Backups & Migrations Summary -->
-    <div class="panel" style="max-width: none;">
-        <h3 style="margin: 0 0 12px 0; font-size: 16px;">Backups &amp; Migrations</h3>
-        <div style="font-size: 13px; margin-bottom: 14px;">
-            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f4f2;">
+    <div class="card">
+        <h3 class="section-title" style="margin-bottom: 16px;">Backups &amp; Migrations</h3>
+        <div style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--clr-header-tint);">
                 <span class="muted">Migrations Ran:</span>
                 <strong>{{ $migrationStatus['total_ran'] }} (Batch {{ $migrationStatus['last_batch'] }})</strong>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f4f2;">
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--clr-header-tint);">
                 <span class="muted">Recent Backups:</span>
                 <strong>{{ $recentBackups->count() }} run(s) logged</strong>
             </div>
         </div>
 
         @if($recentBackups->isNotEmpty())
-            <div style="font-size: 12px;">
+            @php $latestBackup = $recentBackups->first(); @endphp
+            <div style="font-size: 12px; margin-bottom: 16px;">
                 <span class="muted" style="font-weight: 600;">Latest Encrypted Backup:</span>
-                @php $latestBackup = $recentBackups->first(); @endphp
-                <div style="margin-top: 4px; padding: 8px; background: #f8faf9; border-radius: 4px; border: 1px solid #e5eae7;">
+                <div style="margin-top: 6px; padding: 10px; background: var(--clr-grey-tint); border-radius: var(--radius-md);">
                     <div>Type: <strong>{{ ucfirst($latestBackup->backup_type ?? 'central') }}</strong> ({{ $latestBackup->status }})</div>
-                    <div style="color: #63736b; margin-top: 2px;">{{ $latestBackup->created_at?->diffForHumans() }}</div>
+                    <div class="muted" style="margin-top: 2px;">{{ $latestBackup->created_at?->diffForHumans() }}</div>
                     @if(!empty($latestBackup->checksum))
-                        <div style="margin-top: 4px; font-family: monospace; font-size: 11px; word-break: break-all;">
+                        <div style="margin-top: 4px; font-family: monospace; font-size: 11px;">
                             SHA256: {{ substr($latestBackup->checksum, 0, 16) }}...
                         </div>
                     @endif
                 </div>
             </div>
         @else
-            <div class="muted" style="font-size: 12px;">No automated backups recorded yet.</div>
+            <div class="muted" style="font-size: 12px; margin-bottom: 16px;">No automated backups recorded yet.</div>
         @endif
-        <div style="margin-top: 14px;">
-            <a href="{{ route('platform.infrastructure.index') }}" style="font-size: 12px; font-weight: 600;">Manage Backups & Restore &rarr;</a>
+
+        <div style="margin-top: auto;">
+            <a href="{{ route('platform.infrastructure.index') }}" class="btn btn-secondary w-full" style="width: 100%;">
+                <i class="bi bi-hdd-network"></i>
+                <span>Manage Backups &amp; Restore</span>
+            </a>
         </div>
     </div>
 </div>
 
 <!-- Row C & D: Commercial Subscriptions, Module Adoption & Industry Blueprints -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 24px;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 24px;">
     <!-- Active Subscription Plans -->
-    <div class="panel" style="max-width: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h3 style="margin: 0; font-size: 16px;">Plan Distribution</h3>
-            <a href="{{ route('platform.plans.index') }}" style="font-size: 12px;">Plans &rarr;</a>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 class="section-title">Plan Distribution</h3>
+            <a href="{{ route('platform.plans.index') }}" style="font-size: 13px;">Plans &rarr;</a>
         </div>
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-            <thead>
-                <tr style="border-bottom: 1px solid #dce5df; text-align: left;">
-                    <th style="padding: 6px;">Plan</th>
-                    <th style="padding: 6px;">Code</th>
-                    <th style="padding: 6px; text-align: right;">Active Subscriptions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($plans as $plan)
-                    <tr style="border-bottom: 1px solid #f0f4f2;">
-                        <td style="padding: 6px; font-weight: 600;">{{ $plan['name'] }}</td>
-                        <td style="padding: 6px;"><code style="font-size: 11px;">{{ $plan['code'] }}</code></td>
-                        <td style="padding: 6px; text-align: right; font-weight: bold; color: #146b4d;">{{ $plan['active_subscribers'] }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="3" class="muted" style="padding: 10px 0;">No commercial plans configured.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+        <div class="table-container">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Plan</th>
+                            <th>Code</th>
+                            <th style="text-align: right;">Subscribers</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($plans as $plan)
+                            <tr>
+                                <td title="{{ $plan['name'] }}"><strong>{{ $plan['name'] }}</strong></td>
+                                <td><code>{{ $plan['code'] }}</code></td>
+                                <td style="text-align: right; font-weight: 600;" class="text-green">{{ $plan['active_subscribers'] }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="3" class="muted" style="padding: 14px;">No commercial plans configured.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- Module Catalogue Adoption -->
-    <div class="panel" style="max-width: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h3 style="margin: 0; font-size: 16px;">Top Adopted Modules</h3>
-            <a href="{{ route('platform.modules.index') }}" style="font-size: 12px;">Catalogue &rarr;</a>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 class="section-title">Top Adopted Modules</h3>
+            <a href="{{ route('platform.modules.index') }}" style="font-size: 13px;">Catalogue &rarr;</a>
         </div>
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-            <thead>
-                <tr style="border-bottom: 1px solid #dce5df; text-align: left;">
-                    <th style="padding: 6px;">Module</th>
-                    <th style="padding: 6px; text-align: right;">Tenants</th>
-                    <th style="padding: 6px; text-align: right;">Adoption Rate</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($topModules as $mod)
-                    <tr style="border-bottom: 1px solid #f0f4f2;">
-                        <td style="padding: 6px; font-weight: 600;">{{ $mod['name'] }}</td>
-                        <td style="padding: 6px; text-align: right;">{{ $mod['enabled_tenants_count'] }}</td>
-                        <td style="padding: 6px; text-align: right; font-weight: bold; color: #146b4d;">{{ $mod['adoption_rate'] }}%</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="3" class="muted" style="padding: 10px 0;">No module entitlements recorded.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+        <div class="table-container">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th style="text-align: right;">Tenants</th>
+                            <th style="text-align: right;">Adoption Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($topModules as $mod)
+                            <tr>
+                                <td title="{{ $mod['name'] }}"><strong>{{ $mod['name'] }}</strong></td>
+                                <td style="text-align: right;">{{ $mod['enabled_tenants_count'] }}</td>
+                                <td style="text-align: right; font-weight: 600;" class="text-green">{{ $mod['adoption_rate'] }}%</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="3" class="muted" style="padding: 14px;">No module entitlements recorded.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- Industry Blueprint Distribution -->
-    <div class="panel" style="max-width: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h3 style="margin: 0; font-size: 16px;">Industry Blueprints</h3>
-            <a href="{{ route('platform.templates.index') }}" style="font-size: 12px;">Templates &rarr;</a>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 class="section-title">Industry Blueprints</h3>
+            <a href="{{ route('platform.templates.index') }}" style="font-size: 13px;">Templates &rarr;</a>
         </div>
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-            <thead>
-                <tr style="border-bottom: 1px solid #dce5df; text-align: left;">
-                    <th style="padding: 6px;">Industry</th>
-                    <th style="padding: 6px; text-align: right;">Tenants</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($industries as $ind => $cnt)
-                    <tr style="border-bottom: 1px solid #f0f4f2;">
-                        <td style="padding: 6px; font-weight: 600; text-transform: capitalize;">{{ str_replace('-', ' ', $ind) }}</td>
-                        <td style="padding: 6px; text-align: right; color: #146b4d; font-weight: 600;">{{ $cnt }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="2" class="muted" style="padding: 10px 0;">No industry assignments recorded.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+        <div class="table-container">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Industry</th>
+                            <th style="text-align: right;">Tenants</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($industries as $ind => $cnt)
+                            <tr>
+                                <td title="{{ str_replace('-', ' ', $ind) }}" style="text-transform: capitalize;"><strong>{{ str_replace('-', ' ', $ind) }}</strong></td>
+                                <td style="text-align: right; font-weight: 600;" class="text-green">{{ $cnt }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="2" class="muted" style="padding: 14px;">No industry assignments recorded.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Row N & L: Security Centre, Threat Monitoring & Regulatory Compliance -->
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
     <!-- Security Centre Overview -->
-    <div class="panel" style="max-width: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h3 style="margin: 0; font-size: 16px;">Security Centre &amp; Key Governance</h3>
-            <a href="{{ route('platform.security.index') }}" style="font-size: 12px;">Console &rarr;</a>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 class="section-title">Security Centre &amp; Key Governance</h3>
+            <a href="{{ route('platform.security.index') }}" style="font-size: 13px;">Console &rarr;</a>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 13px;">
-            <div style="background: #f8faf9; padding: 8px 12px; border-radius: 4px; border: 1px solid #e5eae7;">
-                <span class="muted" style="font-size: 11px;">Active Incidents:</span>
-                <div style="font-size: 18px; font-weight: bold; color: {{ $security['metrics']['active_incidents'] > 0 ? '#dc2626' : '#146b4d' }};">
-                    {{ $security['metrics']['active_incidents'] }}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <div class="stat-card" style="padding: 14px;">
+                <div class="stat-body">
+                    <div class="stat-label">Active Incidents</div>
+                    <div class="stat-value {{ $security['metrics']['active_incidents'] > 0 ? 'text-red' : 'text-green' }}" style="font-size: 22px;">
+                        {{ $security['metrics']['active_incidents'] }}
+                    </div>
                 </div>
             </div>
-            <div style="background: #f8faf9; padding: 8px 12px; border-radius: 4px; border: 1px solid #e5eae7;">
-                <span class="muted" style="font-size: 11px;">Critical Events (24h):</span>
-                <div style="font-size: 18px; font-weight: bold; color: {{ $security['metrics']['critical_events_24h'] > 0 ? '#dc2626' : '#146b4d' }};">
-                    {{ $security['metrics']['critical_events_24h'] }}
+            <div class="stat-card" style="padding: 14px;">
+                <div class="stat-body">
+                    <div class="stat-label">Critical Events (24h)</div>
+                    <div class="stat-value {{ $security['metrics']['critical_events_24h'] > 0 ? 'text-red' : 'text-green' }}" style="font-size: 22px;">
+                        {{ $security['metrics']['critical_events_24h'] }}
+                    </div>
                 </div>
             </div>
-            <div style="background: #f8faf9; padding: 8px 12px; border-radius: 4px; border: 1px solid #e5eae7;">
-                <span class="muted" style="font-size: 11px;">Blocked Denylist IPs:</span>
-                <div style="font-size: 18px; font-weight: bold; color: #102b22;">
-                    {{ $security['metrics']['blocked_ips'] }}
+            <div class="stat-card" style="padding: 14px;">
+                <div class="stat-body">
+                    <div class="stat-label">Blocked Denylist IPs</div>
+                    <div class="stat-value" style="font-size: 22px;">{{ $security['metrics']['blocked_ips'] }}</div>
                 </div>
             </div>
-            <div style="background: #f8faf9; padding: 8px 12px; border-radius: 4px; border: 1px solid #e5eae7;">
-                <span class="muted" style="font-size: 11px;">Active Sessions:</span>
-                <div style="font-size: 18px; font-weight: bold; color: #102b22;">
-                    {{ $security['metrics']['active_sessions'] }}
+            <div class="stat-card" style="padding: 14px;">
+                <div class="stat-body">
+                    <div class="stat-label">Active Sessions</div>
+                    <div class="stat-value" style="font-size: 22px;">{{ $security['metrics']['active_sessions'] }}</div>
                 </div>
             </div>
         </div>
 
         <div style="font-size: 12px;">
             <span class="muted" style="font-weight: 600;">Envelope Encryption Keys:</span>
-            <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+            <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 6px;">
                 @foreach($security['keys'] as $key)
-                    <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 11px; padding: 4px 6px; background: #fff; border: 1px solid #e5eae7; border-radius: 4px;">
+                    <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 11px; padding: 6px 10px; background: var(--clr-grey-tint); border-radius: var(--radius-sm);">
                         <span>Key {{ $key->key_id }} (v{{ $key->version }})</span>
-                        <span style="color: {{ $key->status === 'active' ? '#146b4d' : '#63736b' }}; font-weight: bold;">{{ strtoupper($key->status) }}</span>
+                        <span class="{{ $key->status === 'active' ? 'text-green' : 'muted' }}" style="font-weight: 600;">{{ strtoupper($key->status) }}</span>
                     </div>
                 @endforeach
             </div>
@@ -343,43 +422,47 @@
     </div>
 
     <!-- Compliance & eTIMS Console Overview -->
-    <div class="panel" style="max-width: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h3 style="margin: 0; font-size: 16px;">Compliance &amp; eTIMS Console</h3>
-            <a href="{{ route('platform.compliance.index') }}" style="font-size: 12px;">Console &rarr;</a>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 class="section-title">Compliance &amp; eTIMS Console</h3>
+            <a href="{{ route('platform.compliance.index') }}" style="font-size: 13px;">Console &rarr;</a>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 13px;">
-            <div style="background: #f8faf9; padding: 8px 12px; border-radius: 4px; border: 1px solid #e5eae7;">
-                <span class="muted" style="font-size: 11px;">eTIMS Checklist:</span>
-                <div style="font-size: 18px; font-weight: bold; color: #146b4d;">
-                    {{ $compliance['metrics']['cert_passed'] }} / {{ $compliance['metrics']['cert_total'] }}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <div class="stat-card" style="padding: 14px;">
+                <div class="stat-body">
+                    <div class="stat-label">eTIMS Checklist</div>
+                    <div class="stat-value text-green" style="font-size: 22px;">{{ $compliance['metrics']['cert_passed'] }} / {{ $compliance['metrics']['cert_total'] }}</div>
                 </div>
             </div>
-            <div style="background: #f8faf9; padding: 8px 12px; border-radius: 4px; border: 1px solid #e5eae7;">
-                <span class="muted" style="font-size: 11px;">Pending DPA Requests:</span>
-                <div style="font-size: 18px; font-weight: bold; color: {{ $compliance['metrics']['dpa_pending'] > 0 ? '#9a3412' : '#102b22' }};">
-                    {{ $compliance['metrics']['dpa_pending'] }}
+            <div class="stat-card" style="padding: 14px;">
+                <div class="stat-body">
+                    <div class="stat-label">Pending DPA Requests</div>
+                    <div class="stat-value {{ $compliance['metrics']['dpa_pending'] > 0 ? 'text-warning' : 'text-green' }}" style="font-size: 22px;">
+                        {{ $compliance['metrics']['dpa_pending'] }}
+                    </div>
                 </div>
             </div>
-            <div style="background: #f8faf9; padding: 8px 12px; border-radius: 4px; border: 1px solid #e5eae7;">
-                <span class="muted" style="font-size: 11px;">Overdue DPA Requests:</span>
-                <div style="font-size: 18px; font-weight: bold; color: {{ $compliance['metrics']['dpa_overdue'] > 0 ? '#dc2626' : '#146b4d' }};">
-                    {{ $compliance['metrics']['dpa_overdue'] }}
+            <div class="stat-card" style="padding: 14px;">
+                <div class="stat-body">
+                    <div class="stat-label">Overdue DPA Requests</div>
+                    <div class="stat-value {{ $compliance['metrics']['dpa_overdue'] > 0 ? 'text-red' : 'text-green' }}" style="font-size: 22px;">
+                        {{ $compliance['metrics']['dpa_overdue'] }}
+                    </div>
                 </div>
             </div>
-            <div style="background: #f8faf9; padding: 8px 12px; border-radius: 4px; border: 1px solid #e5eae7;">
-                <span class="muted" style="font-size: 11px;">Published Legal Docs:</span>
-                <div style="font-size: 18px; font-weight: bold; color: #102b22;">
-                    {{ $compliance['legal_documents']->count() }}
+            <div class="stat-card" style="padding: 14px;">
+                <div class="stat-body">
+                    <div class="stat-label">Published Legal Docs</div>
+                    <div class="stat-value" style="font-size: 22px;">{{ $compliance['legal_documents']->count() }}</div>
                 </div>
             </div>
         </div>
 
         <div style="font-size: 12px;">
             <span class="muted" style="font-weight: 600;">Governing Legal Documents:</span>
-            <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+            <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 6px;">
                 @foreach($compliance['legal_documents']->take(3) as $doc)
-                    <div style="display: flex; justify-content: space-between; padding: 4px 6px; background: #fff; border: 1px solid #e5eae7; border-radius: 4px;">
+                    <div style="display: flex; justify-content: space-between; padding: 6px 10px; background: var(--clr-grey-tint); border-radius: var(--radius-sm);">
                         <span>{{ $doc->title }} (v{{ $doc->version }})</span>
                         <span class="muted">{{ $doc->published_at?->format('Y-m-d') }}</span>
                     </div>
@@ -389,57 +472,97 @@
     </div>
 </div>
 
-<!-- Two-Person Rule Signoff & Pending Approvals (Row P) -->
-<div class="panel" style="max-width: none; margin-bottom: 24px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <h3 style="margin: 0; font-size: 16px;">Pending Two-Person Administrative Approvals</h3>
-        <a href="{{ route('platform.approvals.index') }}" style="font-size: 12px;">Approvals Console &rarr;</a>
+<!-- Two-Person Rule Signoff & Pending Approvals -->
+<div class="card" style="margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 class="section-title">Pending Two-Person Administrative Approvals</h3>
+        <a href="{{ route('platform.approvals.index') }}" style="font-size: 13px;">Approvals Console &rarr;</a>
     </div>
     @if($pendingApprovals->isNotEmpty())
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-            <thead>
-                <tr style="border-bottom: 1px solid #dce5df; text-align: left;">
-                    <th style="padding: 8px 6px;">Action Type</th>
-                    <th style="padding: 8px 6px;">Target</th>
-                    <th style="padding: 8px 6px;">Requested By</th>
-                    <th style="padding: 8px 6px;">Requested At</th>
-                    <th style="padding: 8px 6px; text-align: right;">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($pendingApprovals as $approval)
-                    <tr style="border-bottom: 1px solid #f0f4f2;">
-                        <td style="padding: 8px 6px; font-weight: 600;">{{ $approval->action_type }}</td>
-                        <td style="padding: 8px 6px;">{{ $approval->target_type }} #{{ $approval->target_id }}</td>
-                        <td style="padding: 8px 6px;">{{ $approval->requester?->name ?? 'System' }}</td>
-                        <td style="padding: 8px 6px;" class="muted">{{ $approval->created_at?->format('Y-m-d H:i') }}</td>
-                        <td style="padding: 8px 6px; text-align: right;">
-                            <a href="{{ route('platform.approvals.index') }}" style="font-weight: 600; text-decoration: underline;">Review</a>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+        <div class="table-container">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Action Type</th>
+                            <th>Target</th>
+                            <th>Requested By</th>
+                            <th>Requested At</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($pendingApprovals as $approval)
+                            <tr>
+                                <td title="{{ $approval->action_type }}"><strong>{{ $approval->action_type }}</strong></td>
+                                <td>{{ $approval->target_type }} #{{ $approval->target_id }}</td>
+                                <td>{{ $approval->requester?->name ?? 'System' }}</td>
+                                <td class="muted">{{ $approval->created_at?->format('Y-m-d H:i') }}</td>
+                                <td style="text-align: right;">
+                                    <a href="{{ route('platform.approvals.index') }}" class="btn-ghost" data-tooltip="Review Approval">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
     @else
-        <div class="muted" style="font-size: 13px; padding: 8px 0;">No pending two-person approvals requiring secondary sign-off.</div>
+        <div class="muted" style="padding: 8px 0;">No pending two-person approvals requiring secondary sign-off.</div>
     @endif
 </div>
 
 <!-- Quick Navigation / Administrative Shortcuts -->
-<div class="panel" style="max-width: none;">
-    <h3 style="margin: 0 0 12px 0; font-size: 16px;">Platform Control Plane Quick Links</h3>
-    <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px;">
-        <a href="{{ route('platform.tenants.index') }}" style="padding: 8px 12px; background: #eaf4ef; border-radius: 4px; text-decoration: none; font-weight: 600;">Tenants Console</a>
-        <a href="{{ route('platform.provisioning.index') }}" style="padding: 8px 12px; background: #eaf4ef; border-radius: 4px; text-decoration: none; font-weight: 600;">Provisioning Engine</a>
-        <a href="{{ route('platform.plans.index') }}" style="padding: 8px 12px; background: #eaf4ef; border-radius: 4px; text-decoration: none; font-weight: 600;">Plans & Subscriptions</a>
-        <a href="{{ route('platform.invoices.index') }}" style="padding: 8px 12px; background: #eaf4ef; border-radius: 4px; text-decoration: none; font-weight: 600;">Invoices & Billing</a>
-        <a href="{{ route('platform.modules.index') }}" style="padding: 8px 12px; background: #eaf4ef; border-radius: 4px; text-decoration: none; font-weight: 600;">Module Catalogue</a>
-        <a href="{{ route('platform.infrastructure.index') }}" style="padding: 8px 12px; background: #eaf4ef; border-radius: 4px; text-decoration: none; font-weight: 600;">Infrastructure Health</a>
-        <a href="{{ route('platform.security.index') }}" style="padding: 8px 12px; background: #eaf4ef; border-radius: 4px; text-decoration: none; font-weight: 600;">Security Centre</a>
-        <a href="{{ route('platform.compliance.index') }}" style="padding: 8px 12px; background: #eaf4ef; border-radius: 4px; text-decoration: none; font-weight: 600;">Compliance & eTIMS</a>
-        <a href="{{ route('platform.support.cases.index') }}" style="padding: 8px 12px; background: #eaf4ef; border-radius: 4px; text-decoration: none; font-weight: 600;">Support Cases</a>
-        <a href="{{ route('platform.analytics.index') }}" style="padding: 8px 12px; background: #eaf4ef; border-radius: 4px; text-decoration: none; font-weight: 600;">Analytics & Reports</a>
-        <a href="{{ route('platform.audit.index') }}" style="padding: 8px 12px; background: #eaf4ef; border-radius: 4px; text-decoration: none; font-weight: 600;">Audit Log</a>
+<div class="card">
+    <h3 class="section-title" style="margin-bottom: 16px;">Platform Control Plane Quick Links</h3>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="{{ route('platform.tenants.index') }}" class="btn btn-secondary">
+            <i class="bi bi-buildings"></i>
+            <span>Tenants Console</span>
+        </a>
+        <a href="{{ route('platform.provisioning.index') }}" class="btn btn-secondary">
+            <i class="bi bi-gear-wide-connected"></i>
+            <span>Provisioning Engine</span>
+        </a>
+        <a href="{{ route('platform.plans.index') }}" class="btn btn-secondary">
+            <i class="bi bi-credit-card"></i>
+            <span>Plans &amp; Subscriptions</span>
+        </a>
+        <a href="{{ route('platform.invoices.index') }}" class="btn btn-secondary">
+            <i class="bi bi-receipt"></i>
+            <span>Invoices &amp; Billing</span>
+        </a>
+        <a href="{{ route('platform.modules.index') }}" class="btn btn-secondary">
+            <i class="bi bi-box-seam"></i>
+            <span>Module Catalogue</span>
+        </a>
+        <a href="{{ route('platform.infrastructure.index') }}" class="btn btn-secondary">
+            <i class="bi bi-server"></i>
+            <span>Infrastructure Health</span>
+        </a>
+        <a href="{{ route('platform.security.index') }}" class="btn btn-secondary">
+            <i class="bi bi-shield-lock"></i>
+            <span>Security Centre</span>
+        </a>
+        <a href="{{ route('platform.compliance.index') }}" class="btn btn-secondary">
+            <i class="bi bi-patch-check"></i>
+            <span>Compliance &amp; eTIMS</span>
+        </a>
+        <a href="{{ route('platform.support.cases.index') }}" class="btn btn-secondary">
+            <i class="bi bi-headset"></i>
+            <span>Support Cases</span>
+        </a>
+        <a href="{{ route('platform.analytics.index') }}" class="btn btn-secondary">
+            <i class="bi bi-bar-chart-line"></i>
+            <span>Analytics &amp; Reports</span>
+        </a>
+        <a href="{{ route('platform.audit.index') }}" class="btn btn-secondary">
+            <i class="bi bi-journal-text"></i>
+            <span>Audit Log</span>
+        </a>
     </div>
 </div>
+
 @endsection

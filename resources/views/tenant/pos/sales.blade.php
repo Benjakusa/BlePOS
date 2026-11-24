@@ -3,23 +3,22 @@
 @section('title', 'Sales History')
 
 @section('content')
-<header>
-    <div>
-        <h1>Sales History</h1>
-        <div class="muted">All sales transactions, receipts, and order statuses</div>
-    </div>
-    <div>
-        <a href="{{ route('tenant.pos.checkout') }}" class="btn">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
-            <span>New POS Sale</span>
-        </a>
-    </div>
-</header>
-
-<div class="panel" style="margin-bottom: 20px;">
-    <form action="{{ route('tenant.pos.sales') }}" method="GET" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
         <div>
-            <label for="status" style="font-size: 12px;">Status</label>
+            <h2 class="section-title" style="font-size: 18px;">Sales History</h2>
+            <p class="muted" style="margin-top: 2px;">All sales transactions, receipts, and order statuses</p>
+        </div>
+        <div>
+            <a href="{{ route('tenant.pos.checkout') }}" class="btn btn-primary" aria-label="New POS Sale">
+                <i class="bi bi-cart-plus"></i>
+                <span>New POS Sale</span>
+            </a>
+        </div>
+    </div>
+
+    <form action="{{ route('tenant.pos.sales') }}" method="GET" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 24px;">
+        <div>
             <select id="status" name="status">
                 <option value="">All Statuses</option>
                 <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
@@ -28,80 +27,105 @@
             </select>
         </div>
         <div>
-            <label for="date_from" style="font-size: 12px;">From Date</label>
-            <input type="date" id="date_from" name="date_from" value="{{ request('date_from') }}">
+            <input type="date" id="date_from" name="date_from" value="{{ request('date_from') }}" title="From Date">
         </div>
         <div>
-            <label for="date_to" style="font-size: 12px;">To Date</label>
-            <input type="date" id="date_to" name="date_to" value="{{ request('date_to') }}">
+            <input type="date" id="date_to" name="date_to" value="{{ request('date_to') }}" title="To Date">
         </div>
-        <div>
-            <button type="submit" class="btn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                <span>Filter</span>
-            </button>
-            @if(request()->hasAny(['status', 'date_from', 'date_to']))
-                <a href="{{ route('tenant.pos.sales') }}" class="btn btn-secondary" style="margin-left: 4px;">Reset</a>
-            @endif
-        </div>
+        <button type="submit" class="btn btn-secondary">
+            <i class="bi bi-funnel"></i>
+            <span>Filter</span>
+        </button>
+        @if(request()->hasAny(['status', 'date_from', 'date_to']))
+            <a href="{{ route('tenant.pos.sales') }}" class="btn btn-ghost" aria-label="Reset filters">
+                <i class="bi bi-x-circle"></i>
+                <span>Reset</span>
+            </a>
+        @endif
     </form>
-</div>
 
-<div class="table-container">
-    <table>
-        <thead>
-            <tr>
-                <th>Sale #</th>
-                <th>Date / Time</th>
-                <th>Register</th>
-                <th>Cashier</th>
-                <th style="text-align: right;">Grand Total</th>
-                <th>Status</th>
-                <th style="text-align: right;">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($sales as $sale)
-                <tr>
-                    <td><strong>{{ $sale->sale_number }}</strong></td>
-                    <td>{{ $sale->created_at->format('Y-m-d H:i') }}</td>
-                    <td>{{ $sale->register?->name ?? 'Default' }}</td>
-                    <td>{{ $sale->user?->name ?? 'Staff' }}</td>
-                    <td style="text-align: right; font-weight: 700; color: #166534;">
-                        KES {{ number_format((float) $sale->grand_total, 2) }}
-                    </td>
-                    <td>
-                        @if($sale->status === 'completed')
-                            <span class="badge badge-success">Completed</span>
-                        @elseif($sale->status === 'voided')
-                            <span class="badge badge-danger">Voided</span>
-                        @else
-                            <span class="badge badge-warning">{{ ucfirst($sale->status) }}</span>
-                        @endif
-                    </td>
-                    <td style="text-align: right;">
-                        <div class="actions" style="justify-content: flex-end;">
-                            <a href="{{ route('tenant.pos.receipt', $sale) }}" class="btn btn-secondary btn-sm" target="_blank">Receipt</a>
-                            @if($sale->status === 'completed')
-                                <form action="{{ route('tenant.pos.void', $sale) }}" method="POST" onsubmit="return prompt('Enter void reason:') ? true : false">
-                                    @csrf
-                                    <input type="hidden" name="void_reason" value="Void requested by supervisor">
-                                    <button type="submit" class="btn btn-danger btn-sm">Void</button>
-                                </form>
-                            @endif
-                        </div>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="7" style="text-align: center; color: #64748b; padding: 24px;">No sales recorded yet.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
-</div>
+    <div class="table-container">
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sale #</th>
+                        <th>Date / Time</th>
+                        <th>Register</th>
+                        <th>Cashier</th>
+                        <th style="text-align: right;">Grand Total</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($sales as $sale)
+                        <tr>
+                            <td title="{{ $sale->sale_number }}">
+                                <strong>{{ $sale->sale_number }}</strong>
+                            </td>
+                            <td title="{{ $sale->created_at->format('Y-m-d H:i') }}" class="muted">
+                                {{ $sale->created_at->format('Y-m-d H:i') }}
+                            </td>
+                            <td title="{{ $sale->register?->name ?? 'Default' }}">
+                                {{ $sale->register?->name ?? 'Default' }}
+                            </td>
+                            <td title="{{ $sale->user?->name ?? 'Staff' }}">
+                                {{ $sale->user?->name ?? 'Staff' }}
+                            </td>
+                            <td style="text-align: right; font-weight: 600;" class="{{ $sale->status === 'voided' ? 'text-red' : 'text-green' }}" title="KES {{ number_format((float) $sale->grand_total, 2) }}">
+                                KES {{ number_format((float) $sale->grand_total, 2) }}
+                            </td>
+                            <td>
+                                @if($sale->status === 'completed')
+                                    <span class="badge badge-success">
+                                        <i class="bi bi-check-circle"></i>
+                                        Completed
+                                    </span>
+                                @elseif($sale->status === 'voided')
+                                    <span class="badge badge-danger">
+                                        <i class="bi bi-x-circle"></i>
+                                        Voided
+                                    </span>
+                                @else
+                                    <span class="badge badge-warning">
+                                        <i class="bi bi-clock"></i>
+                                        {{ ucfirst($sale->status) }}
+                                    </span>
+                                @endif
+                            </td>
+                            <td style="text-align: right;">
+                                <div class="table-actions" style="justify-content: flex-end;">
+                                    <a href="{{ route('tenant.pos.receipt', $sale) }}" class="btn-ghost" target="_blank" data-tooltip="Print Receipt" aria-label="Print Receipt">
+                                        <i class="bi bi-receipt"></i>
+                                    </a>
+                                    @if($sale->status === 'completed')
+                                        <form action="{{ route('tenant.pos.void', $sale) }}" method="POST" onsubmit="return prompt('Enter void reason:') ? true : false" style="margin: 0;">
+                                            @csrf
+                                            <input type="hidden" name="void_reason" value="Void requested by supervisor">
+                                            <button type="submit" class="btn-ghost danger" data-tooltip="Void Sale" aria-label="Void Sale">
+                                                <i class="bi bi-slash-circle"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 32px;" class="muted">
+                                <i class="bi bi-receipt" style="font-size: 32px; display: block; margin-bottom: 8px;"></i>
+                                No sales recorded yet.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-<div style="margin-top: 16px;">
-    {{ $sales->links() }}
+    <div style="margin-top: 20px;">
+        {{ $sales->links() }}
+    </div>
 </div>
 @endsection
