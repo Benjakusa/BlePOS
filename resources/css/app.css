@@ -189,10 +189,21 @@ a:hover {
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 20px 20px 16px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 16px 18px;
   border-bottom: 1px solid var(--clr-header-tint);
+  position: relative;
 }
+
+.sidebar-brand-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .sidebar-brand-logo {
   width: 36px;
   height: 36px;
@@ -205,18 +216,109 @@ a:hover {
   font-size: 18px;
   flex-shrink: 0;
 }
+
+.sidebar-brand-text {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .sidebar-brand-text strong {
   display: block;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--clr-text);
   letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
 .sidebar-brand-text span {
   display: block;
   font-size: 11px;
   color: var(--clr-muted);
   margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-hamburger-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--clr-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.sidebar-hamburger-btn:hover {
+  background-color: var(--clr-grey-tint);
+  color: var(--clr-text);
+}
+
+.sidebar.collapsed {
+  width: 76px;
+}
+
+.sidebar.collapsed .sidebar-brand {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 14px 6px;
+  gap: 10px;
+}
+
+.sidebar.collapsed .sidebar-brand-content {
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-brand-text,
+.sidebar.collapsed .nav-label,
+.sidebar.collapsed .nav-section,
+.sidebar.collapsed .user-name,
+.sidebar.collapsed .user-email {
+  display: none !important;
+}
+
+.sidebar.collapsed .nav-link {
+  justify-content: center;
+  padding: 0;
+}
+
+.sidebar.collapsed .sidebar-footer {
+  padding: 12px 6px;
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-user {
+  justify-content: center;
+}
+
+/* Collapsed tooltips on hover */
+.sidebar.collapsed .nav-link[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--clr-text);
+  color: #FFFFFF;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 999;
+  box-shadow: var(--shadow-md);
 }
 
 .sidebar-nav {
@@ -483,17 +585,59 @@ a:hover {
 .stat-trend.up   { color: var(--clr-green); }
 .stat-trend.down { color: var(--clr-red); }
 
-/* ─── 5. Tables (Single line, shadow-only) ───────────────────── */
-.table-container, .table-wrap {
+/* ─── 5. Tables (Single line, shadow-only, horizontal slider) ── */
+.table-container, .table-wrap, .table-scroll, .table-scroll-slider, .overflow-x-auto {
   background-color: var(--clr-surface);
   border-radius: var(--radius-card);
   border: none !important;
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
   transition: box-shadow var(--dur-base) var(--ease);
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  /* Scrollbar / slider styling for modern browsers */
+  scrollbar-width: thin;
+  scrollbar-color: var(--clr-border) var(--clr-grey-tint);
 }
-.table-container:hover, .table-wrap:hover {
+.table-container:hover, .table-wrap:hover, .table-scroll:hover, .table-scroll-slider:hover {
   box-shadow: var(--shadow-md);
+}
+
+/* Webkit scrollbar (Chrome, Safari, Edge) for table slider */
+.table-container::-webkit-scrollbar,
+.table-wrap::-webkit-scrollbar,
+.table-scroll::-webkit-scrollbar,
+.table-scroll-slider::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar {
+  height: 8px;
+}
+.table-container::-webkit-scrollbar-track,
+.table-wrap::-webkit-scrollbar-track,
+.table-scroll::-webkit-scrollbar-track,
+.table-scroll-slider::-webkit-scrollbar-track,
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: var(--clr-grey-tint);
+  border-radius: 4px;
+}
+.table-container::-webkit-scrollbar-thumb,
+.table-wrap::-webkit-scrollbar-thumb,
+.table-scroll::-webkit-scrollbar-thumb,
+.table-scroll-slider::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: var(--clr-border);
+  border-radius: 4px;
+  border: 1px solid var(--clr-grey-tint);
+  transition: background var(--dur-fast) var(--ease);
+}
+.table-container::-webkit-scrollbar-thumb:hover,
+.table-wrap::-webkit-scrollbar-thumb:hover,
+.table-scroll::-webkit-scrollbar-thumb:hover,
+.table-scroll-slider::-webkit-scrollbar-thumb:hover,
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--clr-muted);
 }
 
 table {

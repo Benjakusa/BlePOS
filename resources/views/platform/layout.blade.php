@@ -21,13 +21,18 @@
 
         {{-- Brand --}}
         <div class="sidebar-brand">
-            <div class="sidebar-brand-logo" aria-hidden="true">
-                <i class="bi bi-broadcast-pin"></i>
+            <div class="sidebar-brand-content">
+                <div class="sidebar-brand-logo" aria-hidden="true">
+                    <i class="bi bi-broadcast-pin"></i>
+                </div>
+                <div class="sidebar-brand-text">
+                    <strong>BlePOS</strong>
+                    <span>Platform Console</span>
+                </div>
             </div>
-            <div class="sidebar-brand-text">
-                <strong>BlePOS</strong>
-                <span>Platform Console</span>
-            </div>
+            <button type="button" class="sidebar-hamburger-btn" id="sidebar-hamburger" aria-label="Toggle sidebar" title="Toggle sidebar">
+                <i class="bi bi-list"></i>
+            </button>
         </div>
 
         {{-- Nav --}}
@@ -300,19 +305,52 @@
 (function () {
     'use strict';
     // ── Sidebar toggle ─────────────────────────────────────────
-    const sidebar = document.getElementById('sidebar');
-    const toggle  = document.getElementById('sidebar-toggle');
-    if (sidebar && toggle) {
-        const key = 'ble_sidebar_collapsed';
-        const collapsed = localStorage.getItem(key) === '1';
-        if (collapsed) { sidebar.classList.add('collapsed'); toggle.setAttribute('aria-expanded','false'); }
+    const sidebar   = document.getElementById('sidebar');
+    const toggle    = document.getElementById('sidebar-toggle');
+    const hamburger = document.getElementById('sidebar-hamburger');
+    const key       = 'ble_sidebar_collapsed';
 
-        toggle.addEventListener('click', function () {
-            const isCollapsed = sidebar.classList.toggle('collapsed');
-            toggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
-            localStorage.setItem(key, isCollapsed ? '1' : '0');
-        });
+    function setSidebarCollapsed(collapsed) {
+        if (!sidebar) return;
+        if (collapsed) {
+            sidebar.classList.add('collapsed');
+            if (toggle) toggle.setAttribute('aria-expanded', 'false');
+            if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
+        } else {
+            sidebar.classList.remove('collapsed');
+            if (toggle) toggle.setAttribute('aria-expanded', 'true');
+            if (hamburger) hamburger.setAttribute('aria-expanded', 'true');
+        }
+        localStorage.setItem(key, collapsed ? '1' : '0');
     }
+
+    if (sidebar) {
+        if (localStorage.getItem(key) === '1') {
+            setSidebarCollapsed(true);
+        }
+        function toggleSidebar() {
+            setSidebarCollapsed(!sidebar.classList.contains('collapsed'));
+        }
+        if (toggle) toggle.addEventListener('click', toggleSidebar);
+        if (hamburger) hamburger.addEventListener('click', toggleSidebar);
+    }
+
+    // ── Table horizontal scroll / slider auto-wrapper ──────────
+    document.querySelectorAll('table').forEach(function (table) {
+        const parent = table.parentElement;
+        if (!parent.classList.contains('table-container') &&
+            !parent.classList.contains('table-wrap') &&
+            !parent.classList.contains('table-scroll') &&
+            !parent.classList.contains('table-scroll-slider') &&
+            !parent.classList.contains('overflow-x-auto')) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'table-container table-scroll-slider';
+            parent.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+        } else {
+            parent.classList.add('table-scroll-slider');
+        }
+    });
 
     // ── Auto-dismiss flash alerts after 6 s ───────────────────
     document.querySelectorAll('.alert').forEach(function (el) {
