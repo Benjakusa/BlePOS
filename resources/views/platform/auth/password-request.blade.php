@@ -1,41 +1,35 @@
-@extends('platform.layout')
+@extends('layouts.auth')
 
-@section('title', 'Reset Platform Password')
+@section('title', 'Reset Password')
 
 @section('content')
-<div style="max-width: 440px; margin: 40px auto;">
-    <div class="card" style="padding: 32px;">
-        <div style="text-align: center; margin-bottom: 24px;">
-            <div class="stat-icon blue" style="margin: 0 auto 12px; width: 48px; height: 48px; font-size: 22px;">
-                <i class="bi bi-envelope"></i>
+<div class="auth-header">
+    <h1>Reset Password</h1>
+    <p>Enter your email address to receive a recovery password link.</p>
+</div>
+
+<form method="post" action="{{ route('platform.password.email') }}">
+    @csrf
+
+    <div class="field has-icon {{ $errors->has('email') ? 'has-error' : '' }}">
+        <i class="bi bi-envelope field-prefix-icon" aria-hidden="true"></i>
+        <input name="email" id="email" type="email" autocomplete="email" value="{{ old('email') }}" placeholder="Enter your email" required autofocus>
+        <label for="email">Email address</label>
+        @error('email')
+            <div class="field-error">
+                <i class="bi bi-exclamation-circle"></i>
+                <span>{{ $message }}</span>
             </div>
-            <h2 class="section-title" style="font-size: 20px;">Reset Password</h2>
-            <p class="muted" style="margin-top: 6px; font-size: 13px;">Enter your platform staff email address. If the account exists, we will send a password reset link.</p>
-        </div>
-
-        <form method="post" action="{{ route('platform.password.email') }}">
-            @csrf
-
-            <div class="field {{ $errors->has('email') ? 'has-error' : '' }}">
-                <input name="email" id="email" type="email" autocomplete="email" value="{{ old('email') }}" placeholder=" " required autofocus>
-                <label for="email">Email address</label>
-                @error('email')
-                    <div class="field-error">
-                        <i class="bi bi-exclamation-circle"></i>
-                        <span>{{ $message }}</span>
-                    </div>
-                @enderror
-            </div>
-
-            <button type="submit" class="btn btn-primary w-full" style="width: 100%; padding: 12px; margin-top: 8px;">
-                <i class="bi bi-send"></i>
-                <span>Send Reset Link</span>
-            </button>
-        </form>
-
-        <div style="text-align: center; margin-top: 20px;">
-            <a href="{{ route('platform.login') }}" style="font-size: 13px;">&larr; Back to sign in</a>
-        </div>
+        @enderror
     </div>
+
+    <button type="submit" class="btn auth-submit-btn">
+        <i class="bi bi-send"></i>
+        <span>Send Reset Link</span>
+    </button>
+</form>
+
+<div style="text-align: center; margin-top: 24px;">
+    <a href="{{ route('platform.login') }}" class="auth-recovery-link">&larr; Back to Sign In</a>
 </div>
 @endsection

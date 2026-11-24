@@ -1,52 +1,62 @@
-@extends('platform.layout')
+@extends('layouts.auth')
 
-@section('title', 'Platform Staff Sign In')
+@section('title', 'Welcome')
 
 @section('content')
-<div style="max-width: 440px; margin: 40px auto;">
-    <div class="card" style="padding: 32px;">
-        <div style="text-align: center; margin-bottom: 24px;">
-            <div class="stat-icon green" style="margin: 0 auto 12px; width: 48px; height: 48px; font-size: 22px;">
-                <i class="bi bi-shield-lock"></i>
+<div class="auth-header">
+    <h1>Welcome</h1>
+    <p>Welcome back! Please enter your details.</p>
+</div>
+
+<form method="post" action="{{ route('platform.login.store') }}">
+    @csrf
+
+    <div class="field has-icon {{ $errors->has('email') ? 'has-error' : '' }}">
+        <i class="bi bi-envelope field-prefix-icon" aria-hidden="true"></i>
+        <input name="email" id="email" type="email" autocomplete="username" value="{{ old('email') }}" placeholder="Enter your email" required autofocus>
+        <label for="email">Email</label>
+        @error('email')
+            <div class="field-error">
+                <i class="bi bi-exclamation-circle"></i>
+                <span>{{ $message }}</span>
             </div>
-            <h2 class="section-title" style="font-size: 20px;">Platform Staff Sign In</h2>
-            <p class="muted" style="margin-top: 6px; font-size: 13px;">Sign in with your platform staff account. Tenant accounts cannot access this console.</p>
-        </div>
-
-        <form method="post" action="{{ route('platform.login.store') }}">
-            @csrf
-
-            <div class="field {{ $errors->has('email') ? 'has-error' : '' }}">
-                <input name="email" id="email" type="email" autocomplete="username" value="{{ old('email') }}" placeholder=" " required autofocus>
-                <label for="email">Email address</label>
-                @error('email')
-                    <div class="field-error">
-                        <i class="bi bi-exclamation-circle"></i>
-                        <span>{{ $message }}</span>
-                    </div>
-                @enderror
-            </div>
-
-            <div class="field {{ $errors->has('password') ? 'has-error' : '' }}">
-                <input name="password" id="password" type="password" autocomplete="current-password" placeholder=" " required>
-                <label for="password">Password</label>
-                @error('password')
-                    <div class="field-error">
-                        <i class="bi bi-exclamation-circle"></i>
-                        <span>{{ $message }}</span>
-                    </div>
-                @enderror
-            </div>
-
-            <button type="submit" class="btn btn-primary w-full" style="width: 100%; padding: 12px; margin-top: 8px;">
-                <i class="bi bi-box-arrow-in-right"></i>
-                <span>Continue to MFA</span>
-            </button>
-        </form>
-
-        <div style="text-align: center; margin-top: 20px;">
-            <a href="{{ route('platform.password.request') }}" style="font-size: 13px;">Forgot your password?</a>
-        </div>
+        @enderror
     </div>
+
+    <div class="field has-icon {{ $errors->has('password') ? 'has-error' : '' }}" style="margin-bottom: 12px;">
+        <i class="bi bi-lock field-prefix-icon" aria-hidden="true"></i>
+        <input name="password" id="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+        <label for="password">Password</label>
+        @error('password')
+            <div class="field-error">
+                <i class="bi bi-exclamation-circle"></i>
+                <span>{{ $message }}</span>
+            </div>
+        @enderror
+    </div>
+
+    <div class="auth-recovery-wrap">
+        <a href="{{ route('platform.password.request') }}" class="auth-recovery-link">Recovery Password</a>
+    </div>
+
+    <button type="submit" class="btn auth-submit-btn">
+        <span>Sign In</span>
+    </button>
+</form>
+
+<div class="auth-divider">
+    <span>Or continue with</span>
+</div>
+
+<div class="auth-social-row">
+    <a href="#" class="auth-social-btn google" aria-label="Sign in with Google" title="Sign in with Google" onclick="event.preventDefault();">
+        <i class="bi bi-google"></i>
+    </a>
+    <a href="#" class="auth-social-btn apple" aria-label="Sign in with Apple" title="Sign in with Apple" onclick="event.preventDefault();">
+        <i class="bi bi-apple"></i>
+    </a>
+    <a href="#" class="auth-social-btn facebook" aria-label="Sign in with Facebook" title="Sign in with Facebook" onclick="event.preventDefault();">
+        <i class="bi bi-facebook"></i>
+    </a>
 </div>
 @endsection

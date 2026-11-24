@@ -14,6 +14,7 @@
 <div class="app-shell" id="app">
 
     {{-- ── Tenant Sidebar ──────────────────────────────────────── --}}
+    @auth
     <aside class="sidebar" id="sidebar" aria-label="Tenant navigation">
 
         {{-- Brand --}}
@@ -188,11 +189,13 @@
         </div>
 
     </aside>
+    @endauth
 
     {{-- ── Main Area ───────────────────────────────────────────── --}}
     <div class="main-content">
 
         {{-- Top Bar --}}
+        @auth
         <div class="top-bar" role="banner">
             <button class="top-bar-toggle" id="sidebar-toggle"
                     aria-label="Toggle sidebar" aria-expanded="true" aria-controls="sidebar">
@@ -225,6 +228,7 @@
                 @endif
             </div>
         </div>
+        @endauth
 
         {{-- Page body --}}
         <main class="page-body" id="main-content" tabindex="-1">

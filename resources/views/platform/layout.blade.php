@@ -17,6 +17,7 @@
 <div class="app-shell" id="app">
 
     {{-- ── Sidebar ─────────────────────────────────────────────── --}}
+    @auth('platform')
     <aside class="sidebar" id="sidebar" aria-label="Platform navigation">
 
         {{-- Brand --}}
@@ -220,6 +221,7 @@
         @endauth
 
     </aside>
+    @endauth
 
     {{-- ── Main Area ───────────────────────────────────────────── --}}
     <div class="main-content">
