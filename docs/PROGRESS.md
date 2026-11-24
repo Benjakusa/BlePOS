@@ -242,6 +242,23 @@ This tracker records implementation evidence for [Annex A](ANNEX_A.md). A featur
 - ✅ Focused verification passed: `php artisan test --compact tests/Feature/PlatformBillingAndDunningTest.php tests/Feature/PlatformRouteAuthorizationTest.php` — 13 tests, 511 assertions; `vendor/bin/pint --format agent` passed (L-0119).
 - ✅ Full regression verification passed: `php artisan test --compact` — 136 tests, 1172 assertions (L-0119).
 
+### Industry Templates Full Management UI (2026-11-24)
+
+- ✅ **Root cause found and fixed**: `ModuleCatalogueSeeder` was never registered in `DatabaseSeeder` — dev DB had 0 modules and 0 templates despite existing seeder code. Now registered idempotently.
+- ✅ Added `is_active` boolean column (migration `2026_11_24_142729`) to `industry_templates`; `IndustryTemplate` model updated with cast and `tenants()` HasMany relationship.
+- ✅ Fully rewrote `PlatformIndustryTemplateController` with 10 actions: `index`, `create`, `store`, `show`, `edit`, `update`, `destroy`, `toggleActive`, `preview`, `applyToTenant`, `apply`.
+- ✅ Template list: search box, module chips (max 5 + "N more"), status badge, tenant count, view/edit actions, empty-state CTA.
+- ✅ Create/Edit form: grouped module picker by category, core modules locked, live JS dependency checker with auto-add, slug auto-generation from name, server-side `resolveAllDependencies()` enforcement.
+- ✅ Show page: topological dependency-order module cards, tenant list, apply-to-tenant picker with JS preview (already-enabled vs will-enable diff).
+- ✅ Delete blocked if any tenant provisioned from template; deactivate (`toggleActive`) available as alternative.
+- ✅ `ModuleService` extended with `resolveDependencyOrder()` (topological sort), `getMissingDependencies()`, `resolveAllDependencies()`.
+- ✅ `ProvisioningEngine` steps 19/20 updated to look up template from DB and call `ModuleService::applyIndustryTemplate()` (no more dummy data).
+- ✅ Tenant creation wizard reads industry options from `industry_templates` table (removed hardcoded options).
+- ✅ Full security: `platform.modules.view` on reads, `platform.modules.manage` + `platform.step-up` on mutations, `PlatformPermissionAuthorizer::ensure()` in controller.
+- ✅ Every create/update/delete/apply writes `PlatformAuditRecorder` entry inside same DB transaction.
+- ✅ 9 feature tests in `PlatformIndustryTemplateManagementTest` (68 assertions) covering all scenarios: seeder idempotency, index/empty-state, create/store with dependency enforcement, edit/update with core protection, delete-blocked/deactivate, apply blueprint, preview JSON, permission matrix + step-up.
+- ✅ Full regression: `php artisan test --compact` → **201 tests, 2,194 assertions, 0 failures**; `vendor/bin/pint --test` → passed.
+
 ### Module Catalogue, Entitlements, and Industry Templates (2026-11-23)
 
 - ✅ Versioned module catalogue implemented: 25 modules across Core, Commercial, Logistics, Finance & Industry categories; `ModuleCatalogueSeeder` seeds all modules and 7 industry templates (retail, pharmacy, restaurant, hotel, wholesale, salon, fuel-station) using `updateOrCreate`.

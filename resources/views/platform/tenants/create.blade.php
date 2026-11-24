@@ -41,15 +41,13 @@
             <label>
                 Industry Blueprint
                 <select name="industry" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 11px 12px; font: inherit;">
-                    <option value="general_retail">General Retail</option>
-                    <option value="supermarket">Supermarket</option>
-                    <option value="pharmacy">Pharmacy & Healthcare</option>
-                    <option value="restaurant">Restaurant & F&B</option>
-                    <option value="hospitality">Hotel & Hospitality</option>
-                    <option value="wholesale">Wholesale & Distribution</option>
-                    <option value="fuel_station">Fuel Station</option>
-                    <option value="salon">Salon & Spa</option>
+                    @forelse($industries as $ind)
+                        <option value="{{ $ind->slug }}" @selected(old('industry') === $ind->slug)>{{ $ind->name }}</option>
+                    @empty
+                        <option value="retail">Retail Supermarket & General Store</option>
+                    @endforelse
                 </select>
+                @error('industry') <span class="error">{{ $message }}</span> @enderror
             </label>
             <label>
                 Subscription Plan

@@ -134,6 +134,106 @@ class ModuleService
     }
 
     /**
+     * Resolve module slugs in topological dependency order (prerequisites first).
+     *
+     * @param  array<int, string>  $moduleSlugs
+     * @return array<int, string>
+     */
+    public function resolveDependencyOrder(array $moduleSlugs): array
+    {
+        $allModules = Module::query()->whereIn('slug', $moduleSlugs)->get()->keyBy('slug');
+        $remaining = collect($moduleSlugs)->unique()->values();
+        $ordered = [];
+        $attempts = 0;
+
+        while ($remaining->isNotEmpty() && $attempts < 20) {
+            $attempts++;
+            foreach ($remaining as $key => $slug) {
+                $mod = $allModules->get($slug);
+                if (! $mod) {
+                    $remaining->forget($key);
+
+                    continue;
+                }
+
+                $deps = collect($mod->dependencies ?? []);
+                $depsSatisfied = $deps->every(fn ($dep) => in_array($dep, $ordered, true) || ! in_array($dep, $moduleSlugs, true));
+
+                if ($depsSatisfied) {
+                    $ordered[] = $slug;
+                    $remaining->forget($key);
+                }
+            }
+        }
+
+        foreach ($remaining as $slug) {
+            if (! in_array($slug, $ordered, true)) {
+                $ordered[] = $slug;
+            }
+        }
+
+        return $ordered;
+    }
+
+    /**
+     * Find any missing prerequisite dependencies for the given set of module slugs.
+     *
+     * @param  array<int, string>  $moduleSlugs
+     * @return array<string, array<int, string>>
+     */
+    public function getMissingDependencies(array $moduleSlugs): array
+    {
+        $allModules = Module::query()->whereIn('slug', $moduleSlugs)->get()->keyBy('slug');
+        $missing = [];
+
+        foreach ($moduleSlugs as $slug) {
+            $mod = $allModules->get($slug);
+            if ($mod) {
+                foreach ($mod->dependencies ?? [] as $dep) {
+                    if (! in_array($dep, $moduleSlugs, true)) {
+                        $missing[$slug][] = $dep;
+                    }
+                }
+            }
+        }
+
+        return $missing;
+    }
+
+    /**
+     * Automatically resolve all missing dependencies and ensure core modules are included.
+     *
+     * @param  array<int, string>  $moduleSlugs
+     * @return array<int, string>
+     */
+    public function resolveAllDependencies(array $moduleSlugs): array
+    {
+        $resolved = collect($moduleSlugs);
+        $coreSlugs = Module::query()->where('is_core', true)->pluck('slug');
+        $resolved = $resolved->merge($coreSlugs)->unique();
+
+        $addedNew = true;
+        $iteration = 0;
+
+        while ($addedNew && $iteration < 15) {
+            $iteration++;
+            $addedNew = false;
+            $currentModules = Module::query()->whereIn('slug', $resolved)->get();
+
+            foreach ($currentModules as $mod) {
+                foreach ($mod->dependencies ?? [] as $dep) {
+                    if (! $resolved->contains($dep)) {
+                        $resolved->push($dep);
+                        $addedNew = true;
+                    }
+                }
+            }
+        }
+
+        return $this->resolveDependencyOrder($resolved->unique()->values()->all());
+    }
+
+    /**
      * Apply an industry template to a tenant, enabling all default modules in safe topological order.
      *
      * @return array<int, string>

@@ -1522,3 +1522,50 @@
 - Status label(s) after this activity: VERIFIED (Phase 5 Financial Ledgers & Double-Entry Accounting).
 - Follow-ups / next action: Update `docs/PROGRESS.md`, `README.md`, `docs/ROADMAP.md`.
 ---
+## L-0003 | 2026-11-24 15:00 UTC | 2026-11-24 18:00 EAT | agent: antigravity-session-2026-11-24 | tier/phase: Platform Admin / Industry Templates
+- Activity type: FEATURE IMPLEMENTATION — Industry Templates full CRUD management, dependency resolver, audit logging, and feature tests
+- Summary of changes:
+  1. Root cause: `ModuleCatalogueSeeder` never registered in `DatabaseSeeder` — dev DB had 0 modules, 0 templates.
+  2. Added `is_active boolean default true` column to `industry_templates` via migration `2026_11_24_142729_add_is_active_to_industry_templates_table.php`.
+  3. Updated `DatabaseSeeder` to call `ModuleCatalogueSeeder` — idempotent via `updateOrCreate`.
+  4. Confirmed dev DB seeded: 25 modules, 7 industry templates (retail, pharmacy, restaurant, hotel, wholesale, salon, fuel-station).
+  5. Rewrote `PlatformIndustryTemplateController` with 10 actions: `index`, `create`, `store`, `show`, `edit`, `update`, `destroy`, `toggleActive`, `preview`, `applyToTenant` + existing `apply`.
+  6. Added 3 Form Request classes: `StoreIndustryTemplateRequest`, `UpdateIndustryTemplateRequest`, `ApplyIndustryTemplateRequest`.
+  7. Added 7 new platform routes with correct `platform.modules.view` / `platform.modules.manage` permissions and `platform.step-up` guards.
+  8. Built 4 Blade views: `index` (search box, chips, empty-state, status badges), `create`/`edit` (live dependency JS checker, grouped module picker, core lock, slug auto-gen), `show` (topological order cards, tenant list, apply-to-tenant picker with JS preview).
+  9. Added 3 methods to `ModuleService`: `resolveDependencyOrder()` (topological sort), `getMissingDependencies()`, `resolveAllDependencies()`.
+  10. Fixed `ProvisioningEngine` steps 19/20 to look up template from DB and call `ModuleService::applyIndustryTemplate()`.
+  11. Updated tenant creation wizard to read industry options from `industry_templates` table (removed hardcoded options).
+  12. Added apply-blueprint panel to platform tenant show page.
+  13. Bug fix in test: `withSession()` merges into the shared app session, not replaces. Added `flushSession()` before each `platformRequest()` call to prevent `platform_step_up_at` leaking between requests.
+  14. Fixed pint style issues (fully_qualified_strict_types, ordered_imports) in test file.
+- Files created / modified:
+  - `database/migrations/2026_11_24_142729_add_is_active_to_industry_templates_table.php` — new migration
+  - `database/seeders/DatabaseSeeder.php` — added `ModuleCatalogueSeeder::class`
+  - `database/seeders/ModuleCatalogueSeeder.php` — added `is_active = true` on templates
+  - `app/Models/IndustryTemplate.php` — added `is_active` cast, `tenants()` HasMany relationship
+  - `app/Http/Controllers/Platform/PlatformIndustryTemplateController.php` — fully rewritten (10 actions)
+  - `app/Http/Requests/Platform/StoreIndustryTemplateRequest.php` — new
+  - `app/Http/Requests/Platform/UpdateIndustryTemplateRequest.php` — new
+  - `app/Http/Requests/Platform/ApplyIndustryTemplateRequest.php` — new
+  - `app/Services/ModuleService.php` — added 3 dependency-resolution methods
+  - `app/Http/Controllers/Platform/PlatformTenantController.php` — `show()` now passes `$industryTemplates`
+  - `app/Services/ProvisioningEngine.php` — steps 19/20 use DB template + `ModuleService`
+  - `routes/web.php` — added 7 new template routes + updated `tenants.templates.apply`
+  - `resources/views/platform/templates/index.blade.php` — new
+  - `resources/views/platform/templates/create.blade.php` — new
+  - `resources/views/platform/templates/edit.blade.php` — new
+  - `resources/views/platform/templates/show.blade.php` — new
+  - `resources/views/platform/tenants/create.blade.php` — read industries from DB
+  - `resources/views/platform/tenants/show.blade.php` — added blueprint apply panel
+  - `tests/Feature/PlatformIndustryTemplateManagementTest.php` — new (9 tests, 68 assertions); bug fix for `withSession()` session leak
+- Commands run:
+  - `php artisan migrate` — applied `add_is_active_to_industry_templates_table`
+  - `php artisan db:seed` — 25 modules, 7 templates confirmed (idempotent)
+  - `php artisan test --filter PlatformIndustryTemplateManagementTest` → 9 tests, 68 assertions, exit 0
+  - `php artisan test --compact` → 201 tests, 2,194 assertions, exit 0
+  - `vendor/bin/pint` → passed (0 fixable issues)
+- Actual results: 201 tests passing, 2,194 assertions, 0 failures, exit 0.
+- Status label(s) after this activity: COMPLETE — Industry Templates CRUD, dependency resolution, audit logging, full test coverage.
+- Follow-ups / next action: Git commit. Run `php artisan migrate && php artisan db:seed` to populate dev DB, then visit `/platform-console/templates`.
+---

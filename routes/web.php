@@ -256,6 +256,33 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
             Route::get('/templates', [PlatformIndustryTemplateController::class, 'index'])
                 ->middleware('platform.permission:platform.modules.view')
                 ->name('templates.index');
+            Route::get('/templates/create', [PlatformIndustryTemplateController::class, 'create'])
+                ->middleware('platform.permission:platform.modules.manage')
+                ->name('templates.create');
+            Route::post('/templates', [PlatformIndustryTemplateController::class, 'store'])
+                ->middleware(['platform.permission:platform.modules.manage', 'platform.step-up'])
+                ->name('templates.store');
+            Route::get('/templates/{template}', [PlatformIndustryTemplateController::class, 'show'])
+                ->middleware('platform.permission:platform.modules.view')
+                ->name('templates.show');
+            Route::get('/templates/{template}/edit', [PlatformIndustryTemplateController::class, 'edit'])
+                ->middleware('platform.permission:platform.modules.manage')
+                ->name('templates.edit');
+            Route::put('/templates/{template}', [PlatformIndustryTemplateController::class, 'update'])
+                ->middleware(['platform.permission:platform.modules.manage', 'platform.step-up'])
+                ->name('templates.update');
+            Route::delete('/templates/{template}', [PlatformIndustryTemplateController::class, 'destroy'])
+                ->middleware(['platform.permission:platform.modules.manage', 'platform.step-up'])
+                ->name('templates.destroy');
+            Route::post('/templates/{template}/toggle-active', [PlatformIndustryTemplateController::class, 'toggleActive'])
+                ->middleware(['platform.permission:platform.modules.manage', 'platform.step-up'])
+                ->name('templates.toggle-active');
+            Route::get('/templates/{template}/tenants/{tenant}/preview', [PlatformIndustryTemplateController::class, 'preview'])
+                ->middleware('platform.permission:platform.modules.view')
+                ->name('templates.preview');
+            Route::post('/templates/{template}/apply', [PlatformIndustryTemplateController::class, 'applyToTenant'])
+                ->middleware(['platform.permission:platform.modules.manage', 'platform.step-up'])
+                ->name('templates.apply');
             Route::post('/tenants/{tenant}/templates/apply', [PlatformIndustryTemplateController::class, 'apply'])
                 ->middleware(['platform.permission:platform.modules.manage', 'platform.step-up'])
                 ->name('tenants.templates.apply');

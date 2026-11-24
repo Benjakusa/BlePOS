@@ -333,6 +333,7 @@ class ModuleCatalogueSeeder extends Seeder
         ];
 
         foreach ($templates as $t) {
+            $t['is_active'] = $t['is_active'] ?? true;
             IndustryTemplate::updateOrCreate(
                 ['slug' => $t['slug']],
                 $t

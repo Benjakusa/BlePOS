@@ -59,7 +59,7 @@ class PlatformTenantController extends Controller
 
         return view('platform.tenants.create', [
             'plans' => Plan::query()->where('is_active', true)->orderBy('monthly_price')->get(),
-            'industries' => IndustryTemplate::query()->orderBy('name')->get(),
+            'industries' => IndustryTemplate::query()->where('is_active', true)->orderBy('name')->get(),
         ]);
     }
 
@@ -115,12 +115,14 @@ class PlatformTenantController extends Controller
         $provisioningRuns = $tenant->hasMany(ProvisioningRun::class)->with('steps')->orderByDesc('created_at')->get();
         $subscription = Subscription::where('tenant_id', $tenant->id)->with('plan')->latest()->first();
         $availablePlans = Plan::where('is_active', true)->orderBy('name')->get();
+        $industryTemplates = IndustryTemplate::where('is_active', true)->orderBy('name')->get();
 
         return view('platform.tenants.show', [
             'tenant' => $tenant,
             'provisioningRuns' => $provisioningRuns,
             'subscription' => $subscription,
             'availablePlans' => $availablePlans,
+            'industryTemplates' => $industryTemplates,
         ]);
     }
 

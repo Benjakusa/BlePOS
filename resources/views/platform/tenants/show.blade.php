@@ -194,6 +194,84 @@
     @endif
 </section>
 
+@if(auth('platform')->user()->hasPermission('platform.modules.manage'))
+    <section class="panel" style="max-width: 100%; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div>
+                <h3 style="margin: 0;">Industry Blueprint & Modules</h3>
+                <span class="muted" style="font-size: 13px;">Current blueprint: <strong>{{ ucfirst(str_replace('_', ' ', $tenant->industry)) }}</strong></span>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ route('platform.tenants.templates.apply', $tenant) }}" id="tenant-apply-blueprint-form" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+            @csrf
+            <div style="flex: 1; min-width: 260px;">
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Select Blueprint to Apply</label>
+                <select name="template_id" id="blueprint-select" required style="width: 100%;">
+                    <option value="">— Choose Industry Blueprint —</option>
+                    @foreach($industryTemplates as $t)
+                        <option value="{{ $t->id }}">{{ $t->name }} ({{ count($t->default_modules ?? []) }} modules)</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-sm" id="btn-apply-tenant-bp" disabled>Apply Blueprint</button>
+            </div>
+        </form>
+
+        <div id="tenant-bp-preview" style="display: none; background: var(--color-neutral-50); border: 1px solid var(--color-neutral-200); border-radius: 6px; padding: 10px 14px; margin-top: 12px; font-size: 12.5px;">
+            <div style="font-weight: 600; margin-bottom: 4px; color: var(--color-ink-950);">Installation Preview:</div>
+            <div id="tenant-bp-will-enable" style="color: #15803d; margin-bottom: 2px;"></div>
+            <div id="tenant-bp-already-enabled" style="color: var(--color-neutral-600);"></div>
+        </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const bpSelect = document.getElementById('blueprint-select');
+            const previewBox = document.getElementById('tenant-bp-preview');
+            const willEnableDiv = document.getElementById('tenant-bp-will-enable');
+            const alreadyEnabledDiv = document.getElementById('tenant-bp-already-enabled');
+            const applyBtn = document.getElementById('btn-apply-tenant-bp');
+            const tenantId = {{ $tenant->id }};
+
+            if (bpSelect) {
+                bpSelect.addEventListener('change', function() {
+                    const templateId = bpSelect.value;
+                    if (!templateId) {
+                        previewBox.style.display = 'none';
+                        applyBtn.disabled = true;
+                        return;
+                    }
+
+                    fetch(`/platform-console/templates/${templateId}/tenants/${tenantId}/preview`)
+                        .then(res => res.json())
+                        .then(data => {
+                            previewBox.style.display = 'block';
+                            applyBtn.disabled = false;
+
+                            if (data.will_enable && data.will_enable.length > 0) {
+                                willEnableDiv.innerHTML = `<strong>+ ${data.will_enable.length} modules will be activated:</strong> ` + data.will_enable.join(', ');
+                            } else {
+                                willEnableDiv.innerHTML = `<em>All modules from this blueprint are already active for this tenant.</em>`;
+                            }
+
+                            if (data.already_enabled && data.already_enabled.length > 0) {
+                                alreadyEnabledDiv.innerHTML = `<strong>&bull; ${data.already_enabled.length} already active:</strong> ` + data.already_enabled.join(', ');
+                            } else {
+                                alreadyEnabledDiv.innerHTML = '';
+                            }
+                        })
+                        .catch(() => {
+                            previewBox.style.display = 'none';
+                            applyBtn.disabled = false;
+                        });
+                });
+            }
+        });
+        </script>
+    </section>
+@endif
+
 <section class="panel" style="max-width: 100%;">
     <h3>Lifecycle Controls (Danger Zone)</h3>
     <div style="display: flex; gap: 14px; margin-top: 14px;">

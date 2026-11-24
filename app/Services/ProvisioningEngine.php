@@ -318,18 +318,27 @@ class ProvisioningEngine
                 break;
 
             case 19: // Apply industry blueprint configuration
-                IndustryTemplate::query()->firstOrCreate(
-                    ['slug' => $tenant->industry],
-                    [
-                        'name' => ucfirst(str_replace('_', ' ', $tenant->industry)),
-                        'default_modules' => ['pos', 'inventory', 'customers'],
-                        'tax_rates' => ['standard' => 16.0, 'zero' => 0.0],
-                        'default_roles' => ['owner', 'cashier'],
-                    ],
-                );
+                $template = IndustryTemplate::query()->where('slug', $tenant->industry)->first();
+                if (! $template) {
+                    $template = IndustryTemplate::query()->firstOrCreate(
+                        ['slug' => $tenant->industry],
+                        [
+                            'name' => ucfirst(str_replace(['_', '-'], ' ', $tenant->industry)),
+                            'default_modules' => ['mod-pos', 'mod-products', 'mod-inventory', 'mod-cash', 'mod-staff'],
+                            'tax_rates' => ['standard' => 16.0, 'zero' => 0.0],
+                            'default_roles' => ['owner', 'cashier'],
+                            'is_active' => true,
+                        ],
+                    );
+                }
                 break;
 
             case 20: // Configure initial module activation
+                $template = IndustryTemplate::query()->where('slug', $tenant->industry)->first();
+                if ($template) {
+                    app(ModuleService::class)->applyIndustryTemplate($tenant, $template);
+                }
+                break;
             case 21: // Provision payment gateway placeholders
             case 22: // Set eTIMS compliance onboarding state
             case 23: // Verify tenant database integrity
