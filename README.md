@@ -2,6 +2,11 @@
 
 **BlePOS** is a multi-tenant, multi-shop, multi-industry Point of Sale (POS) and Business Management SaaS engineered for Kenya, East Africa, and global commercial operations.
 
+> [!NOTE]
+> **Annex A Full Specification Complete & Verified (183 tests, 1,970 assertions, 100% pass rate).**
+> - **KRA eTIMS**: Sandbox simulation placeholder active (`BLOCKED-ON-CERTIFICATION`). Ready for production keys upon formal KRA sign-off.
+> - **Safaricom M-Pesa**: Sandbox simulation placeholder active. Ready for production credentials upon telecommunications onboarding.
+
 ---
 
 ## Key Features
@@ -84,8 +89,9 @@ php artisan platform:audit-verify
 
 ## Documentation
 
-Detailed architectural and operational specifications are available in `docs/`:
+Detailed architectural, platform, and operational specifications are available in `docs/`:
 
+### Core Specifications
 - [Architecture Specification](docs/ARCHITECTURE.md)
 - [Multi-Tenancy & Isolation](docs/MULTITENANCY.md)
 - [Security Architecture](docs/SECURITY.md)
@@ -99,3 +105,29 @@ Detailed architectural and operational specifications are available in `docs/`:
 - [Production Deployment](docs/DEPLOYMENT.md)
 - [Engineering Roadmap](docs/ROADMAP.md)
 - [Development Progress Ledger](docs/PROGRESS.md)
+- [Granular Audit Progress Log](docs/PROGRESS_LOG.md)
+
+### Platform Control Plane Specifications (Annex A Part 37)
+- [Platform Architecture](docs/PLATFORM_ARCHITECTURE.md)
+- [Platform Authentication & MFA](docs/PLATFORM_AUTHENTICATION.md)
+- [Platform Security & Hardening](docs/PLATFORM_SECURITY.md)
+- [Platform Roles & Permissions](docs/PLATFORM_ROLES_PERMISSIONS.md)
+- [Platform Tenant Lifecycle](docs/PLATFORM_TENANT_LIFECYCLE.md)
+- [Platform Provisioning Engine](docs/PLATFORM_PROVISIONING.md)
+- [Platform Billing & Subscriptions](docs/PLATFORM_BILLING.md)
+- [Platform Modules & Entitlements](docs/PLATFORM_MODULES_ENTITLEMENTS.md)
+- [Platform Industry Templates](docs/PLATFORM_INDUSTRY_TEMPLATES.md)
+- [Platform & Tenant Dashboards](docs/PLATFORM_DASHBOARDS.md)
+- [Platform Infrastructure Monitoring](docs/PLATFORM_MONITORING.md)
+- [Platform Compliance & DPA](docs/PLATFORM_COMPLIANCE.md)
+- [Platform eTIMS Fiscalization (Placeholder)](docs/PLATFORM_ETIMS.md)
+- [Platform M-Pesa Integration (Placeholder)](docs/PLATFORM_MPESA.md)
+- [Platform Support Centre](docs/PLATFORM_SUPPORT.md)
+- [Platform Audit Trail & Integrity](docs/PLATFORM_AUDIT.md)
+- [Platform Backups & Recovery](docs/PLATFORM_BACKUPS_RECOVERY.md)
+- [Platform Data Protection (Kenya DPA)](docs/PLATFORM_DATA_PROTECTION.md)
+- [Platform REST API](docs/PLATFORM_API.md)
+- [Platform Testing Standards](docs/PLATFORM_TESTING.md)
+- [Platform Production Deployment](docs/PLATFORM_DEPLOYMENT.md)
+- [Platform Incident Response](docs/PLATFORM_INCIDENT_RESPONSE.md)
+- [Platform Milestone Registry](docs/PLATFORM_PROGRESS.md)

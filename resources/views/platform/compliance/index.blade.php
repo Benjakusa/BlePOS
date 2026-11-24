@@ -29,7 +29,7 @@
         <div class="muted" style="font-size: 13px; margin-top: 6px;">
             {{ $metrics['etims_status'] === 'CERTIFIED'
                 ? 'All technical and regulatory criteria verified. Real-time fiscal invoice transmissions active.'
-                : 'Platform operates in technical simulation mode. Live KRA production transmission gateway blocked pending official regulatory sign-off (Annex A 8.8).' }}
+                : 'Platform operates in technical simulation mode. Live KRA production transmission gateway blocked pending official regulatory sign-off (Annex A 8.8). Regulatory placeholder active — pending official KRA clearance.' }}
         </div>
     </div>
     <div style="text-align: right;">
