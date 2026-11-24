@@ -62,10 +62,12 @@ Phase 10: Production Deployment & Operational Handover
 - Module catalogue management and plan entitlement matrix.
 - Break-glass emergency tenant access protocol with dual-authorization and audit logging.
 
-### Phase 5: Financial Ledgers & Double-Entry Accounting
+### Phase 5: Financial Ledgers & Double-Entry Accounting [VERIFIED]
 - Standardized Chart of Accounts (Assets, Liabilities, Equity, Revenue, Expenses).
 - Real-time double-entry journal entries generated from POS sales, receipts, and expenses.
 - Financial reporting: Trial Balance, Balance Sheet, Profit & Loss Statement, General Ledger.
+- Automatic sales revenue, VAT payable, and COGS/Inventory journal posting with void reversal support.
+- Operating expenses management with direct ledger impact.
 
 ### Phase 6: Industry Modules
 - Pharmacy: Batches, expiry alerts, prescription management, restricted drug controls.

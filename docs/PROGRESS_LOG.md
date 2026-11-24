@@ -1492,3 +1492,33 @@
 - Status label(s) after this activity: VERIFIED (Phase 14 / A14 Hardening and Release Readiness); Annex A Full Specification COMPLETE and VERIFIED.
 - Follow-ups / next action: Update `docs/PROGRESS.md`, `README.md`, and inform user.
 ---
+
+## L-0128 | 2026-11-24 12:38 UTC | 2026-11-24 15:38 EAT | agent: antigravity | tier/phase: Phase 5 Financial Ledgers & Double-Entry Accounting
+- Activity type: IMPLEMENT & VERIFY
+- What and why: Implemented Phase 5 Financial Ledgers and Double-Entry Accounting (`mod-accounting`) per the master project engineering roadmap:
+  1. Standardized Kenyan Chart of Accounts: 13 system accounts across Assets (Cash on Hand, M-Pesa Clearing, Bank, Accounts Receivable, Inventory), Liabilities (Accounts Payable, 16% VAT Payable), Equity (Owner Capital & Retained Earnings), Revenue (Merchandise Sales, Discounts), and Expenses (COGS, Store Operating Expenses, Cash Shift Variance).
+  2. Balanced Double-Entry Engine: `AccountingService` strictly validates the fundamental accounting equation and rejects unbalanced manual journal entries with `InvalidArgumentException` ($\sum \text{debit} == \sum \text{credit}$).
+  3. Real-Time POS Sales Journal Generation: Connected `AccountingService::recordSaleJournal` into `SaleService::createSale`. Debits payment asset accounts (Cash net of change, M-Pesa, Card), credits Sales Revenue & VAT Payable, and automatically posts COGS debit and Inventory asset credit for tracked goods.
+  4. Void Sale Reversal Engine: Connected `AccountingService::voidSaleJournal` into `SaleService::voidSale` to generate balanced reversal journal entries.
+  5. Operating Expense Management: `Expense` model, `ExpenseController`, and view suite with automated debit to expense accounts and credit to payment asset accounts.
+  6. Financial Statements & Reporting: Real-time calculation of Trial Balance (with equality verification), Profit & Loss Statement (Revenue, COGS, Gross Profit, Expenses, Net Income), Balance Sheet (Assets = Liabilities + Equity, flowing net earnings to retained equity), and account-by-account General Ledger statements.
+  7. Multi-Tenant Accounting Isolation: Verified that tenant accounts, journal lines, and ledger statements are strictly isolated using `BelongsToTenant`.
+- Files created / modified:
+  - `database/migrations/2026_11_24_121505_create_accounting_and_ledger_tables.php` — migration for accounts, journal_entries, journal_entry_lines, and expenses.
+  - `app/Models/{Account,JournalEntry,JournalEntryLine,Expense}.php` — Eloquent domain models.
+  - `app/Services/AccountingService.php` — complete double-entry bookkeeping, posting, and financial statement service.
+  - `app/Services/SaleService.php` — hooked in automated sales and void journal entries.
+  - `app/Http/Controllers/Tenant/Accounting/{ChartOfAccountsController,JournalEntryController,ExpenseController,AccountingReportController}.php` — presentation controllers.
+  - `resources/views/tenant/accounting/**` — 11 Blade templates for accounts, journals, expenses, and financial statements.
+  - `resources/views/tenant/layout.blade.php` — added Finance & Ledgers navigation section.
+  - `routes/web.php` — registered accounting resource routes under tenant group.
+  - `tests/Feature/TenantAccountingAndGeneralLedgerTest.php` — 9 feature tests with 64 assertions verifying all accounting operations.
+- Migrations: `2026_11_24_121505_create_accounting_and_ledger_tables.php`.
+- Commands run (secrets redacted):
+  - `php artisan test --compact tests/Feature/TenantAccountingAndGeneralLedgerTest.php` → 9 tests, 64 assertions, exit 0.
+  - `php artisan test --compact` → 192 tests, 2,048 assertions, exit 0.
+  - `vendor/bin/pint --format agent` → passed.
+- Actual results (exit codes, counts, error summaries): 192 tests passing, 2,048 assertions, 0 failures, exit 0 throughout.
+- Status label(s) after this activity: VERIFIED (Phase 5 Financial Ledgers & Double-Entry Accounting).
+- Follow-ups / next action: Update `docs/PROGRESS.md`, `README.md`, `docs/ROADMAP.md`.
+---

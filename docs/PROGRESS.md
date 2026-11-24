@@ -1,17 +1,17 @@
-# BlePOS Annex A Progress
+# BlePOS Progress Ledger
 
 ## Session header
-- Last updated: 2026-11-24 11:58 UTC / 14:58 EAT
-- Last agent / session ID: antigravity-phase14-2026-11-24
-- Current tier / phase: Phase 14 Hardening, Final Verification and Release Readiness (A14 Verified; Annex A Complete)
+- Last updated: 2026-11-24 12:38 UTC / 15:38 EAT
+- Last agent / session ID: antigravity-phase5-accounting-2026-11-24
+- Current tier / phase: Phase 5 Financial Ledgers & Double-Entry Accounting (Verified; 192 tests passing)
 - Build status: Passed
-- Last full test run: `php artisan test --compact` — 183 tests, 1970 assertions (2026-11-24; see `PROGRESS_LOG.md` L-0127).
-- Resume verification: Platform hardening tests passed (6 tests, 172 assertions); full suite passed (183 tests, 1970 assertions); `vendor/bin/pint --format agent` passed (2026-11-24; see `PROGRESS_LOG.md` L-0127).
-- Git working branch / checkpoint: All phases (A1 through A14) of Annex A are fully implemented, hardened, and verified with 183 automated tests and complete Part 37 platform documentation.
+- Last full test run: `php artisan test --compact` — 192 tests, 2048 assertions (2026-11-24; see `PROGRESS_LOG.md` L-0128).
+- Resume verification: Financial ledgers and double-entry accounting tests passed (9 tests, 64 assertions); full suite passed (192 tests, 2048 assertions); `vendor/bin/pint --format agent` passed (2026-11-24; see `PROGRESS_LOG.md` L-0128).
+- Git working branch / checkpoint: All phases (A1 through A14) of Annex A and Phase 5 Financial Ledgers & Double-Entry Accounting are fully implemented, hardened, and verified with 192 automated tests.
 
 ## RESUME POINT
-- Next action (exact): Annex A complete. Platform release readiness verified. Next: Production environment deployment and live certification onboarding (KRA eTIMS, Safaricom M-Pesa).
-- Preconditions / what must be true first: All 14 phases verified with 183 automated tests passing (1970 assertions; L-0127).
+- Next action (exact): Phase 5 complete. Next: Proceed to Phase 6 Industry Modules (Pharmacy batch & Rx controls, Restaurant table management & KDS, Wholesale tiered pricing & credit limits).
+- Preconditions / what must be true first: Phase 5 Financial Ledgers verified with automated tests passing (192 tests, 2048 assertions; L-0128).
 - Files in flight: None. All models, migrations, services, middleware, controllers, views, commands, docs, and tests are implemented and passing.
 - First commands to run on resume: `php artisan test --compact`, `vendor/bin/pint --format agent`.
 - Warnings: eTIMS and M-Pesa remain in honest regulatory sandbox placeholder states pending official clearance and production credentials.
@@ -19,6 +19,9 @@
 ## Latest session verification
 | Suite | Command | Date | Passed | Failed | Skipped | Notes |
 |---|---|---|---:|---:|---:|---|
+| Financial ledgers & double-entry accounting | `php artisan test --compact tests/Feature/TenantAccountingAndGeneralLedgerTest.php` | 2026-11-24 | 9 | 0 | 0 | 64 assertions, exit 0; see `PROGRESS_LOG.md` L-0128. |
+| Full PHPUnit suite | `php artisan test --compact` | 2026-11-24 | 192 | 0 | 0 | 2048 assertions, exit 0; see `PROGRESS_LOG.md` L-0128. |
+| PHP style | `vendor/bin/pint --format agent` | 2026-11-24 | Passed | — | — | See `PROGRESS_LOG.md` L-0128. |
 | Hardening & release readiness | `php artisan test --compact tests/Feature/PlatformHardeningAndReleaseReadinessTest.php` | 2026-11-24 | 6 | 0 | 0 | 172 assertions, exit 0; see `PROGRESS_LOG.md` L-0127. |
 | Full PHPUnit suite | `php artisan test --compact` | 2026-11-24 | 183 | 0 | 0 | 1970 assertions, exit 0; see `PROGRESS_LOG.md` L-0127. |
 | PHP style | `vendor/bin/pint --format agent` | 2026-11-24 | Passed | — | — | See `PROGRESS_LOG.md` L-0127. |

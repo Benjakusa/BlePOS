@@ -32,6 +32,10 @@ use App\Http\Controllers\Platform\PlatformTenantController;
 use App\Http\Controllers\Platform\PlatformTenantModuleController;
 use App\Http\Controllers\Platform\PlatformUserController;
 use App\Http\Controllers\Platform\StepUpController;
+use App\Http\Controllers\Tenant\Accounting\AccountingReportController;
+use App\Http\Controllers\Tenant\Accounting\ChartOfAccountsController;
+use App\Http\Controllers\Tenant\Accounting\ExpenseController;
+use App\Http\Controllers\Tenant\Accounting\JournalEntryController;
 use App\Http\Controllers\Tenant\CashierShiftController;
 use App\Http\Controllers\Tenant\CategoryController;
 use App\Http\Controllers\Tenant\InventoryController;
@@ -373,4 +377,15 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
     Route::get('/inventory/receive', [InventoryController::class, 'receiveForm'])->name('inventory.receive');
     Route::post('/inventory/receive', [InventoryController::class, 'receive'])->name('inventory.receive.store');
     Route::get('/inventory/movements', [InventoryController::class, 'movements'])->name('inventory.movements');
+
+    // Financial Ledgers & Double-Entry Accounting
+    Route::prefix('accounting')->name('accounting.')->group(function (): void {
+        Route::resource('accounts', ChartOfAccountsController::class)->only(['index', 'create', 'store']);
+        Route::resource('journals', JournalEntryController::class)->only(['index', 'create', 'store', 'show']);
+        Route::resource('expenses', ExpenseController::class)->only(['index', 'create', 'store']);
+        Route::get('/reports/trial-balance', [AccountingReportController::class, 'trialBalance'])->name('reports.trial-balance');
+        Route::get('/reports/profit-loss', [AccountingReportController::class, 'profitLoss'])->name('reports.profit-loss');
+        Route::get('/reports/balance-sheet', [AccountingReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
+        Route::get('/reports/general-ledger', [AccountingReportController::class, 'generalLedger'])->name('reports.general-ledger');
+    });
 });

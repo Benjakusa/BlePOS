@@ -16,7 +16,8 @@ use Illuminate\Support\Str;
 class SaleService
 {
     public function __construct(
-        protected InventoryService $inventory
+        protected InventoryService $inventory,
+        protected AccountingService $accounting
     ) {}
 
     /**
@@ -180,6 +181,9 @@ class SaleService
                 ]);
             }
 
+            // Record double-entry general ledger journal entry
+            $this->accounting->recordSaleJournal($sale);
+
             return $sale;
         });
     }
@@ -212,6 +216,9 @@ class SaleService
                 'status' => 'voided',
                 'notes' => trim(($sale->notes ?? '')."\nVoid reason: {$reason}"),
             ]);
+
+            // Reverse double-entry general ledger journal entry
+            $this->accounting->voidSaleJournal($sale, $user, $reason);
 
             return $sale;
         });

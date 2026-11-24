@@ -101,6 +101,15 @@
                 <a href="{{ route('tenant.inventory.adjust') }}" class="{{ request()->routeIs('tenant.inventory.adjust') ? 'active' : '' }}">Adjust Stock</a>
                 <a href="{{ route('tenant.inventory.receive') }}" class="{{ request()->routeIs('tenant.inventory.receive') ? 'active' : '' }}">Receive Stock</a>
                 <a href="{{ route('tenant.inventory.movements') }}" class="{{ request()->routeIs('tenant.inventory.movements') ? 'active' : '' }}">Audit Movements</a>
+
+                <div class="section-header">Finance & Ledgers</div>
+                <a href="{{ route('tenant.accounting.accounts.index') }}" class="{{ request()->routeIs('tenant.accounting.accounts.*') ? 'active' : '' }}">Chart of Accounts</a>
+                <a href="{{ route('tenant.accounting.journals.index') }}" class="{{ request()->routeIs('tenant.accounting.journals.*') ? 'active' : '' }}">Journal Entries</a>
+                <a href="{{ route('tenant.accounting.expenses.index') }}" class="{{ request()->routeIs('tenant.accounting.expenses.*') ? 'active' : '' }}">Expenses</a>
+                <a href="{{ route('tenant.accounting.reports.trial-balance') }}" class="{{ request()->routeIs('tenant.accounting.reports.trial-balance') ? 'active' : '' }}">Trial Balance</a>
+                <a href="{{ route('tenant.accounting.reports.profit-loss') }}" class="{{ request()->routeIs('tenant.accounting.reports.profit-loss') ? 'active' : '' }}">Profit & Loss</a>
+                <a href="{{ route('tenant.accounting.reports.balance-sheet') }}" class="{{ request()->routeIs('tenant.accounting.reports.balance-sheet') ? 'active' : '' }}">Balance Sheet</a>
+                <a href="{{ route('tenant.accounting.reports.general-ledger') }}" class="{{ request()->routeIs('tenant.accounting.reports.general-ledger') ? 'active' : '' }}">General Ledger</a>
             </nav>
         </div>
         <div class="user-panel">
