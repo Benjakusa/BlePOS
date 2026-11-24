@@ -29,41 +29,41 @@
     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
         <!-- Perspective Switcher (where permitted) -->
         @if($isOwner)
-            <form method="GET" action="{{ route('tenant.dashboard') }}" style="display: inline-flex; margin: 0;">
+            <form method="GET" action="{{ route('tenant.dashboard') }}" style="display: inline-flex; margin: 0; min-width: 160px;">
                 @if(request('period'))<input type="hidden" name="period" value="{{ request('period') }}">@endif
                 @if(request('shop_id'))<input type="hidden" name="shop_id" value="{{ request('shop_id') }}">@endif
-                <select name="view" onchange="this.form.submit()" style="padding: 8px 12px; font-size: 13px;">
+                <x-input type="select" name="view" label="Perspective" onchange="this.form.submit()" :compact="true">
                     <option value="owner" @selected($roleView === 'owner')>Executive View</option>
                     <option value="manager" @selected($roleView === 'shop-manager')>Shop Manager View</option>
                     <option value="cashier" @selected($roleView === 'cashier')>Cashier View</option>
-                </select>
+                </x-input>
             </form>
         @endif
 
         <!-- Shop Switcher -->
         @if($accessibleShops->count() > 1 && $roleView !== 'cashier')
-            <form method="GET" action="{{ route('tenant.dashboard') }}" style="display: inline-flex; margin: 0;">
+            <form method="GET" action="{{ route('tenant.dashboard') }}" style="display: inline-flex; margin: 0; min-width: 170px;">
                 @if(request('view'))<input type="hidden" name="view" value="{{ request('view') }}">@endif
                 @if(request('period'))<input type="hidden" name="period" value="{{ request('period') }}">@endif
-                <select name="shop_id" onchange="this.form.submit()" style="padding: 8px 12px; font-size: 13px;">
+                <x-input type="select" name="shop_id" label="Branch" onchange="this.form.submit()" :compact="true">
                     @if($isOwner)<option value="all" @selected(!$activeShop)>All Branches</option>@endif
                     @foreach($accessibleShops as $shop)
                         <option value="{{ $shop->id }}" @selected($activeShop && $activeShop->id === $shop->id)>{{ $shop->name }}</option>
                     @endforeach
-                </select>
+                </x-input>
             </form>
         @endif
 
         <!-- Period Filter (for Owner and Manager) -->
         @if($roleView !== 'cashier')
-            <form method="GET" action="{{ route('tenant.dashboard') }}" style="display: inline-flex; margin: 0;">
+            <form method="GET" action="{{ route('tenant.dashboard') }}" style="display: inline-flex; margin: 0; min-width: 140px;">
                 @if(request('view'))<input type="hidden" name="view" value="{{ request('view') }}">@endif
                 @if(request('shop_id'))<input type="hidden" name="shop_id" value="{{ request('shop_id') }}">@endif
-                <select name="period" onchange="this.form.submit()" style="padding: 8px 12px; font-size: 13px;">
+                <x-input type="select" name="period" label="Period" onchange="this.form.submit()" :compact="true">
                     <option value="today" @selected($period === 'today')>Today</option>
                     <option value="7d" @selected($period === '7d')>Last 7 Days</option>
                     <option value="30d" @selected($period === '30d')>Last 30 Days</option>
-                </select>
+                </x-input>
             </form>
         @endif
 
@@ -534,26 +534,17 @@
             <h3 class="section-title" style="margin-bottom: 6px;">Quick Add Item</h3>
             <div class="caption" style="margin-bottom: 20px;">Instantly introduce new stock to catalog</div>
 
-            <form action="{{ route('tenant.products.create') }}" method="GET">
-                <div class="field">
-                    <input type="text" id="quick_product_name" name="name" placeholder=" ">
-                    <label for="quick_product_name">Product Name</label>
-                </div>
+            <form action="{{ route('tenant.products.create') }}" method="GET" style="display: flex; flex-direction: column; gap: 14px;">
+                <x-input name="name" id="quick_product_name" label="Product Name" />
 
-                <div class="field">
-                    <input type="number" step="0.01" id="quick_product_price" name="retail_price" placeholder=" ">
-                    <label for="quick_product_price">Retail Price (KES)</label>
-                </div>
+                <x-input type="number" step="0.01" name="retail_price" id="quick_product_price" label="Retail Price (KES)" />
 
-                <div class="field">
-                    <select id="quick_category" name="category_id">
-                        <option value="">Select Category</option>
-                        <option value="general">General Merchandise</option>
-                        <option value="beverages">Beverages</option>
-                        <option value="packaged">Packaged Goods</option>
-                    </select>
-                    <label for="quick_category">Category</label>
-                </div>
+                <x-input type="select" name="category_id" id="quick_category" label="Category">
+                    <option value="">Select Category</option>
+                    <option value="general">General Merchandise</option>
+                    <option value="beverages">Beverages</option>
+                    <option value="packaged">Packaged Goods</option>
+                </x-input>
 
                 <button type="submit" class="btn btn-primary w-full" style="width: 100%;">
                     <i class="bi bi-plus-lg"></i>

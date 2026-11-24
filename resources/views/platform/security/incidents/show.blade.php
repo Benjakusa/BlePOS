@@ -7,10 +7,10 @@
     <div>
         <div style="display: flex; align-items: center; gap: 10px;">
             <h1>{{ $incident->incident_number }}</h1>
-            <span class="badge" style="background: {{ $incident->severity === 'critical' ? '#fee2e2' : ($incident->severity === 'high' ? '#ffedd5' : '#fef9c3') }}; color: {{ $incident->severity === 'critical' ? '#991b1b' : ($incident->severity === 'high' ? '#9a3412' : '#854d0e') }}; padding: 4px 8px; border-radius: 4px; font-weight: 700;">
+            <span class="badge" style="background: #EAEEF3; color: {{ $incident->severity === 'critical' ? '#DC2626' : ($incident->severity === 'high' ? '#B45309' : '#0F172A') }}; padding: 4px 8px; border-radius: 4px; font-weight: 700;">
                 {{ strtoupper($incident->severity) }}
             </span>
-            <span class="badge" style="background: {{ in_array($incident->status, ['resolved', 'closed']) ? '#dcfce7' : '#e0e7ff' }}; color: {{ in_array($incident->status, ['resolved', 'closed']) ? '#166534' : '#3730a3' }}; padding: 4px 8px; border-radius: 4px;">
+            <span class="badge" style="background: #EAEEF3; color: {{ in_array($incident->status, ['resolved', 'closed']) ? '#16A34A' : '#2563EB' }}; padding: 4px 8px; border-radius: 4px;">
                 {{ strtoupper($incident->status) }}
             </span>
         </div>
@@ -33,12 +33,12 @@
 
             @if($incident->containment_steps)
                 <h3 style="font-size: 15px; margin-bottom: 6px;">Containment Measures</h3>
-                <div style="background: #f8faf9; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 16px; white-space: pre-wrap;">{{ $incident->containment_steps }}</div>
+                <div style="background: #EAEEF3; border: 1px solid #CBD5E1; border-radius: 6px; padding: 12px; margin-bottom: 16px; white-space: pre-wrap;">{{ $incident->containment_steps }}</div>
             @endif
 
             @if($incident->resolution_notes)
-                <h3 style="font-size: 15px; margin-bottom: 6px; color: #166534;">Resolution Notes</h3>
-                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px; white-space: pre-wrap;">{{ $incident->resolution_notes }}</div>
+                <h3 style="font-size: 15px; margin-bottom: 6px; color: #16A34A;">Resolution Notes</h3>
+                <div style="background: #EAEEF3; border: 1px solid #CBD5E1; border-radius: 6px; padding: 12px; white-space: pre-wrap;">{{ $incident->resolution_notes }}</div>
             @endif
         </div>
 
@@ -47,12 +47,12 @@
 
             <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
                 @forelse($incident->notes as $note)
-                    <div style="border-left: 3px solid {{ $note->is_containment_action ? '#b91c1c' : '#146b4d' }}; padding-left: 12px;">
+                    <div style="border-left: 3px solid {{ $note->is_containment_action ? '#DC2626' : '#16A34A' }}; padding-left: 12px;">
                         <div style="display: flex; justify-content: space-between; font-size: 12px;" class="muted">
                             <span>
                                 <strong>{{ $note->user->name }}</strong>
                                 @if($note->is_containment_action)
-                                    <span style="color: #b91c1c; font-weight: 600;">[Containment Action]</span>
+                                    <span style="color: #DC2626; font-weight: 600;">[Containment Action]</span>
                                 @endif
                             </span>
                             <span>{{ $note->created_at->format('M d, Y H:i:s') }}</span>
@@ -64,15 +64,10 @@
                 @endforelse
             </div>
 
-            <form method="POST" action="{{ route('platform.security.incidents.notes', $incident) }}" style="display: grid; gap: 10px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+            <form method="POST" action="{{ route('platform.security.incidents.notes', $incident) }}" style="display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #CBD5E1; padding-top: 16px;">
                 @csrf
-                <label style="font-weight: 600; font-size: 14px;">Append Timeline Note / Action
-                    <textarea name="note" rows="3" required style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 10px 12px; font: inherit;" placeholder="Record investigation findings, mitigation steps, or updates..."></textarea>
-                </label>
-                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 13px;">
-                    <input type="checkbox" name="is_containment_action" value="1" style="width: auto;">
-                    Mark as active containment action
-                </label>
+                <x-input type="textarea" name="note" label="Append Timeline Note / Action" rows="3" required placeholder="Record investigation findings, mitigation steps, or updates..." />
+                <x-input type="checkbox" name="is_containment_action" value="1" label="Mark as active containment action" />
                 <div>
                     <button type="submit" style="padding: 8px 14px; font-size: 13px;">Add Note</button>
                 </div>
@@ -129,18 +124,14 @@
 
         <div class="panel" style="max-width: none;">
             <h3 style="font-size: 16px; margin-top: 0;">Update Status & Progression</h3>
-            <form method="POST" action="{{ route('platform.security.incidents.status', $incident) }}" style="display: grid; gap: 12px;">
+            <form method="POST" action="{{ route('platform.security.incidents.status', $incident) }}" style="display: flex; flex-direction: column; gap: 12px;">
                 @csrf
-                <label style="font-size: 13px;">Transition Status
-                    <select name="status" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 8px 10px; font: inherit; width: 100%;">
-                        @foreach(['new' => 'New', 'acknowledged' => 'Acknowledged', 'investigating' => 'Investigating', 'escalated' => 'Escalated', 'resolved' => 'Resolved', 'closed' => 'Closed'] as $st => $lbl)
-                            <option value="{{ $st }}" @selected($incident->status === $st)>{{ $lbl }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label style="font-size: 13px;">Status Transition Notes
-                    <textarea name="notes" rows="2" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 8px 10px; font: inherit; width: 100%;" placeholder="Summary or resolution reason..."></textarea>
-                </label>
+                <x-input type="select" name="status" label="Transition Status" :selected="$incident->status">
+                    @foreach(['new' => 'New', 'acknowledged' => 'Acknowledged', 'investigating' => 'Investigating', 'escalated' => 'Escalated', 'resolved' => 'Resolved', 'closed' => 'Closed'] as $st => $lbl)
+                        <option value="{{ $st }}" @selected($incident->status === $st)>{{ $lbl }}</option>
+                    @endforeach
+                </x-input>
+                <x-input type="textarea" name="notes" label="Status Transition Notes" rows="2" placeholder="Summary or resolution reason..." />
                 <div>
                     <button type="submit" style="width: 100%;">Update Status</button>
                 </div>

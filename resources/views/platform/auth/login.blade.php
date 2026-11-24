@@ -9,42 +9,26 @@
 <form method="post" action="{{ route('platform.login.store') }}">
     @csrf
 
-    {{-- Email --}}
-    <div class="ath-field {{ $errors->has('email') ? 'has-error' : '' }}">
-        <label for="email">Email</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-envelope ath-icon" aria-hidden="true"></i>
-            <input type="email" name="email" id="email"
-                   autocomplete="username"
-                   value="{{ old('email') }}"
-                   placeholder="name@example.com"
-                   required autofocus>
-        </div>
-        @error('email')
-            <div class="ath-field-error">
-                <i class="bi bi-exclamation-circle"></i>
-                <span>{{ $message }}</span>
-            </div>
-        @enderror
-    </div>
+    <x-input
+        type="email"
+        name="email"
+        id="email"
+        label="Email"
+        leadingIcon="bi-envelope"
+        autocomplete="username"
+        :required="true"
+        :autofocus="true"
+    />
 
-    {{-- Password --}}
-    <div class="ath-field {{ $errors->has('password') ? 'has-error' : '' }}">
-        <label for="password">Password</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-lock ath-icon" aria-hidden="true"></i>
-            <input type="password" name="password" id="password"
-                   autocomplete="current-password"
-                   placeholder="••••••••"
-                   required>
-        </div>
-        @error('password')
-            <div class="ath-field-error">
-                <i class="bi bi-exclamation-circle"></i>
-                <span>{{ $message }}</span>
-            </div>
-        @enderror
-    </div>
+    <x-input
+        type="password"
+        name="password"
+        id="password"
+        label="Password"
+        leadingIcon="bi-lock"
+        autocomplete="current-password"
+        :required="true"
+    />
 
     {{-- Forgot password --}}
     <div class="ath-recover-row">

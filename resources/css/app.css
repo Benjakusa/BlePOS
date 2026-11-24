@@ -58,6 +58,9 @@
   --dur-base:           180ms;
   --dur-med:            280ms;
   --dur-slow:           550ms;
+
+  /* Input font token */
+  --font-input:         "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 /* Dark theme via prefers-color-scheme */
@@ -68,7 +71,7 @@
     --clr-grey-tint:   #1C2A45;
     --clr-header-tint: #162035;
     --clr-sidebar-bg:  #162033;
-    --clr-border:      #2A3A5C;
+    --clr-border:      #334155;
     --clr-text:        #E2E8F0;
     --clr-muted:       #94A3B8;
     --shadow-sm:       0 1px 3px rgba(0, 0, 0, 0.25);
@@ -853,131 +856,723 @@ button:active, .btn:active {
   border-radius: var(--radius-sm) !important;
 }
 
-/* ─── 8. Floating-Label Form Inputs ───────────────────────────── */
-.field {
+/* ─── 8. Standardized Unified Input System (.ui-field) ────────── */
+@keyframes uiAutofillStart {
+  from { opacity: 0.99; }
+  to { opacity: 1; }
+}
+
+@keyframes uiShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-4px); }
+}
+
+@keyframes uiSpin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+.ui-field {
   position: relative;
-  margin-bottom: 20px;
+  width: 100%;
+  margin-bottom: 14px;
   display: block;
 }
 
-.field input,
-.field select,
-.field textarea {
+.ui-field.ui-shake {
+  animation: uiShake 250ms var(--ease) 1;
+}
+
+.ui-control {
+  position: relative;
   width: 100%;
-  height: 48px;
-  padding: 16px 14px 6px;
-  border: 1px solid var(--clr-border) !important;
-  border-radius: var(--radius-md);
-  background-color: var(--clr-surface) !important;
+  display: flex;
+  align-items: center;
+}
+
+.ui-field input,
+.ui-field textarea,
+.ui-field select,
+.ui-select-trigger {
+  font-family: var(--font-input) !important;
+  font-size: 13px;
+  font-weight: 400;
   color: var(--clr-text);
-  font-size: 14px;
+  background-color: var(--clr-surface);
+  border: 1px solid var(--clr-border) !important;
+  border-radius: 10px;
+  width: 100%;
+  height: 40px;
+  padding: 8px 12px 0;
   outline: none !important;
   box-shadow: none !important;
-  transition: border-color var(--dur-base) var(--ease);
+  transition: border-color 150ms var(--ease), background-color 150ms var(--ease);
   appearance: none;
+  -webkit-appearance: none;
 }
 
-.field textarea {
+.ui-field.is-compact input,
+.ui-field.is-compact textarea,
+.ui-field.is-compact .ui-select-trigger {
+  height: 32px;
+  padding: 4px 10px 0;
+  font-size: 12.5px;
+}
+
+.ui-field.is-textarea textarea {
   height: auto;
-  min-height: 96px;
-  padding-top: 20px;
+  min-height: 80px;
+  max-height: 220px;
+  padding: 14px 12px 8px;
   resize: vertical;
+  line-height: 1.45;
 }
 
-.field select {
+.ui-field.has-leading input,
+.ui-field.has-leading textarea,
+.ui-field.has-leading .ui-select-trigger {
+  padding-left: 36px;
+}
+
+.ui-field.has-trailing input,
+.ui-field.has-trailing textarea,
+.ui-field.has-trailing .ui-select-trigger {
   padding-right: 36px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748B' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  cursor: pointer;
 }
 
-.field label {
+.ui-field.is-right input {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hide browser number spinners & native password reveal */
+.ui-field input[type="number"]::-webkit-inner-spin-button,
+.ui-field input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.ui-field input[type="number"] {
+  -moz-appearance: textfield;
+}
+.ui-field input[type="password"]::-ms-reveal,
+.ui-field input[type="password"]::-ms-clear,
+.ui-field input::-webkit-credentials-auto-fill-button {
+  display: none !important;
+}
+
+/* Autofill detection hook */
+.ui-field input:-webkit-autofill {
+  animation-name: uiAutofillStart;
+  animation-duration: 0.01s;
+  -webkit-box-shadow: 0 0 0 1000px var(--clr-surface) inset !important;
+  -webkit-text-fill-color: var(--clr-text) !important;
+}
+
+/* Hover */
+.ui-field:not(.is-disabled):not(.is-readonly):not(.has-error) .ui-control:hover input,
+.ui-field:not(.is-disabled):not(.is-readonly):not(.has-error) .ui-control:hover textarea,
+.ui-field:not(.is-disabled):not(.is-readonly):not(.has-error) .ui-control:hover .ui-select-trigger {
+  border-color: #94A3B8 !important;
+}
+
+/* Focus: thin 1px green border, no glow */
+.ui-field:not(.is-disabled):not(.is-readonly) input:focus,
+.ui-field:not(.is-disabled):not(.is-readonly) textarea:focus,
+.ui-field:not(.is-disabled):not(.is-readonly) .ui-select-trigger:focus,
+.ui-field.is-select.is-open .ui-select-trigger {
+  border-color: var(--clr-green) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Floating Label */
+.ui-label {
   position: absolute;
   left: 12px;
-  top: 14px;
-  font-size: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  transform-origin: left center;
+  font-family: var(--font-input) !important;
+  font-size: 13px;
+  font-weight: 400;
   color: var(--clr-muted);
   pointer-events: none;
-  transform-origin: top left;
-  transition: all var(--dur-base) var(--ease);
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+  max-width: calc(100% - 24px);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 180ms cubic-bezier(0.4, 0, 0.2, 1),
+              color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+}
+
+.ui-field.is-textarea .ui-label {
+  top: 18px;
+}
+
+.ui-field.has-leading .ui-label {
+  left: 36px;
+  max-width: calc(100% - 48px);
+}
+
+.ui-label-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ui-req {
+  color: var(--clr-red);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* Raised label state: sits centered ON the top border line at 11px */
+.ui-field input:focus ~ .ui-label,
+.ui-field input:not(:placeholder-shown) ~ .ui-label,
+.ui-field input:-webkit-autofill ~ .ui-label,
+.ui-field textarea:focus ~ .ui-label,
+.ui-field textarea:not(:placeholder-shown) ~ .ui-label,
+.ui-field.has-value .ui-label,
+.ui-field.always-float .ui-label,
+.ui-field.is-open .ui-label {
+  top: 0;
+  left: 10px;
+  transform: translateY(-50%) scale(0.846);
   background-color: var(--clr-surface);
   padding: 0 4px;
-  border-radius: 2px;
-}
-
-/* Floating animation on focus or when field has text */
-.field input:focus ~ label,
-.field input:not(:placeholder-shown) ~ label,
-.field select:focus ~ label,
-.field select:not([value=""]) ~ label,
-.field textarea:focus ~ label,
-.field textarea:not(:placeholder-shown) ~ label,
-.field.is-floating label {
-  top: -8px;
-  font-size: 11px;
   font-weight: 500;
-  color: var(--clr-muted);
+  max-width: calc(100% - 20px);
 }
 
-.field input:focus ~ label,
-.field select:focus ~ label,
-.field textarea:focus ~ label {
+.ui-field input:focus ~ .ui-label,
+.ui-field textarea:focus ~ .ui-label,
+.ui-field .ui-select-trigger:focus ~ .ui-label,
+.ui-field.is-open .ui-label {
   color: var(--clr-green) !important;
 }
 
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
-  border-color: var(--clr-green) !important;
+/* Leading & Trailing Icons */
+.ui-leading-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--clr-muted);
+  pointer-events: none;
+  z-index: 2;
+  transition: color 150ms var(--ease);
 }
 
-/* Error state: 1px red border, red label, helper text below */
-.field.has-error input,
-.field.has-error select,
-.field.has-error textarea {
+.ui-field.is-textarea .ui-leading-icon {
+  top: 18px;
+}
+
+.ui-trailing-icon,
+.ui-trailing-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--clr-muted);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-trailing-icon {
+  pointer-events: none;
+}
+
+.ui-trailing-btn {
+  background: transparent !important;
+  border: none !important;
+  padding: 4px !important;
+  margin: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px !important;
+  cursor: pointer;
+  box-shadow: none !important;
+  color: var(--clr-muted) !important;
+  transition: background-color 150ms var(--ease), color 150ms var(--ease);
+}
+
+.ui-trailing-btn:hover {
+  background-color: var(--clr-grey-tint) !important;
+  color: var(--clr-text) !important;
+}
+
+.ui-trailing-btn:focus-visible {
+  outline: 1px solid var(--clr-green) !important;
+}
+
+.ui-select-chevron {
+  transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ui-field.is-select.is-open .ui-select-chevron {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.ui-success-icon {
+  color: var(--clr-green) !important;
+}
+
+.ui-spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid var(--clr-border);
+  border-top-color: var(--clr-green);
+  border-radius: 50%;
+  animation: uiSpin 650ms linear infinite;
+}
+
+/* Error State */
+.ui-field.has-error input,
+.ui-field.has-error textarea,
+.ui-field.has-error .ui-select-trigger,
+.ui-field.has-error .ui-file-dropzone {
   border-color: var(--clr-red) !important;
 }
-.field.has-error label {
+
+.ui-field.has-error .ui-label,
+.ui-field.has-error input:focus ~ .ui-label,
+.ui-field.has-error textarea:focus ~ .ui-label {
   color: var(--clr-red) !important;
 }
-.field-error, .error-text {
+
+.ui-meta-row {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--clr-red);
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 16px;
+  margin-top: 4px;
 }
 
-/* Disabled & Readonly */
-.field input:disabled,
-.field select:disabled,
-.field textarea:disabled,
-input:disabled, select:disabled, textarea:disabled {
+.ui-helper-slot {
+  font-size: 11px;
+  line-height: 1.35;
+  flex: 1;
+}
+
+.ui-helper-text {
+  color: var(--clr-muted);
+  font-size: 11px;
+}
+
+.ui-error-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--clr-red);
+  font-size: 11px;
+  font-weight: 500;
+  animation: fadeSlideUp 150ms var(--ease);
+}
+
+.ui-char-count {
+  font-size: 11px;
+  color: var(--clr-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ui-char-count.is-limit {
+  color: var(--clr-red);
+  font-weight: 600;
+}
+
+/* Disabled & Readonly States */
+.ui-field.is-disabled input,
+.ui-field.is-disabled textarea,
+.ui-field.is-disabled .ui-select-trigger,
+.ui-field.is-disabled .ui-file-dropzone {
   background-color: var(--clr-grey-tint) !important;
   color: var(--clr-muted);
   cursor: not-allowed;
-  opacity: 0.75;
 }
 
-/* Bare inputs (for fallback and fast styling across legacy forms) */
-input:not(.field input),
-select:not(.field select),
-textarea:not(.field textarea) {
-  border: 1px solid var(--clr-border) !important;
-  border-radius: var(--radius-md);
-  padding: 10px 14px;
-  background-color: var(--clr-surface);
-  color: var(--clr-text);
-  outline: none !important;
-  box-shadow: none !important;
-  transition: border-color var(--dur-base) var(--ease);
+.ui-field.is-disabled .ui-label {
+  background-color: transparent;
 }
-input:not(.field input):focus,
-select:not(.field select):focus,
-textarea:not(.field textarea):focus {
-  border-color: var(--clr-green) !important;
+
+.ui-field.is-disabled.has-value .ui-label,
+.ui-field.is-disabled.always-float .ui-label {
+  background-color: var(--clr-surface);
+}
+
+.ui-field.is-readonly input,
+.ui-field.is-readonly textarea {
+  background-color: var(--clr-grey-tint) !important;
+  cursor: default;
+}
+
+/* Custom Select Menu */
+.ui-select-native {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+.ui-select-trigger {
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px !important;
+  box-shadow: none !important;
+}
+
+.ui-select-trigger:hover {
+  box-shadow: none !important;
+}
+
+.ui-select-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--clr-text);
+  font-weight: 400;
+}
+
+.ui-select-value.is-placeholder {
+  color: var(--clr-muted);
+}
+
+.ui-select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background-color: var(--clr-surface);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  z-index: 60;
+  padding: 4px;
+  max-height: 260px;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 150ms var(--ease), transform 150ms var(--ease);
+}
+
+.ui-field.is-select.is-open .ui-select-menu {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ui-select-menu[hidden] {
+  display: none !important;
+}
+
+.ui-select-search-wrap {
+  position: relative;
+  padding: 4px 4px 6px;
+  border-bottom: 1px solid var(--clr-header-tint);
+  margin-bottom: 4px;
+}
+
+.ui-select-search-wrap i {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: var(--clr-muted);
+  pointer-events: none;
+}
+
+.ui-select-search {
+  height: 32px !important;
+  padding: 0 10px 0 30px !important;
+  font-size: 13px !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--clr-border) !important;
+}
+
+.ui-select-options {
+  overflow-y: auto;
+  max-height: 200px;
+}
+
+.ui-select-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: var(--clr-text) !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: none !important;
+  transition: background-color 120ms var(--ease);
+}
+
+.ui-select-option:hover,
+.ui-select-option.is-active {
+  background-color: var(--clr-grey-tint) !important;
+}
+
+.ui-select-option.is-selected {
+  color: var(--clr-green) !important;
+  font-weight: 500 !important;
+}
+
+.ui-select-empty {
+  padding: 10px;
+  font-size: 12px;
+  color: var(--clr-muted);
+  text-align: center;
+}
+
+/* File Dropzone */
+.ui-file-dropzone {
+  position: relative;
+  border: 1px dashed var(--clr-border);
+  border-radius: 10px;
+  background-color: var(--clr-surface);
+  padding: 14px 16px;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: border-color 150ms var(--ease), background-color 150ms var(--ease);
+}
+
+.ui-file-dropzone:hover {
+  border-color: #94A3B8;
+}
+
+.ui-file-dropzone:focus-visible,
+.ui-file-dropzone.is-dragover {
+  border-color: var(--clr-green);
+  outline: none;
+}
+
+.ui-file-native {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+.ui-file-empty,
+.ui-file-selected {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.ui-file-empty[hidden],
+.ui-file-selected[hidden] {
+  display: none !important;
+}
+
+.ui-file-icon {
+  font-size: 18px;
+  color: var(--clr-muted);
+  flex-shrink: 0;
+}
+
+.ui-file-prompt,
+.ui-file-name {
+  font-size: 13px;
+  color: var(--clr-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.ui-file-prompt {
+  color: var(--clr-muted);
+}
+
+.ui-file-clear {
+  background: transparent !important;
+  border: none !important;
+  color: var(--clr-muted) !important;
+  padding: 4px !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  box-shadow: none !important;
+}
+
+.ui-file-clear:hover {
+  background-color: var(--clr-grey-tint) !important;
+  color: var(--clr-red) !important;
+}
+
+/* Checkbox, Radio, Toggle Switch */
+.ui-choice-wrap {
+  margin-bottom: 10px;
+}
+
+.ui-choice-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  min-height: 28px;
+  position: relative;
+  user-select: none;
+}
+
+.ui-choice-wrap.is-disabled .ui-choice-label {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.ui-choice-native {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.ui-check-box,
+.ui-radio-box {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--clr-border);
+  background-color: var(--clr-surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 150ms var(--ease), background-color 150ms var(--ease);
+}
+
+.ui-check-box {
+  border-radius: 4px;
+}
+
+.ui-radio-box {
+  border-radius: 50%;
+}
+
+.ui-check-box i {
+  color: #FFFFFF;
+  font-size: 13px;
+  line-height: 1;
+  transform: scale(0);
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ui-radio-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  transform: scale(0);
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ui-choice-native:checked + .ui-check-box,
+.ui-choice-native:checked + .ui-radio-box {
+  background-color: var(--clr-green);
+  border-color: var(--clr-green);
+}
+
+.ui-choice-native:checked + .ui-check-box i,
+.ui-choice-native:checked + .ui-radio-dot,
+.ui-choice-native:checked + .ui-radio-box .ui-radio-dot {
+  transform: scale(1);
+}
+
+.ui-choice-native:focus-visible + .ui-check-box,
+.ui-choice-native:focus-visible + .ui-radio-box,
+.ui-choice-native:focus-visible + .ui-toggle-track {
+  box-shadow: 0 0 0 1px var(--clr-green);
+  border-color: var(--clr-green);
+}
+
+.ui-toggle-track {
+  width: 34px;
+  height: 18px;
+  border-radius: 9999px;
+  background-color: var(--clr-border);
+  position: relative;
+  flex-shrink: 0;
+  transition: background-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ui-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ui-choice-native:checked + .ui-toggle-track {
+  background-color: var(--clr-green);
+}
+
+.ui-choice-native:checked + .ui-toggle-track .ui-toggle-knob {
+  transform: translateX(16px);
+}
+
+.ui-choice-text {
+  font-family: var(--font-input) !important;
+  font-size: 13px;
+  color: var(--clr-text);
+}
+
+/* Mobile: prevent iOS zoom on focus by keeping input font-size 16px on <768px */
+@media (max-width: 767px) {
+  .ui-field input,
+  .ui-field textarea,
+  .ui-field select,
+  .ui-select-trigger {
+    font-size: 16px !important;
+  }
+  .ui-choice-label {
+    min-height: 40px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .ui-label,
+  .ui-select-chevron,
+  .ui-select-menu,
+  .ui-check-box i,
+  .ui-radio-dot,
+  .ui-toggle-track,
+  .ui-toggle-knob {
+    transition: none !important;
+  }
+  .ui-field.ui-shake {
+    animation: none !important;
+  }
 }
 
 /* ─── 9. Alerts (NO pale green or pink backgrounds) ───────────── */
@@ -1333,36 +1928,6 @@ textarea:not(.field textarea):focus {
 }
 .auth-social-btn.facebook:hover {
   color: #1877F2;
-}
-
-/* Field with prefix icon */
-.field.has-icon input {
-  padding-left: 42px !important;
-}
-
-.field-prefix-icon {
-  position: absolute;
-  left: 14px;
-  top: 15px;
-  color: var(--clr-muted);
-  font-size: 16px;
-  pointer-events: none;
-  z-index: 3;
-  transition: color var(--dur-fast) var(--ease);
-}
-
-.field.has-icon input:focus ~ .field-prefix-icon {
-  color: var(--clr-green);
-}
-
-.field.has-icon label {
-  left: 40px !important;
-}
-
-.field.has-icon input:focus ~ label,
-.field.has-icon input:not(:placeholder-shown) ~ label,
-.field.has-icon.is-floating label {
-  left: 12px !important;
 }
 
 @media (max-width: 900px) {

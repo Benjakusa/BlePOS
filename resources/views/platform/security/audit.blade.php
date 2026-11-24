@@ -9,17 +9,19 @@
         @else
             <p class="error">Audit chain verification failed at entry {{ $integrity['broken_entry_id'] }}.</p>
         @endif
-        <form method="get" class="form">
-            <label>Actor ID<input name="actor_id" type="number" value="{{ $filters['actor_id'] ?? '' }}"></label>
-            <label>Action<input name="action" value="{{ $filters['action'] ?? '' }}"></label>
-            <label>Target type<input name="target_type" value="{{ $filters['target_type'] ?? '' }}"></label>
-            <label>Target ID<input name="target_id" value="{{ $filters['target_id'] ?? '' }}"></label>
-            <label>From<input name="from" type="date" value="{{ $filters['from'] ?? '' }}"></label>
-            <label>To<input name="to" type="date" value="{{ $filters['to'] ?? '' }}"></label>
-            <button type="submit">Filter audit entries</button>
-            @if(auth('platform')->user()->hasPermission('platform.audit.export'))
-                <a href="{{ route('platform.audit.export', request()->query()) }}">Export matching entries as CSV</a>
-            @endif
+        <form method="get" class="form" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end;">
+            <x-input type="number" name="actor_id" label="Actor ID" :value="$filters['actor_id'] ?? ''" />
+            <x-input name="action" label="Action" :value="$filters['action'] ?? ''" />
+            <x-input name="target_type" label="Target type" :value="$filters['target_type'] ?? ''" />
+            <x-input name="target_id" label="Target ID" :value="$filters['target_id'] ?? ''" />
+            <x-input type="date" name="from" label="From" :value="$filters['from'] ?? ''" />
+            <x-input type="date" name="to" label="To" :value="$filters['to'] ?? ''" />
+            <div style="grid-column: 1 / -1; display:flex; gap: 12px; align-items:center;">
+                <button type="submit">Filter audit entries</button>
+                @if(auth('platform')->user()->hasPermission('platform.audit.export'))
+                    <a href="{{ route('platform.audit.export', request()->query()) }}">Export matching entries as CSV</a>
+                @endif
+            </div>
         </form>
     </section>
     <section class="panel" style="overflow-x:auto">

@@ -17,16 +17,22 @@
         @endif
     </div>
 
-    <form method="GET" action="{{ route('platform.templates.index') }}" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 24px;">
+    <form method="GET" action="{{ route('platform.templates.index') }}" style="display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 24px;">
         <div style="flex: 1; min-width: 260px; max-width: 440px;">
-            <input type="text" name="q" value="{{ $searchQuery }}" placeholder="Search templates by name, slug, or description..." style="width: 100%;">
+            <x-input
+                type="search"
+                name="q"
+                label="Search templates by name, slug, or description"
+                :value="$searchQuery"
+                wrapperClass="mb-0"
+            />
         </div>
-        <button type="submit" class="btn btn-secondary">
+        <button type="submit" class="btn btn-secondary" style="height: 40px;">
             <i class="bi bi-search"></i>
             <span>Search</span>
         </button>
         @if($searchQuery)
-            <a href="{{ route('platform.templates.index') }}" class="btn btn-ghost">
+            <a href="{{ route('platform.templates.index') }}" class="btn btn-ghost" style="height: 40px;">
                 <i class="bi bi-x-circle"></i>
                 <span>Clear</span>
             </a>

@@ -17,20 +17,20 @@
         </div>
     </div>
 
-    <form action="{{ route('tenant.pos.sales') }}" method="GET" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 24px;">
-        <div>
-            <select id="status" name="status">
+    <form action="{{ route('tenant.pos.sales') }}" method="GET" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin-bottom: 24px;">
+        <div style="min-width: 160px;">
+            <x-input type="select" name="status" label="Status" :selected="request('status')">
                 <option value="">All Statuses</option>
                 <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
                 <option value="held" {{ request('status') === 'held' ? 'selected' : '' }}>Held</option>
                 <option value="voided" {{ request('status') === 'voided' ? 'selected' : '' }}>Voided</option>
-            </select>
+            </x-input>
         </div>
-        <div>
-            <input type="date" id="date_from" name="date_from" value="{{ request('date_from') }}" title="From Date">
+        <div style="min-width: 160px;">
+            <x-input type="date" name="date_from" label="From Date" :value="request('date_from')" />
         </div>
-        <div>
-            <input type="date" id="date_to" name="date_to" value="{{ request('date_to') }}" title="To Date">
+        <div style="min-width: 160px;">
+            <x-input type="date" name="date_to" label="To Date" :value="request('date_to')" />
         </div>
         <button type="submit" class="btn btn-secondary">
             <i class="bi bi-funnel"></i>

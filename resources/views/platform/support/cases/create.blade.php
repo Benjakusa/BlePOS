@@ -13,94 +13,48 @@
     </div>
 </header>
 
-@if ($errors->any())
-    <div class="notice" style="border-color: #fca5a5; background: #fef2f2; color: #991b1b;" role="alert">
-        <strong>Please check the errors:</strong>
-        <ul style="margin: 8px 0 0; padding-left: 20px;">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
-
 <div class="panel" style="max-width: 680px;">
-    <form method="POST" action="{{ route('platform.support.cases.store') }}" class="form">
+    <form method="POST" action="{{ route('platform.support.cases.store') }}" class="form" style="display: flex; flex-direction: column; gap: 14px;">
         @csrf
 
-        <label>
-            Tenant Organization:
-            <select name="tenant_id" required style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 11px 12px; font: inherit; width: 100%;">
-                <option value="">Select tenant...</option>
-                @foreach($tenants as $tenant)
-                    <option value="{{ $tenant->id }}" @selected(old('tenant_id', $selectedTenantId) == $tenant->id)>
-                        {{ $tenant->name }} ({{ $tenant->slug }})
-                    </option>
-                @endforeach
-            </select>
-        </label>
+        <x-input type="select" name="tenant_id" label="Tenant Organization" required>
+            <option value="">Select tenant...</option>
+            @foreach($tenants as $tenant)
+                <option value="{{ $tenant->id }}" @selected(old('tenant_id', $selectedTenantId) == $tenant->id)>
+                    {{ $tenant->name }} ({{ $tenant->slug }})
+                </option>
+            @endforeach
+        </x-input>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <label>
-                Requester Name:
-                <input type="text" name="requester_name" value="{{ old('requester_name') }}" required>
-            </label>
-            <label>
-                Requester Email:
-                <input type="email" name="requester_email" value="{{ old('requester_email') }}" required>
-            </label>
+            <x-input name="requester_name" label="Requester Name" required placeholder="e.g. Mary Wanjiku" />
+            <x-input type="email" name="requester_email" label="Requester Email" required placeholder="e.g. mary@example.test" />
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <label>
-                Category:
-                <select name="category" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 11px 12px; font: inherit; width: 100%;">
-                    <option value="general">General Inquiry</option>
-                    <option value="billing">Billing & Subscriptions</option>
-                    <option value="hardware_pos">POS Hardware & Printers</option>
-                    <option value="inventory">Inventory & Stock Adjustments</option>
-                    <option value="user_access">User Access & Passwords</option>
-                    <option value="etims_tax">KRA eTIMS Tax Compliance</option>
-                    <option value="system_bug">System Bug / Error</option>
-                </select>
-            </label>
+            <x-input type="select" name="category" label="Category" required>
+                <option value="pos_hardware">POS Hardware / Printing</option>
+                <option value="billing">Billing & Subscriptions</option>
+                <option value="etims_sync">eTIMS Sync / KRA Fiscalisation</option>
+                <option value="account_access">Account Access / MFA</option>
+                <option value="general">General Support</option>
+            </x-input>
 
-            <label>
-                Priority (determines SLA):
-                <select name="priority" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 11px 12px; font: inherit; width: 100%;">
-                    <option value="low">Low (72h SLA)</option>
-                    <option value="medium" selected>Medium (24h SLA)</option>
-                    <option value="high">High (12h SLA)</option>
-                    <option value="urgent">Urgent (4h SLA)</option>
-                </select>
-            </label>
+            <x-input type="select" name="priority" label="Priority" required>
+                <option value="low">Low</option>
+                <option value="normal" selected>Normal</option>
+                <option value="high">High</option>
+                <option value="critical">Critical / Outage</option>
+            </x-input>
         </div>
 
-        <label>
-            Assign Agent (optional):
-            <select name="assigned_agent_id" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 11px 12px; font: inherit; width: 100%;">
-                <option value="">Leave unassigned</option>
-                @foreach($agents as $agent)
-                    <option value="{{ $agent->id }}" @selected(old('assigned_agent_id') == $agent->id)>
-                        {{ $agent->name }} ({{ $agent->email }})
-                    </option>
-                @endforeach
-            </select>
-        </label>
+        <x-input name="subject" label="Subject / Problem Summary" required placeholder="Brief description of the issue" />
 
-        <label>
-            Subject:
-            <input type="text" name="subject" value="{{ old('subject') }}" required placeholder="e.g. Receipt printer failing to cut paper on POS checkout">
-        </label>
+        <x-input type="textarea" name="description" label="Detailed Description / Steps to Reproduce" rows="5" required />
 
-        <label>
-            Issue Description:
-            <textarea name="description" rows="5" required style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 11px 12px; font: inherit; width: 100%;">{{ old('description') }}</textarea>
-        </label>
-
-        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
             <a href="{{ route('platform.support.cases.index') }}" class="btn secondary">Cancel</a>
-            <button type="submit">Open Ticket</button>
+            <button type="submit">Create Support Ticket</button>
         </div>
     </form>
 </div>

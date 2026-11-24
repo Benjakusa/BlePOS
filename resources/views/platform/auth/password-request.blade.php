@@ -9,23 +9,16 @@
 <form method="post" action="{{ route('platform.password.email') }}">
     @csrf
 
-    <div class="ath-field {{ $errors->has('email') ? 'has-error' : '' }}">
-        <label for="email">Email address</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-envelope ath-icon" aria-hidden="true"></i>
-            <input type="email" name="email" id="email"
-                   autocomplete="email"
-                   value="{{ old('email') }}"
-                   placeholder="name@example.com"
-                   required autofocus>
-        </div>
-        @error('email')
-            <div class="ath-field-error">
-                <i class="bi bi-exclamation-circle"></i>
-                <span>{{ $message }}</span>
-            </div>
-        @enderror
-    </div>
+    <x-input
+        type="email"
+        name="email"
+        id="email"
+        label="Email address"
+        leadingIcon="bi-envelope"
+        autocomplete="email"
+        :required="true"
+        :autofocus="true"
+    />
 
     <button type="submit" class="ath-submit">
         <i class="bi bi-send" style="font-size:16px;"></i>

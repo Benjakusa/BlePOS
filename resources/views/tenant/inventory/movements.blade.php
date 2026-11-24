@@ -16,18 +16,16 @@
 
 <div class="panel" style="margin-bottom: 20px;">
     <form action="{{ route('tenant.inventory.movements') }}" method="GET" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
-        <div>
-            <label for="shop_id" style="font-size: 12px;">Shop</label>
-            <select id="shop_id" name="shop_id">
+        <div style="min-width: 180px;">
+            <x-input type="select" name="shop_id" label="Shop" :selected="request('shop_id')">
                 <option value="">All Shops</option>
                 @foreach($shops as $s)
                     <option value="{{ $s->id }}" {{ request('shop_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
                 @endforeach
-            </select>
+            </x-input>
         </div>
-        <div>
-            <label for="type" style="font-size: 12px;">Movement Type</label>
-            <select id="type" name="type">
+        <div style="min-width: 180px;">
+            <x-input type="select" name="type" label="Movement Type" :selected="request('type')">
                 <option value="">All Types</option>
                 <option value="sale" {{ request('type') === 'sale' ? 'selected' : '' }}>Sale</option>
                 <option value="purchase" {{ request('type') === 'purchase' ? 'selected' : '' }}>Purchase / Receive</option>
@@ -36,7 +34,7 @@
                 <option value="waste" {{ request('type') === 'waste' ? 'selected' : '' }}>Waste</option>
                 <option value="return" {{ request('type') === 'return' ? 'selected' : '' }}>Return</option>
                 <option value="void_return" {{ request('type') === 'void_return' ? 'selected' : '' }}>Void Reversal</option>
-            </select>
+            </x-input>
         </div>
         <div>
             <button type="submit" class="btn btn-secondary">Filter</button>

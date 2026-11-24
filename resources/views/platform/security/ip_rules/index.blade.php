@@ -17,16 +17,6 @@
     <div class="notice" role="alert">{{ session('notice') }}</div>
 @endif
 
-@if($errors->any())
-    <div class="error" style="margin-bottom: 16px;">
-        <ul>
-            @foreach($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
-
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
     <div class="panel" style="max-width: none;">
         <h2 style="font-size: 18px; margin-top: 0;">Active & Configured IP Rules</h2>
@@ -47,7 +37,7 @@
                     <tr>
                         <td><code>{{ $rule->ip_or_cidr }}</code></td>
                         <td>
-                            <span class="badge" style="background: {{ $rule->rule_type === 'denylist' ? '#fee2e2' : '#dcfce7' }}; color: {{ $rule->rule_type === 'denylist' ? '#991b1b' : '#166534' }}; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
+                            <span class="badge" style="background: #EAEEF3; color: {{ $rule->rule_type === 'denylist' ? '#DC2626' : '#16A34A' }}; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
                                 {{ strtoupper($rule->rule_type) }}
                             </span>
                         </td>
@@ -58,7 +48,7 @@
                             @if($rule->isExpired())
                                 <span class="muted">[Expired]</span>
                             @else
-                                <span style="color: {{ $rule->is_active ? '#15803d' : '#9ca3af' }}; font-weight: 600;">
+                                <span style="color: {{ $rule->is_active ? '#16A34A' : '#64748B' }}; font-weight: 600;">
                                     {{ $rule->is_active ? 'Active' : 'Disabled' }}
                                 </span>
                             @endif
@@ -67,14 +57,14 @@
                             <div style="display: flex; gap: 6px;">
                                 <form method="POST" action="{{ route('platform.security.ip-rules.toggle', $rule) }}" style="display: inline;">
                                     @csrf
-                                    <button type="submit" class="btn secondary" style="padding: 2px 6px; font-size: 12px; color: #146b4d;">
+                                    <button type="submit" class="btn secondary" style="padding: 2px 6px; font-size: 12px; color: #16A34A;">
                                         {{ $rule->is_active ? 'Disable' : 'Enable' }}
                                     </button>
                                 </form>
                                 <form method="POST" action="{{ route('platform.security.ip-rules.destroy', $rule) }}" style="display: inline;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn secondary" style="padding: 2px 6px; font-size: 12px; color: #b91c1c;">
+                                    <button type="submit" class="btn secondary" style="padding: 2px 6px; font-size: 12px; color: #DC2626;">
                                         Delete
                                     </button>
                                 </form>
@@ -94,30 +84,20 @@
     <div>
         <div class="panel" style="max-width: none;">
             <h3 style="font-size: 16px; margin-top: 0;">Add Dynamic IP Rule</h3>
-            <form method="POST" action="{{ route('platform.security.ip-rules.store') }}" style="display: grid; gap: 12px;">
+            <form method="POST" action="{{ route('platform.security.ip-rules.store') }}" style="display: flex; flex-direction: column; gap: 12px;">
                 @csrf
-                <label style="font-size: 13px;">IP or CIDR Network
-                    <input name="ip_or_cidr" required placeholder="e.g. 198.51.100.5 or 10.0.0.0/8" value="{{ old('ip_or_cidr') }}">
-                </label>
-                <label style="font-size: 13px;">Rule Type
-                    <select name="rule_type" required style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 8px 10px; font: inherit;">
-                        <option value="denylist" @selected(old('rule_type') === 'denylist')>Denylist (Block traffic)</option>
-                        <option value="allowlist" @selected(old('rule_type') === 'allowlist')>Allowlist (Permit access)</option>
-                    </select>
-                </label>
-                <label style="font-size: 13px;">Enforcement Scope
-                    <select name="scope" required style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 8px 10px; font: inherit;">
-                        <option value="global" @selected(old('scope') === 'global')>Global (Platform & API)</option>
-                        <option value="platform_console" @selected(old('scope') === 'platform_console')>Platform Console Only</option>
-                        <option value="tenant_api" @selected(old('scope') === 'tenant_api')>Tenant APIs Only</option>
-                    </select>
-                </label>
-                <label style="font-size: 13px;">Duration (Minutes)
-                    <input type="number" name="duration_minutes" placeholder="Leave empty for permanent rule" value="{{ old('duration_minutes') }}">
-                </label>
-                <label style="font-size: 13px;">Justification / Reason
-                    <textarea name="reason" rows="2" required style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 8px 10px; font: inherit;" placeholder="Reason for rule...">{{ old('reason') }}</textarea>
-                </label>
+                <x-input name="ip_or_cidr" label="IP or CIDR Network" required placeholder="e.g. 198.51.100.5 or 10.0.0.0/8" />
+                <x-input type="select" name="rule_type" label="Rule Type" required>
+                    <option value="denylist" @selected(old('rule_type') === 'denylist')>Denylist (Block traffic)</option>
+                    <option value="allowlist" @selected(old('rule_type') === 'allowlist')>Allowlist (Permit access)</option>
+                </x-input>
+                <x-input type="select" name="scope" label="Enforcement Scope" required>
+                    <option value="global" @selected(old('scope') === 'global')>Global (Platform & API)</option>
+                    <option value="platform_console" @selected(old('scope') === 'platform_console')>Platform Console Only</option>
+                    <option value="tenant_api" @selected(old('scope') === 'tenant_api')>Tenant APIs Only</option>
+                </x-input>
+                <x-input type="number" name="duration_minutes" label="Duration (Minutes)" placeholder="Leave empty for permanent rule" />
+                <x-input type="textarea" name="reason" label="Justification / Reason" rows="2" required placeholder="Reason for rule..." />
                 <div>
                     <button type="submit" style="width: 100%;">Create Rule</button>
                 </div>

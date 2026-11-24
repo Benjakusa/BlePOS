@@ -25,23 +25,20 @@
         </div>
     </div>
 
-    <form action="{{ route('tenant.inventory.index') }}" method="GET" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 24px;">
+    <form action="{{ route('tenant.inventory.index') }}" method="GET" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin-bottom: 24px;">
         <div style="flex: 1; min-width: 220px; max-width: 360px;">
-            <input type="text" id="q" name="q" value="{{ request('q') }}" placeholder="Search by name, SKU, or barcode..." style="width: 100%;">
+            <x-input type="search" name="q" label="Search by name, SKU, or barcode..." :value="request('q')" />
         </div>
-        <div>
-            <select id="shop_id" name="shop_id">
+        <div style="min-width: 180px;">
+            <x-input type="select" name="shop_id" label="Shop Location" :selected="request('shop_id')">
                 <option value="">All Shop Locations</option>
                 @foreach($shops as $s)
                     <option value="{{ $s->id }}" {{ request('shop_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
                 @endforeach
-            </select>
+            </x-input>
         </div>
-        <div style="display: flex; align-items: center;">
-            <label style="display: flex; align-items: center; gap: 6px; font-weight: normal; cursor: pointer;">
-                <input type="checkbox" name="low_stock" value="1" {{ request('low_stock') ? 'checked' : '' }} style="width: auto;">
-                <span>Low stock only</span>
-            </label>
+        <div style="display: flex; align-items: center; padding-bottom: 8px;">
+            <x-input type="checkbox" name="low_stock" value="1" :checked="(bool) request('low_stock')" label="Low stock only" />
         </div>
         <button type="submit" class="btn btn-secondary">
             <i class="bi bi-funnel"></i>

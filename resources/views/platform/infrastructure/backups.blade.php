@@ -46,7 +46,7 @@
                             <span class="badge" style="background: #e0f2fe; color: #0369a1;">AES-256</span>
                         </td>
                         <td style="text-align: center; padding: 8px;">
-                            <span class="badge" style="background: #dcfce7; color: #166534;">{{ strtoupper($backup->status) }}</span>
+                            <span class="badge" style="background: #EAEEF3; color: #16A34A;">{{ strtoupper($backup->status) }}</span>
                         </td>
                     </tr>
                 @empty
@@ -64,29 +64,23 @@
 
     <div class="panel">
         <h3>Trigger Manual Backup</h3>
-        <form method="POST" action="{{ route('platform.infrastructure.backups.trigger') }}" class="form" style="margin-top: 12px;">
+        <form method="POST" action="{{ route('platform.infrastructure.backups.trigger') }}" class="form" style="margin-top: 12px; display: flex; flex-direction: column; gap: 12px;">
             @csrf
-            <label>
-                Backup Scope / Type:
-                <select name="backup_type" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 10px 12px; font: inherit; width: 100%;">
-                    <option value="database">Central Database Snapshot</option>
-                    <option value="tenant_database">Tenant Database Snapshot</option>
-                    <option value="files">Platform Storage & Files</option>
-                    <option value="full_system">Full System Disaster Recovery Snapshot</option>
-                </select>
-            </label>
+            <x-input type="select" name="backup_type" label="Backup Scope / Type">
+                <option value="database">Central Database Snapshot</option>
+                <option value="tenant_database">Tenant Database Snapshot</option>
+                <option value="files">Platform Storage & Files</option>
+                <option value="full_system">Full System Disaster Recovery Snapshot</option>
+            </x-input>
 
-            <label>
-                Specific Tenant (if tenant scope):
-                <select name="tenant_id" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 10px 12px; font: inherit; width: 100%;">
-                    <option value="">None (Platform-wide)</option>
-                    @foreach($tenants as $t)
-                        <option value="{{ $t->id }}">{{ $t->name }} ({{ $t->slug }})</option>
-                    @endforeach
-                </select>
-            </label>
+            <x-input type="select" name="tenant_id" label="Specific Tenant (if tenant scope)">
+                <option value="">None (Platform-wide)</option>
+                @foreach($tenants as $t)
+                    <option value="{{ $t->id }}">{{ $t->name }} ({{ $t->slug }})</option>
+                @endforeach
+            </x-input>
 
-            <button type="submit" style="margin-top: 12px;">Start Backup Run</button>
+            <button type="submit" style="margin-top: 4px;">Start Backup Run</button>
         </form>
     </div>
 </div>

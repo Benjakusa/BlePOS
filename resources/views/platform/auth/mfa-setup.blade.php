@@ -24,25 +24,19 @@
 <form method="post" action="{{ route('platform.mfa.setup.confirm') }}">
     @csrf
 
-    <div class="ath-field {{ $errors->has('code') ? 'has-error' : '' }}">
-        <label for="code">6-digit Authenticator Code</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-shield-lock ath-icon" aria-hidden="true"></i>
-            <input name="code" id="code"
-                   inputmode="numeric"
-                   autocomplete="one-time-code"
-                   pattern="[0-9]{6}"
-                   maxlength="6"
-                   placeholder="123456"
-                   required autofocus>
-        </div>
-        @error('code')
-            <div class="ath-field-error">
-                <i class="bi bi-exclamation-circle"></i>
-                <span>{{ $message }}</span>
-            </div>
-        @enderror
-    </div>
+    <x-input
+        type="text"
+        name="code"
+        id="code"
+        label="6-digit Authenticator Code"
+        leadingIcon="bi-shield-lock"
+        inputmode="numeric"
+        autocomplete="one-time-code"
+        pattern="[0-9]{6}"
+        maxlength="6"
+        :required="true"
+        :autofocus="true"
+    />
 
     <button type="submit" class="ath-submit">
         <i class="bi bi-check-lg" style="font-size:17px;"></i>

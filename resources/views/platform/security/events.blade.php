@@ -1,6 +1,3 @@
-<div>
-    <!-- Simplicity is the consequence of refined emotions. - Jean D'Alembert -->
-</div>
 @extends('platform.layout')
 
 @section('title', 'Security events')
@@ -8,17 +5,17 @@
 @section('content')
     <section class="panel" style="max-width:none; margin-bottom:18px">
         <form method="get" action="{{ route('platform.security.events.index') }}" style="display:flex; gap:12px; align-items:end; flex-wrap:wrap">
-            <label style="min-width:220px">Event, account or IP
-                <input name="search" value="{{ $filters['search'] ?? '' }}" maxlength="120">
-            </label>
-            <label>Severity
-                <select name="severity" style="border:1px solid #b9c9bf; border-radius:5px; padding:11px 12px; font:inherit">
+            <div style="min-width:240px">
+                <x-input name="search" label="Event, account or IP" :value="$filters['search'] ?? ''" maxlength="120" />
+            </div>
+            <div style="min-width:180px">
+                <x-input type="select" name="severity" label="Severity" :selected="$filters['severity'] ?? ''">
                     <option value="">All severities</option>
                     @foreach(['info' => 'Info', 'warning' => 'Warning', 'critical' => 'Critical'] as $value => $label)
                         <option value="{{ $value }}" @selected(($filters['severity'] ?? '') === $value)>{{ $label }}</option>
                     @endforeach
-                </select>
-            </label>
+                </x-input>
+            </div>
             <button type="submit">Filter</button>
             @if(($filters['search'] ?? null) || ($filters['severity'] ?? null))
                 <a href="{{ route('platform.security.events.index') }}">Clear filters</a>

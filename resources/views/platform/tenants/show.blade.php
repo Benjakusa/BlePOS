@@ -170,25 +170,31 @@
     @if(auth('platform')->user()->hasPermission('platform.billing.subscriptions.manage'))
         <div style="border-top: 1px solid #e2e8f0; padding-top: 14px;">
             <h4 style="margin: 0 0 10px; font-size: 14px;">{{ $subscription ? 'Change Subscription Plan' : 'Assign Subscription Plan' }}</h4>
-            <form action="{{ route('platform.tenants.subscription.assign', $tenant) }}" method="POST" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <form action="{{ route('platform.tenants.subscription.assign', $tenant) }}" method="POST" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start;">
                 @csrf
-                <select name="plan_id" required style="width: auto; min-width: 180px;">
-                    <option value="">— Select Plan —</option>
-                    @foreach($availablePlans as $p)
-                        <option value="{{ $p->id }}" {{ ($subscription && $subscription->plan_id == $p->id) ? 'selected' : '' }}>
-                            {{ $p->name }} ({{ $p->currency }} {{ number_format((float) $p->monthly_price, 2) }}/mo)
-                        </option>
-                    @endforeach
-                </select>
-                <select name="billing_cycle" required style="width: auto;">
-                    <option value="monthly" {{ ($subscription && $subscription->billing_cycle === 'monthly') ? 'selected' : '' }}>Monthly</option>
-                    <option value="annual" {{ ($subscription && $subscription->billing_cycle === 'annual') ? 'selected' : '' }}>Annual</option>
-                </select>
-                <select name="status" required style="width: auto;">
-                    <option value="trial" {{ ($subscription && $subscription->status === 'trial') ? 'selected' : '' }}>Trial</option>
-                    <option value="active" {{ ($subscription && $subscription->status === 'active') ? 'selected' : '' }}>Active</option>
-                </select>
-                <button type="submit" class="btn btn-secondary btn-sm">{{ $subscription ? 'Update Plan' : 'Assign Plan' }}</button>
+                <div style="min-width: 220px;">
+                    <x-input type="select" name="plan_id" label="Plan" :required="true">
+                        <option value="">— Select Plan —</option>
+                        @foreach($availablePlans as $p)
+                            <option value="{{ $p->id }}" {{ ($subscription && $subscription->plan_id == $p->id) ? 'selected' : '' }}>
+                                {{ $p->name }} ({{ $p->currency }} {{ number_format((float) $p->monthly_price, 2) }}/mo)
+                            </option>
+                        @endforeach
+                    </x-input>
+                </div>
+                <div style="min-width: 140px;">
+                    <x-input type="select" name="billing_cycle" label="Billing Cycle" :required="true">
+                        <option value="monthly" {{ ($subscription && $subscription->billing_cycle === 'monthly') ? 'selected' : '' }}>Monthly</option>
+                        <option value="annual" {{ ($subscription && $subscription->billing_cycle === 'annual') ? 'selected' : '' }}>Annual</option>
+                    </x-input>
+                </div>
+                <div style="min-width: 130px;">
+                    <x-input type="select" name="status" label="Status" :required="true">
+                        <option value="trial" {{ ($subscription && $subscription->status === 'trial') ? 'selected' : '' }}>Trial</option>
+                        <option value="active" {{ ($subscription && $subscription->status === 'active') ? 'selected' : '' }}>Active</option>
+                    </x-input>
+                </div>
+                <button type="submit" class="btn btn-secondary" style="height: 40px;">{{ $subscription ? 'Update Plan' : 'Assign Plan' }}</button>
             </form>
         </div>
     @endif
@@ -203,19 +209,18 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ route('platform.tenants.templates.apply', $tenant) }}" id="tenant-apply-blueprint-form" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+        <form method="POST" action="{{ route('platform.tenants.templates.apply', $tenant) }}" id="tenant-apply-blueprint-form" style="display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap;">
             @csrf
             <div style="flex: 1; min-width: 260px;">
-                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Select Blueprint to Apply</label>
-                <select name="template_id" id="blueprint-select" required style="width: 100%;">
+                <x-input type="select" name="template_id" id="blueprint-select" label="Select Blueprint to Apply" :required="true">
                     <option value="">— Choose Industry Blueprint —</option>
                     @foreach($industryTemplates as $t)
                         <option value="{{ $t->id }}">{{ $t->name }} ({{ count($t->default_modules ?? []) }} modules)</option>
                     @endforeach
-                </select>
+                </x-input>
             </div>
             <div>
-                <button type="submit" class="btn btn-sm" id="btn-apply-tenant-bp" disabled>Apply Blueprint</button>
+                <button type="submit" class="btn btn-primary" id="btn-apply-tenant-bp" disabled style="height: 40px;">Apply Blueprint</button>
             </div>
         </form>
 

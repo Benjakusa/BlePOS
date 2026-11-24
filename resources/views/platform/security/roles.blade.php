@@ -7,15 +7,23 @@
         <h2>Create custom role</h2>
         <form class="form" method="post" action="{{ route('platform.roles.store') }}">
             @csrf
-            <label>Name<input name="name" maxlength="120" required></label>
-            <label>Description<input name="description" maxlength="1000" required></label>
-            <label>Reason<input name="reason" minlength="8" maxlength="1000" required></label>
-            <label>Search permissions<input type="search" data-permission-search placeholder="Filter permissions"></label>
+            <x-input name="name" label="Name" maxlength="120" required />
+            <x-input name="description" label="Description" maxlength="1000" required />
+            <x-input name="reason" label="Reason" minlength="8" maxlength="1000" required />
+            <x-input type="search" name="permission_search_new" label="Search permissions" data-permission-search />
             <fieldset><legend>Permission grants</legend>
                 @foreach($permissionsByArea as $area => $permissions)
                     <fieldset><legend>{{ ucfirst($area) }}</legend>
                     @foreach($permissions as $permission)
-                        <label data-permission-label data-permission-name="{{ $permission->name }}" style="display:inline-flex;margin:5px 12px 5px 0;font-weight:400"><input type="checkbox" name="permission_ids[]" value="{{ $permission->id }}" data-initial="0"> {{ $permission->name }}</label>
+                        <div data-permission-label data-permission-name="{{ $permission->name }}" style="display:inline-block;margin:5px 12px 5px 0;">
+                            <div class="ui-choice-wrap" data-ui-input="checkbox">
+                                <label class="ui-choice-label" for="perm_new_{{ $permission->id }}">
+                                    <input type="checkbox" id="perm_new_{{ $permission->id }}" name="permission_ids[]" value="{{ $permission->id }}" data-initial="0" class="ui-choice-native">
+                                    <span class="ui-check-box" aria-hidden="true"><i class="bi bi-check"></i></span>
+                                    <span class="ui-choice-text">{{ $permission->name }}</span>
+                                </label>
+                            </div>
+                        </div>
                     @endforeach
                     </fieldset>
                 @endforeach
@@ -34,16 +42,24 @@
             @else
                 <form class="form" method="post" action="{{ route('platform.roles.update', $role) }}">
                     @csrf @method('PUT')
-                    <label>Name<input name="name" value="{{ $role->name }}" required></label>
-                    <label>Description<input name="description" value="{{ $role->description }}" required></label>
-                    <label>Reason<input name="reason" minlength="8" required></label>
-                    <label>Search permissions<input type="search" data-permission-search placeholder="Filter permissions"></label>
+                    <x-input name="name" label="Name" :value="$role->name" required />
+                    <x-input name="description" label="Description" :value="$role->description" required />
+                    <x-input name="reason" label="Reason" minlength="8" required />
+                    <x-input type="search" name="permission_search_{{ $role->id }}" label="Search permissions" data-permission-search />
                     <fieldset><legend>Permission changes</legend>
                         @foreach($permissionsByArea as $area => $permissions)
                             <fieldset><legend>{{ ucfirst($area) }}</legend>
                             @foreach($permissions as $permission)
                                 @php($isAssigned = $role->permissions->contains('id', $permission->id))
-                                <label data-permission-label data-permission-name="{{ $permission->name }}" style="display:inline-flex;margin:5px 12px 5px 0;font-weight:400"><input type="checkbox" name="permission_ids[]" value="{{ $permission->id }}" data-initial="{{ $isAssigned ? '1' : '0' }}" @checked($isAssigned)> {{ $permission->name }}</label>
+                                <div data-permission-label data-permission-name="{{ $permission->name }}" style="display:inline-block;margin:5px 12px 5px 0;">
+                                    <div class="ui-choice-wrap" data-ui-input="checkbox">
+                                        <label class="ui-choice-label" for="perm_{{ $role->id }}_{{ $permission->id }}">
+                                            <input type="checkbox" id="perm_{{ $role->id }}_{{ $permission->id }}" name="permission_ids[]" value="{{ $permission->id }}" data-initial="{{ $isAssigned ? '1' : '0' }}" @checked($isAssigned) class="ui-choice-native">
+                                            <span class="ui-check-box" aria-hidden="true"><i class="bi bi-check"></i></span>
+                                            <span class="ui-choice-text">{{ $permission->name }}</span>
+                                        </label>
+                                    </div>
+                                </div>
                             @endforeach
                             </fieldset>
                         @endforeach
@@ -52,8 +68,9 @@
                     <button type="submit">Save permission changes</button>
                 </form>
                 @if($role->users()->doesntExist())
-                    <form method="post" action="{{ route('platform.roles.destroy', $role) }}" style="margin-top:12px">
-                        @csrf @method('DELETE') <input name="reason" placeholder="Reason for deletion" minlength="8" required>
+                    <form method="post" action="{{ route('platform.roles.destroy', $role) }}" style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+                        @csrf @method('DELETE')
+                        <x-input name="reason" label="Reason for deletion" minlength="8" required :compact="true" />
                         <button type="submit">Delete custom role</button>
                     </form>
                 @endif
@@ -71,8 +88,8 @@
 
             if (diff && checkboxes.length) {
                 const refreshDiff = () => {
-                    const added = checkboxes.filter((input) => input.dataset.initial === '0' && input.checked).map((input) => input.closest('label').dataset.permissionName);
-                    const removed = checkboxes.filter((input) => input.dataset.initial === '1' && !input.checked).map((input) => input.closest('label').dataset.permissionName);
+                    const added = checkboxes.filter((input) => input.dataset.initial === '0' && input.checked).map((input) => input.closest('[data-permission-name]').dataset.permissionName);
+                    const removed = checkboxes.filter((input) => input.dataset.initial === '1' && !input.checked).map((input) => input.closest('[data-permission-name]').dataset.permissionName);
                     const parts = [];
                     if (added.length) parts.push(`Grant: ${added.join(', ')}`);
                     if (removed.length) parts.push(`Remove: ${removed.join(', ')}`);

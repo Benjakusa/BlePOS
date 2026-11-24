@@ -8,7 +8,7 @@
     .pos-main { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
     .pos-cart { flex: 1; overflow-y: auto; background: var(--clr-surface); border-radius: var(--radius-card); box-shadow: var(--shadow-sm); }
     .pos-summary { background: var(--clr-surface); border-radius: var(--radius-card); box-shadow: var(--shadow-sm); padding: 24px; display: flex; flex-direction: column; justify-content: space-between; }
-    .scanner-box { display: flex; gap: 12px; background: var(--clr-surface); padding: 14px; border-radius: var(--radius-card); box-shadow: var(--shadow-sm); }
+    .scanner-box { display: flex; gap: 12px; background: var(--clr-surface); padding: 14px; border-radius: var(--radius-card); box-shadow: var(--shadow-sm); align-items: flex-end; }
     .totals-line { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
     .totals-grand { font-size: 24px; font-weight: 700; color: var(--clr-green); border-top: 2px dashed var(--clr-border); padding-top: 14px; margin-top: 12px; }
     .qty-btn { width: 30px; height: 30px; border: 1px solid var(--clr-border); background: var(--clr-grey-tint); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
@@ -40,9 +40,9 @@
 
         <div class="scanner-box">
             <div style="flex: 1;">
-                <input type="text" id="barcode-input" placeholder="Scan barcode or type SKU / product name and press Enter..." autofocus autocomplete="off" style="width: 100%; font-size: 15px; padding: 12px 14px;">
+                <x-input id="barcode-input" name="barcode" label="Scan barcode or type SKU / product name and press Enter..." autofocus autocomplete="off" leadingIcon="bi-upc-scan" />
             </div>
-            <button type="button" id="lookup-btn" class="btn btn-primary">
+            <button type="button" id="lookup-btn" class="btn btn-primary" style="height: 40px;">
                 <i class="bi bi-plus-lg"></i>
                 <span>Add to Cart</span>
             </button>
@@ -78,13 +78,12 @@
         <div>
             <h2 class="section-title" style="margin-bottom: 16px; border-bottom: 1px solid var(--clr-header-tint); padding-bottom: 10px;">Order Summary</h2>
             
-            <div class="field" style="margin-bottom: 16px;">
-                <select id="register-select">
+            <div style="margin-bottom: 16px;">
+                <x-input type="select" id="register-select" name="register_id" label="Register / Terminal">
                     @foreach($registers as $reg)
                         <option value="{{ $reg->id }}" {{ $openShift->register_id == $reg->id ? 'selected' : '' }}>{{ $reg->name }} ({{ $reg->code }})</option>
                     @endforeach
-                </select>
-                <label for="register-select">Register / Terminal</label>
+                </x-input>
             </div>
 
             <div class="totals-line">
@@ -134,23 +133,20 @@
         </div>
 
         <div style="display: grid; gap: 16px; margin-bottom: 20px;">
-            <div class="field">
-                <select id="payment-method">
+            <div>
+                <x-input type="select" id="payment-method" name="payment_method" label="Payment Method">
                     <option value="cash">Cash Tender</option>
                     <option value="mpesa">M-Pesa Express / STK</option>
                     <option value="card">Card / Electronic POS</option>
-                </select>
-                <label for="payment-method">Payment Method</label>
+                </x-input>
             </div>
 
-            <div class="field">
-                <input type="number" step="0.01" id="tender-amount" value="0.00" placeholder=" ">
-                <label for="tender-amount">Amount Tendered (KES)</label>
+            <div>
+                <x-input type="number" step="0.01" id="tender-amount" name="tender_amount" value="0.00" label="Amount Tendered (KES)" />
             </div>
 
-            <div id="ref-field" class="field" style="display: none;">
-                <input type="text" id="tender-ref" placeholder=" ">
-                <label for="tender-ref">M-Pesa / Card Reference Code</label>
+            <div id="ref-field" style="display: none;">
+                <x-input id="tender-ref" name="tender_ref" label="M-Pesa / Card Reference Code" />
             </div>
 
             <div class="totals-line" id="change-line" style="display: flex; padding: 10px 14px; background: var(--clr-grey-tint); border-radius: var(--radius-md);">
@@ -198,11 +194,14 @@
             if (data.found) {
                 addToCart(data.product);
                 barcodeInput.value = '';
+                barcodeInput.dispatchEvent(new Event('input', { bubbles: true }));
             } else {
                 alert(`Product not found for: ${query}`);
             }
         } catch (e) {
             alert('Lookup failed.');
+        } finally {
+            barcodeInput.focus();
         }
     }
 
@@ -231,11 +230,13 @@
             cart = cart.filter(i => i.id !== id);
         }
         renderCart();
+        barcodeInput?.focus();
     }
 
     function removeItem(id) {
         cart = cart.filter(i => i.id !== id);
         renderCart();
+        barcodeInput?.focus();
     }
 
     function calculateTotals() {
@@ -314,16 +315,24 @@
         if (cart.length > 0 && confirm('Clear entire cart?')) {
             cart = [];
             renderCart();
+            barcodeInput.focus();
         }
+    });
+
+    // Select all on focus for tenderAmount
+    tenderAmount.addEventListener('focus', () => {
+        tenderAmount.select();
     });
 
     payBtn.addEventListener('click', () => {
         const totals = calculateTotals();
         modalDue.textContent = `KES ${totals.grand.toFixed(2)}`;
         tenderAmount.value = totals.grand.toFixed(2);
+        tenderAmount.dispatchEvent(new Event('input', { bubbles: true }));
         modalChange.textContent = 'KES 0.00';
         modal.style.display = 'flex';
         tenderAmount.focus();
+        tenderAmount.select();
     });
 
     paymentMethod.addEventListener('change', () => {
@@ -339,6 +348,7 @@
 
     cancelPayBtn.addEventListener('click', () => {
         modal.style.display = 'none';
+        barcodeInput.focus();
     });
 
     submitSaleBtn.addEventListener('click', async () => {

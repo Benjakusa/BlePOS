@@ -17,24 +17,24 @@
         </div>
     </div>
 
-    <form action="{{ route('tenant.products.index') }}" method="GET" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 24px;">
+    <form action="{{ route('tenant.products.index') }}" method="GET" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin-bottom: 24px;">
         <div style="flex: 1; min-width: 220px; max-width: 360px;">
-            <input type="text" id="q" name="q" value="{{ request('q') }}" placeholder="Search by name, SKU, or barcode..." style="width: 100%;">
+            <x-input type="search" name="q" label="Search by name, SKU, or barcode..." :value="request('q')" />
         </div>
-        <div>
-            <select id="category_id" name="category_id">
+        <div style="min-width: 180px;">
+            <x-input type="select" name="category_id" label="Category" :selected="request('category_id')">
                 <option value="">All Categories</option>
                 @foreach($categories as $cat)
                     <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                 @endforeach
-            </select>
+            </x-input>
         </div>
-        <div>
-            <select id="status" name="status">
+        <div style="min-width: 150px;">
+            <x-input type="select" name="status" label="Status" :selected="request('status')">
                 <option value="">All Statuses</option>
                 <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
                 <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
-            </select>
+            </x-input>
         </div>
         <button type="submit" class="btn btn-secondary">
             <i class="bi bi-funnel"></i>

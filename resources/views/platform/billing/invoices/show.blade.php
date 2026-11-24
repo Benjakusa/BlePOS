@@ -25,7 +25,7 @@
 @endif
 
 @if ($errors->any())
-    <div class="notice" style="border-color: #fca5a5; background: #fef2f2; color: #991b1b;" role="alert">
+    <div class="notice" style="border-color: #DC2626; background: #EAEEF3; color: #991b1b;" role="alert">
         <strong>Please check the errors:</strong>
         <ul style="margin: 8px 0 0; padding-left: 20px;">
             @foreach ($errors->all() as $error)
@@ -165,32 +165,20 @@
         @if($invoice->amount_due > 0 && !in_array($invoice->status, ['voided', 'cancelled'], true) && auth('platform')->user()->hasPermission('platform.billing.subscriptions.manage'))
             <div class="panel">
                 <h3>Record Payment</h3>
-                <form method="POST" action="{{ route('platform.invoices.payment', $invoice) }}" class="form" style="margin-top: 12px;">
+                <form method="POST" action="{{ route('platform.invoices.payment', $invoice) }}" class="form" style="margin-top: 12px; display: flex; flex-direction: column; gap: 12px;">
                     @csrf
-                    <label>
-                        Amount ({{ $invoice->currency }}):
-                        <input type="number" step="0.01" min="0.01" max="{{ $invoice->amount_due }}" name="amount" value="{{ $invoice->amount_due }}" required>
-                    </label>
+                    <x-input type="number" step="0.01" min="0.01" :max="$invoice->amount_due" name="amount" :label="'Amount (' . $invoice->currency . ')'" :value="$invoice->amount_due" required />
 
-                    <label>
-                        Payment Method:
-                        <select name="payment_method" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 11px 12px; font: inherit; width: 100%;">
-                            <option value="bank_transfer">Bank Transfer (EFT/RTGS)</option>
-                            <option value="mpesa">M-Pesa Express / Paybill</option>
-                            <option value="card">Card (Visa/Mastercard)</option>
-                            <option value="manual">Manual / Offline Entry</option>
-                        </select>
-                    </label>
+                    <x-input type="select" name="payment_method" label="Payment Method">
+                        <option value="bank_transfer">Bank Transfer (EFT/RTGS)</option>
+                        <option value="mpesa">M-Pesa Express / Paybill</option>
+                        <option value="card">Card (Visa/Mastercard)</option>
+                        <option value="manual">Manual / Offline Entry</option>
+                    </x-input>
 
-                    <label>
-                        Gateway / Transaction Ref:
-                        <input type="text" name="gateway_reference" placeholder="e.g. QED9876543">
-                    </label>
+                    <x-input name="gateway_reference" label="Gateway / Transaction Ref" placeholder="e.g. QED9876543" />
 
-                    <label>
-                        Notes:
-                        <textarea name="notes" rows="2" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 11px 12px; font: inherit; width: 100%;"></textarea>
-                    </label>
+                    <x-input type="textarea" name="notes" label="Notes" rows="2" />
 
                     <button type="submit" style="margin-top: 8px;">Record Payment</button>
                 </form>

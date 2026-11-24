@@ -19,7 +19,7 @@
 @endif
 
 @if ($errors->any())
-    <div class="notice" style="border-color: #fca5a5; background: #fef2f2; color: #991b1b;" role="alert">
+    <div class="notice" style="border-color: #DC2626; background: #EAEEF3; color: #991b1b;" role="alert">
         <strong>Please check the errors:</strong>
         <ul style="margin: 8px 0 0; padding-left: 20px;">
             @foreach ($errors->all() as $error)
@@ -56,7 +56,7 @@
                         <td style="padding: 8px;"><code>{{ $restore->backupRun->filename }}</code></td>
                         <td style="padding: 8px;">{{ $restore->requester->name }}</td>
                         <td style="text-align: center; padding: 8px;">
-                            <span class="badge" style="background: {{ $restore->status === 'production_completed' ? '#dcfce7' : '#fef3c7' }}; color: {{ $restore->status === 'production_completed' ? '#166534' : '#92400e' }};">
+                            <span class="badge" style="background: #EAEEF3; color: {{ $restore->status === 'production_completed' ? '#16A34A' : '#B45309' }};">
                                 {{ strtoupper(str_replace('_', ' ', $restore->status)) }}
                             </span>
                         </td>
@@ -86,34 +86,25 @@
 
     <div class="panel">
         <h3>Initiate Tenant Restore</h3>
-        <form method="POST" action="{{ route('platform.infrastructure.restores.store') }}" class="form" style="margin-top: 12px;">
+        <form method="POST" action="{{ route('platform.infrastructure.restores.store') }}" class="form" style="margin-top: 12px; display: flex; flex-direction: column; gap: 12px;">
             @csrf
-            <label>
-                Target Tenant:
-                <select name="tenant_id" required style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 10px 12px; font: inherit; width: 100%;">
-                    <option value="">Select tenant...</option>
-                    @foreach($tenants as $t)
-                        <option value="{{ $t->id }}">{{ $t->name }} ({{ $t->slug }})</option>
-                    @endforeach
-                </select>
-            </label>
+            <x-input type="select" name="tenant_id" label="Target Tenant" required>
+                <option value="">Select tenant...</option>
+                @foreach($tenants as $t)
+                    <option value="{{ $t->id }}">{{ $t->name }} ({{ $t->slug }})</option>
+                @endforeach
+            </x-input>
 
-            <label>
-                Restore Snapshot / Point:
-                <select name="platform_backup_run_id" required style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 10px 12px; font: inherit; width: 100%;">
-                    <option value="">Select backup run...</option>
-                    @foreach($backups as $b)
-                        <option value="{{ $b->id }}">{{ $b->filename }} ({{ $b->created_at->format('Y-m-d H:i') }})</option>
-                    @endforeach
-                </select>
-            </label>
+            <x-input type="select" name="platform_backup_run_id" label="Restore Snapshot / Point" required>
+                <option value="">Select backup run...</option>
+                @foreach($backups as $b)
+                    <option value="{{ $b->id }}">{{ $b->filename }} ({{ $b->created_at->format('Y-m-d H:i') }})</option>
+                @endforeach
+            </x-input>
 
-            <label>
-                Business Justification / Reason:
-                <textarea name="reason" rows="3" required placeholder="State incident ticket or data corruption cause..." style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 10px 12px; font: inherit; width: 100%;"></textarea>
-            </label>
+            <x-input type="textarea" name="reason" label="Business Justification / Reason" rows="3" required placeholder="State incident ticket or data corruption cause..." />
 
-            <button type="submit" style="margin-top: 12px;">Submit Restore Request</button>
+            <button type="submit" style="margin-top: 4px;">Submit Restore Request</button>
         </form>
     </div>
 </div>

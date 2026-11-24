@@ -14,7 +14,7 @@
 </header>
 
 @if($errors->any())
-    <div class="alert alert-danger" style="background: #fee2e2; border: 1px solid #fecaca; color: #b91c1c; padding: 12px 16px; border-radius: var(--radius-btn); margin-bottom: 20px;">
+    <div class="alert alert-danger" style="background: #EAEEF3; border: 1px solid #DC2626; color: #b91c1c; padding: 12px 16px; border-radius: var(--radius-btn); margin-bottom: 20px;">
         <strong>Validation Error:</strong>
         <ul style="margin: 6px 0 0 18px; padding: 0;">
             @foreach($errors->all() as $error)
@@ -32,55 +32,62 @@
         <div class="panel" style="max-width: 100%;">
             <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 16px;">1. Template Details</h3>
 
-            <div style="display: grid; gap: 14px;">
-                <label>
-                    Template Name
-                    <input type="text" name="name" id="name" value="{{ old('name') }}" required placeholder="e.g. Pharmacy & Healthcare Store">
-                    @error('name') <span class="error">{{ $message }}</span> @enderror
-                </label>
+            <div style="display: grid; gap: 6px;">
+                <x-input
+                    type="text"
+                    name="name"
+                    id="name"
+                    label="Template Name"
+                    :required="true"
+                />
 
-                <label>
-                    Slug (Lowercase, unique URL identifier)
-                    <input type="text" name="slug" id="slug" value="{{ old('slug') }}" required placeholder="e.g. pharmacy-healthcare" pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$">
-                    <small class="muted">Must be lowercase letters, numbers, and hyphens only.</small>
-                    @error('slug') <span class="error">{{ $message }}</span> @enderror
-                </label>
+                <x-input
+                    type="text"
+                    name="slug"
+                    id="slug"
+                    label="Slug (Lowercase, unique URL identifier)"
+                    pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                    helper="Must be lowercase letters, numbers, and hyphens only."
+                    :required="true"
+                />
 
-                <label>
-                    Description
-                    <textarea name="description" rows="3" placeholder="Describe the target business model and key functional workflows...">{{ old('description') }}</textarea>
-                    @error('description') <span class="error">{{ $message }}</span> @enderror
-                </label>
+                <x-input
+                    type="textarea"
+                    name="description"
+                    id="description"
+                    label="Description"
+                    rows="3"
+                />
 
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-top: 6px;">
-                    <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }} style="width: auto;">
-                    <span style="font-weight: 500;">Active for new tenant provisioning</span>
-                </label>
+                <x-input
+                    type="toggle"
+                    name="is_active"
+                    id="is_active"
+                    label="Active for new tenant provisioning"
+                    value="1"
+                    :checked="(bool) old('is_active', true)"
+                />
             </div>
         </div>
 
         <!-- Right: Live Dependency Status & Quick Actions -->
         <div class="panel" style="max-width: 100%;">
-            <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 16px;">2. Dependency Validation</h3>
+            <h3 style="margin-top: 0; margin-bottom: 16px;">2. Dependency Validation</h3>
 
-            <div id="dependency-warning" style="display: none; background: #fef3c7; border: 1px solid #fde68a; color: #92400e; padding: 14px; border-radius: var(--radius-btn); margin-bottom: 16px;">
-                <div style="display: flex; gap: 10px; align-items: flex-start;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    <div>
-                        <strong>Missing Required Dependencies:</strong>
-                        <div id="missing-deps-list" style="font-size: 13px; margin: 6px 0;"></div>
-                        <button type="button" id="btn-auto-add" class="btn btn-sm" style="background: #b45309; margin-top: 6px;">
-                            Add required modules automatically
-                        </button>
-                    </div>
+            <div id="dependency-warning" class="alert alert-warning" style="display: none; margin-bottom: 16px;">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div>
+                    <strong>Missing Required Dependencies:</strong>
+                    <div id="missing-deps-list" style="font-size: 13px; margin: 6px 0;"></div>
+                    <button type="button" id="btn-auto-add" class="btn btn-sm btn-secondary" style="margin-top: 6px;">
+                        Add required modules automatically
+                    </button>
                 </div>
             </div>
 
-            <div id="dependency-ok" style="background: #e8f8ee; border: 1px solid #bbf7d0; color: #166534; padding: 14px; border-radius: var(--radius-btn); margin-bottom: 16px;">
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span>All module dependencies satisfied.</span>
-                </div>
+            <div id="dependency-ok" class="alert alert-success" style="margin-bottom: 16px;">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>All module dependencies satisfied.</span>
             </div>
 
             <div style="font-size: 13px; color: var(--color-neutral-600); line-height: 1.5;">
@@ -120,12 +127,14 @@
                                 $isCore = in_array($mod->slug, $coreModules, true);
                                 $isChecked = $isCore || in_array($mod->slug, old('default_modules', []), true);
                             @endphp
-                            <label style="display: flex; align-items: flex-start; gap: 8px; font-weight: normal; cursor: {{ $isCore ? 'default' : 'pointer' }}; background: #fff; padding: 8px 10px; border-radius: 6px; box-shadow: var(--shadow-input);">
+                            <label class="ui-choice-label" style="display: flex; align-items: flex-start; gap: 10px; font-weight: normal; cursor: {{ $isCore ? 'default' : 'pointer' }}; background: var(--clr-surface); padding: 10px 12px; border-radius: 10px; box-shadow: var(--shadow-sm);">
                                 @if($isCore)
-                                    <input type="checkbox" checked disabled style="width: auto; margin-top: 3px;">
+                                    <input type="checkbox" checked disabled class="ui-choice-native">
+                                    <span class="ui-check-box" aria-hidden="true" style="margin-top: 2px; opacity: 0.7;"><i class="bi bi-check"></i></span>
                                     <input type="hidden" name="default_modules[]" value="{{ $mod->slug }}">
                                 @else
-                                    <input type="checkbox" name="default_modules[]" value="{{ $mod->slug }}" class="module-checkbox" data-slug="{{ $mod->slug }}" data-name="{{ $mod->name }}" {{ $isChecked ? 'checked' : '' }} style="width: auto; margin-top: 3px;">
+                                    <input type="checkbox" name="default_modules[]" value="{{ $mod->slug }}" class="ui-choice-native module-checkbox" data-slug="{{ $mod->slug }}" data-name="{{ $mod->name }}" {{ $isChecked ? 'checked' : '' }}>
+                                    <span class="ui-check-box" aria-hidden="true" style="margin-top: 2px;"><i class="bi bi-check"></i></span>
                                 @endif
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">

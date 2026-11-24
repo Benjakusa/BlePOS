@@ -66,7 +66,7 @@
                     <td style="padding: 10px 8px;">{{ $case->subject }}</td>
                     <td style="text-align: center; padding: 10px 8px;"><span class="badge">{{ strtoupper($case->category) }}</span></td>
                     <td style="text-align: center; padding: 10px 8px;">
-                        <span class="badge" style="background: {{ $case->priority === 'urgent' ? '#fee2e2' : ($case->priority === 'high' ? '#ffedd5' : '#f1f5f9') }}; color: {{ $case->priority === 'urgent' ? '#991b1b' : ($case->priority === 'high' ? '#9a3412' : '#334155') }};">
+                        <span class="badge" style="background: {{ $case->priority === 'urgent' ? '#EAEEF3' : ($case->priority === 'high' ? '#ffedd5' : '#f1f5f9') }}; color: {{ $case->priority === 'urgent' ? '#991b1b' : ($case->priority === 'high' ? '#9a3412' : '#334155') }};">
                             {{ strtoupper($case->priority) }}
                         </span>
                     </td>

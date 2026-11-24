@@ -10,50 +10,35 @@
     @csrf
     <input type="hidden" name="token" value="{{ $token }}">
 
-    <div class="ath-field {{ $errors->has('email') ? 'has-error' : '' }}">
-        <label for="email">Email address</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-envelope ath-icon" aria-hidden="true"></i>
-            <input type="email" name="email" id="email"
-                   value="{{ old('email', $email) }}"
-                   placeholder="name@example.com"
-                   required>
-        </div>
-        @error('email')
-            <div class="ath-field-error">
-                <i class="bi bi-exclamation-circle"></i>
-                <span>{{ $message }}</span>
-            </div>
-        @enderror
-    </div>
+    <x-input
+        type="email"
+        name="email"
+        id="email"
+        label="Email address"
+        leadingIcon="bi-envelope"
+        :value="$email"
+        :required="true"
+    />
 
-    <div class="ath-field {{ $errors->has('password') ? 'has-error' : '' }}">
-        <label for="password">New password</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-lock ath-icon" aria-hidden="true"></i>
-            <input type="password" name="password" id="password"
-                   autocomplete="new-password"
-                   placeholder="••••••••"
-                   required>
-        </div>
-        @error('password')
-            <div class="ath-field-error">
-                <i class="bi bi-exclamation-circle"></i>
-                <span>{{ $message }}</span>
-            </div>
-        @enderror
-    </div>
+    <x-input
+        type="password"
+        name="password"
+        id="password"
+        label="New password"
+        leadingIcon="bi-lock"
+        autocomplete="new-password"
+        :required="true"
+    />
 
-    <div class="ath-field">
-        <label for="password_confirmation">Confirm password</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-lock-fill ath-icon" aria-hidden="true"></i>
-            <input type="password" name="password_confirmation" id="password_confirmation"
-                   autocomplete="new-password"
-                   placeholder="••••••••"
-                   required>
-        </div>
-    </div>
+    <x-input
+        type="password"
+        name="password_confirmation"
+        id="password_confirmation"
+        label="Confirm password"
+        leadingIcon="bi-lock-fill"
+        autocomplete="new-password"
+        :required="true"
+    />
 
     <button type="submit" class="ath-submit">
         <i class="bi bi-check-lg" style="font-size:17px;"></i>

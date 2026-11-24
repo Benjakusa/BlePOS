@@ -8,27 +8,30 @@
         <h1>Platform Analytics & Reports</h1>
         <div class="muted">Live operational intelligence, commercial aggregates, tenant lifecycle, and regulatory status (Annex A, Part 32)</div>
     </div>
-    <div style="display: flex; gap: 12px; align-items: center;">
-        <form method="GET" action="{{ route('platform.analytics.index') }}" style="display: flex; gap: 6px; align-items: center;">
-            <label style="font-size: 13px; font-weight: normal; margin: 0;">Period:
-                <select name="period" onchange="this.form.submit()" style="padding: 6px 10px; font-size: 13px; border-radius: 4px; border: 1px solid #b9c9bf;">
-                    <option value="7d" @selected($period === '7d')>Last 7 Days</option>
-                    <option value="30d" @selected($period === '30d')>Last 30 Days</option>
-                    <option value="90d" @selected($period === '90d')>Last 90 Days</option>
-                    <option value="12m" @selected($period === '12m')>Last 12 Months</option>
-                </select>
-            </label>
+    <div style="display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap;">
+        <form method="GET" action="{{ route('platform.analytics.index') }}" style="min-width: 170px;">
+            <x-input type="select" name="period" label="Period" onchange="this.form.submit()">
+                <option value="7d" @selected($period === '7d')>Last 7 Days</option>
+                <option value="30d" @selected($period === '30d')>Last 30 Days</option>
+                <option value="90d" @selected($period === '90d')>Last 90 Days</option>
+                <option value="12m" @selected($period === '12m')>Last 12 Months</option>
+            </x-input>
         </form>
 
-        <form method="POST" action="{{ route('platform.analytics.export') }}" style="display: flex; gap: 6px; align-items: center;">
+        <form method="POST" action="{{ route('platform.analytics.export') }}" style="display: flex; gap: 8px; align-items: flex-start;">
             @csrf
-            <select name="report_type" style="padding: 6px 10px; font-size: 13px; border-radius: 4px; border: 1px solid #b9c9bf;">
-                <option value="revenue">Export Revenue Report</option>
-                <option value="tenants">Export Tenant Registry</option>
-                <option value="modules">Export Module Adoption</option>
-                <option value="growth">Export Growth Metrics</option>
-            </select>
-            <button type="submit" class="btn" style="padding: 6px 12px; font-size: 13px;">Download CSV</button>
+            <div style="min-width: 220px;">
+                <x-input type="select" name="report_type" label="Report Type">
+                    <option value="revenue">Export Revenue Report</option>
+                    <option value="tenants">Export Tenant Registry</option>
+                    <option value="modules">Export Module Adoption</option>
+                    <option value="growth">Export Growth Metrics</option>
+                </x-input>
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 40px;">
+                <i class="bi bi-download"></i>
+                <span>Download CSV</span>
+            </button>
         </form>
     </div>
 </header>
@@ -155,7 +158,7 @@
             </div>
             <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 4px;">
                 <span>eTIMS Regulatory Status:</span>
-                <span class="badge" style="background: {{ $operations['compliance']['etims_status'] === 'CERTIFIED' ? '#dcfce7' : '#fee2e2' }}; color: {{ $operations['compliance']['etims_status'] === 'CERTIFIED' ? '#166534' : '#991b1b' }}; padding: 1px 6px; border-radius: 3px;">
+                <span class="badge" style="background: {{ $operations['compliance']['etims_status'] === 'CERTIFIED' ? '#EAEEF3' : '#EAEEF3' }}; color: {{ $operations['compliance']['etims_status'] === 'CERTIFIED' ? '#166534' : '#991b1b' }}; padding: 1px 6px; border-radius: 3px;">
                     {{ $operations['compliance']['etims_status'] }}
                 </span>
             </div>

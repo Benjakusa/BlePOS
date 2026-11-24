@@ -83,14 +83,20 @@
             <!-- Cash Movement Form -->
             <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
                 <h3 style="font-size: 15px; margin: 0 0 10px;">Record Cash In / Cash Out</h3>
-                <form action="{{ route('tenant.shifts.cash-movement', $shift) }}" method="POST" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <form action="{{ route('tenant.shifts.cash-movement', $shift) }}" method="POST" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end;">
                     @csrf
-                    <select name="type" required style="width: 110px;">
-                        <option value="in">Cash In</option>
-                        <option value="out">Cash Out</option>
-                    </select>
-                    <input type="number" step="0.01" name="amount" placeholder="Amount (KES)" required style="width: 130px;">
-                    <input type="text" name="reason" placeholder="Reason (e.g. Petty cash / Till drop)" required style="flex: 1; min-width: 140px;">
+                    <div style="width: 120px;">
+                        <x-input type="select" name="type" label="Type" :compact="true" required>
+                            <option value="in">Cash In</option>
+                            <option value="out">Cash Out</option>
+                        </x-input>
+                    </div>
+                    <div style="width: 140px;">
+                        <x-input type="number" step="0.01" name="amount" label="Amount (KES)" :compact="true" required />
+                    </div>
+                    <div style="flex: 1; min-width: 180px;">
+                        <x-input name="reason" label="Reason (e.g. Petty cash / Till drop)" :compact="true" required />
+                    </div>
                     <button type="submit" class="btn btn-secondary">Record</button>
                 </form>
             </div>
@@ -100,20 +106,12 @@
     <!-- Close Shift Form or Closed Info -->
     <div class="panel">
         @if($shift->isOpen())
-            <h2 style="font-size: 18px; margin-top: 0; margin-bottom: 14px; color: #b91c1c;">Close & Reconcile Shift</h2>
-            <form action="{{ route('tenant.shifts.close', $shift) }}" method="POST" class="form" onsubmit="return confirm('Are you sure you want to close this shift? This action cannot be undone.')">
+            <h2 style="font-size: 18px; margin-top: 0; margin-bottom: 14px; color: #DC2626;">Close & Reconcile Shift</h2>
+            <form action="{{ route('tenant.shifts.close', $shift) }}" method="POST" class="form" onsubmit="return confirm('Are you sure you want to close this shift? This action cannot be undone.')" style="display: flex; flex-direction: column; gap: 14px;">
                 @csrf
-                <div>
-                    <label for="actual_cash">Physical Counted Cash (KES) *</label>
-                    <input type="number" step="0.01" id="actual_cash" name="actual_cash" required placeholder="Count physical money in till drawer">
-                    <span class="muted" style="font-size: 12px;">Count all notes and coins present in the register.</span>
-                    @error('actual_cash') <div class="badge badge-danger" style="margin-top: 4px;">{{ $message }}</div> @enderror
-                </div>
+                <x-input type="number" step="0.01" name="actual_cash" label="Physical Counted Cash (KES)" required placeholder="Count physical money in till drawer" helper="Count all notes and coins present in the register." />
 
-                <div>
-                    <label for="closing_notes">Closing Notes (Optional)</label>
-                    <textarea id="closing_notes" name="closing_notes" rows="2" placeholder="Explain any discrepancy or variance"></textarea>
-                </div>
+                <x-input type="textarea" name="closing_notes" label="Closing Notes (Optional)" rows="2" placeholder="Explain any discrepancy or variance" />
 
                 <div style="margin-top: 8px;">
                     <button type="submit" class="btn btn-danger" style="width: 100%;">Close Shift Now</button>

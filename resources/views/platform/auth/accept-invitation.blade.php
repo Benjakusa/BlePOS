@@ -12,45 +12,37 @@
 <form method="post" action="{{ route('platform.invitation.accept.store', ['token' => $token]) }}">
     @csrf
 
-    <div class="ath-field">
-        <label for="name">Your Full Name</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-person ath-icon" aria-hidden="true"></i>
-            <input name="name" id="name"
-                   maxlength="255"
-                   autocomplete="name"
-                   placeholder="John Doe"
-                   required autofocus>
-        </div>
-    </div>
+    <x-input
+        type="text"
+        name="name"
+        id="name"
+        label="Your Full Name"
+        leadingIcon="bi-person"
+        autocomplete="name"
+        maxlength="255"
+        :required="true"
+        :autofocus="true"
+    />
 
-    <div class="ath-field {{ $errors->has('password') ? 'has-error' : '' }}">
-        <label for="password">Password</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-lock ath-icon" aria-hidden="true"></i>
-            <input type="password" name="password" id="password"
-                   autocomplete="new-password"
-                   placeholder="••••••••"
-                   required>
-        </div>
-        @error('password')
-            <div class="ath-field-error">
-                <i class="bi bi-exclamation-circle"></i>
-                <span>{{ $message }}</span>
-            </div>
-        @enderror
-    </div>
+    <x-input
+        type="password"
+        name="password"
+        id="password"
+        label="Password"
+        leadingIcon="bi-lock"
+        autocomplete="new-password"
+        :required="true"
+    />
 
-    <div class="ath-field">
-        <label for="password_confirmation">Confirm Password</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-lock-fill ath-icon" aria-hidden="true"></i>
-            <input type="password" name="password_confirmation" id="password_confirmation"
-                   autocomplete="new-password"
-                   placeholder="••••••••"
-                   required>
-        </div>
-    </div>
+    <x-input
+        type="password"
+        name="password_confirmation"
+        id="password_confirmation"
+        label="Confirm Password"
+        leadingIcon="bi-lock-fill"
+        autocomplete="new-password"
+        :required="true"
+    />
 
     <p style="font-size:12px;color:#64748B;margin:0 0 20px;">Use at least 14 characters with uppercase, lowercase, a number, and a symbol.</p>
 

@@ -9,13 +9,15 @@
         <div class="muted">Detailed transactional ledger statement by account</div>
     </div>
     <form method="GET" action="{{ route('tenant.accounting.reports.general-ledger') }}" style="display: flex; gap: 8px; align-items: center;">
-        <select name="account_id" style="width: auto;" onchange="this.form.submit()">
-            @foreach($accounts as $acc)
-                <option value="{{ $acc->id }}" {{ ($selectedAccount->id ?? 0) == $acc->id ? 'selected' : '' }}>
-                    [{{ $acc->code }}] {{ $acc->name }} ({{ ucfirst($acc->type) }})
-                </option>
-            @endforeach
-        </select>
+        <div style="min-width: 260px;">
+            <x-input type="select" name="account_id" label="Account" onchange="this.form.submit()" :compact="true">
+                @foreach($accounts as $acc)
+                    <option value="{{ $acc->id }}" {{ ($selectedAccount->id ?? 0) == $acc->id ? 'selected' : '' }}>
+                        [{{ $acc->code }}] {{ $acc->name }} ({{ ucfirst($acc->type) }})
+                    </option>
+                @endforeach
+            </x-input>
+        </div>
         <button type="submit" class="btn btn-secondary">Select</button>
     </form>
 </header>

@@ -1,57 +1,32 @@
 @extends('tenant.layout')
 
-@section('title', 'Open Cashier Shift')
+@section('title', 'Open Shift')
 
 @section('content')
 <header>
     <div>
-        <h1>Open Cashier Shift</h1>
-        <div class="muted">Start a register session with opening float</div>
+        <h1>Open Work Shift</h1>
+        <div class="muted">Record opening cash float in register till to start processing sales</div>
     </div>
     <div>
-        <a href="{{ route('tenant.shifts.index') }}" class="btn btn-secondary">Back to Shifts</a>
+        <a href="{{ route('tenant.shifts.index') }}" class="btn btn-secondary">Shift History</a>
     </div>
 </header>
 
 <div class="panel">
-    <form action="{{ route('tenant.shifts.store') }}" method="POST" class="form">
+    <form action="{{ route('tenant.shifts.store') }}" method="POST" class="form" style="max-width: 600px; display: flex; flex-direction: column; gap: 14px;">
         @csrf
-        <div>
-            <label for="shop_id">Shop Location *</label>
-            <select id="shop_id" name="shop_id" required>
-                @foreach($shops as $shop)
-                    <option value="{{ $shop->id }}">{{ $shop->name }} ({{ $shop->code }})</option>
-                @endforeach
-            </select>
-            @error('shop_id') <div class="badge badge-danger" style="margin-top: 4px;">{{ $message }}</div> @enderror
+        <div style="background: var(--clr-grey-tint); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 4px;">
+            <p style="margin: 0;"><strong>Active Branch:</strong> {{ $shop->name }}</p>
+            <p style="margin: 4px 0 0;"><strong>Cashier:</strong> {{ auth()->user()->name }}</p>
         </div>
 
-        <div>
-            <label for="register_id">Register / Till Terminal *</label>
-            <select id="register_id" name="register_id" required>
-                @foreach($shops as $shop)
-                    @foreach($shop->registers as $reg)
-                        <option value="{{ $reg->id }}" data-shop="{{ $shop->id }}">{{ $shop->name }} &mdash; {{ $reg->name }} ({{ $reg->code }})</option>
-                    @endforeach
-                @endforeach
-            </select>
-            @error('register_id') <div class="badge badge-danger" style="margin-top: 4px;">{{ $message }}</div> @enderror
-        </div>
+        <x-input type="number" step="0.01" min="0" name="opening_float" label="Opening Cash Float (KES)" value="0.00" required autofocus helper="Count the physical notes and coins in the drawer before starting." />
 
-        <div>
-            <label for="opening_float">Opening Cash Float (KES) *</label>
-            <input type="number" step="0.01" id="opening_float" name="opening_float" value="{{ old('opening_float', '0.00') }}" required>
-            <span class="muted" style="font-size: 12px;">Physical cash in the drawer at the start of shift.</span>
-            @error('opening_float') <div class="badge badge-danger" style="margin-top: 4px;">{{ $message }}</div> @enderror
-        </div>
-
-        <div>
-            <label for="notes">Shift Notes (Optional)</label>
-            <textarea id="notes" name="notes" rows="2" placeholder="e.g. Morning shift">{{ old('notes') }}</textarea>
-        </div>
+        <x-input type="textarea" name="opening_notes" label="Opening Notes" rows="2" placeholder="e.g. Received float envelope #42 from safe" />
 
         <div style="margin-top: 8px;">
-            <button type="submit" class="btn">Open Shift</button>
+            <button type="submit" class="btn">Open Shift & Begin Sales</button>
         </div>
     </form>
 </div>

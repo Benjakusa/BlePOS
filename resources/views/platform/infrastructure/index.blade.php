@@ -29,7 +29,7 @@
         <div class="panel" style="padding: 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span class="muted" style="font-size: 13px; text-transform: uppercase;">{{ $name }}</span>
-                <span class="badge" style="background: {{ $probe['status'] === 'healthy' ? '#dcfce7' : ($probe['status'] === 'degraded' ? '#fef3c7' : '#fee2e2') }}; color: {{ $probe['status'] === 'healthy' ? '#166534' : ($probe['status'] === 'degraded' ? '#92400e' : '#991b1b') }};">
+                <span class="badge" style="background: {{ $probe['status'] === 'healthy' ? '#EAEEF3' : ($probe['status'] === 'degraded' ? '#fef3c7' : '#EAEEF3') }}; color: {{ $probe['status'] === 'healthy' ? '#166534' : ($probe['status'] === 'degraded' ? '#92400e' : '#991b1b') }};">
                     {{ strtoupper($probe['status']) }}
                 </span>
             </div>
@@ -69,7 +69,7 @@
                             <span class="badge" style="background: #e0f2fe; color: #0369a1;">AES-256</span>
                         </td>
                         <td style="text-align: center; padding: 8px;">
-                            <span class="badge" style="background: #dcfce7; color: #166534;">{{ strtoupper($backup->status) }}</span>
+                            <span class="badge" style="background: #EAEEF3; color: #166534;">{{ strtoupper($backup->status) }}</span>
                         </td>
                         <td style="padding: 8px; font-size: 13px;">{{ $backup->completed_at?->format('Y-m-d H:i') }}</td>
                     </tr>

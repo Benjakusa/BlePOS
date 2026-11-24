@@ -20,22 +20,22 @@
 
 <section class="panel" style="max-width: none; margin-bottom: 18px;">
     <form method="get" action="{{ route('platform.compliance.dpa.index') }}" style="display: flex; gap: 12px; align-items: end; flex-wrap: wrap;">
-        <label>Status
-            <select name="status" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 10px 12px; font: inherit;">
+        <div style="min-width: 170px;">
+            <x-input type="select" name="status" label="Status" :selected="$filters['status'] ?? ''">
                 <option value="">All statuses</option>
                 @foreach(['pending' => 'Pending', 'under_review' => 'Under Review', 'processing' => 'Processing', 'completed' => 'Completed', 'rejected' => 'Rejected'] as $val => $lbl)
                     <option value="{{ $val }}" @selected(($filters['status'] ?? '') === $val)>{{ $lbl }}</option>
                 @endforeach
-            </select>
-        </label>
-        <label>Request Type
-            <select name="request_type" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 10px 12px; font: inherit;">
+            </x-input>
+        </div>
+        <div style="min-width: 190px;">
+            <x-input type="select" name="request_type" label="Request Type" :selected="$filters['request_type'] ?? ''">
                 <option value="">All types</option>
                 @foreach(['access_export' => 'Access / Export', 'rectification' => 'Rectification', 'erasure_deletion' => 'Erasure / Deletion', 'objection' => 'Objection', 'consent_withdrawal' => 'Consent Withdrawal'] as $val => $lbl)
                     <option value="{{ $val }}" @selected(($filters['request_type'] ?? '') === $val)>{{ $lbl }}</option>
                 @endforeach
-            </select>
-        </label>
+            </x-input>
+        </div>
         <button type="submit">Filter</button>
         @if(!empty(array_filter($filters)))
             <a href="{{ route('platform.compliance.dpa.index') }}" style="align-self: center;">Clear</a>
@@ -70,15 +70,15 @@
                     <td><code>{{ $req->request_type }}</code></td>
                     <td><small>{{ $req->legal_basis }}</small></td>
                     <td>
-                        <span class="badge" style="background: {{ $req->status === 'completed' ? '#dcfce7' : ($req->status === 'rejected' ? '#fee2e2' : '#e0e7ff') }}; color: {{ $req->status === 'completed' ? '#166534' : ($req->status === 'rejected' ? '#991b1b' : '#3730a3') }}; padding: 3px 8px; border-radius: 4px;">
+                        <span class="badge" style="background: #EAEEF3; color: {{ $req->status === 'completed' ? '#16A34A' : ($req->status === 'rejected' ? '#DC2626' : '#2563EB') }}; padding: 3px 8px; border-radius: 4px;">
                             {{ strtoupper($req->status) }}
                         </span>
                     </td>
                     <td>
-                        <span style="color: {{ $req->isOverdue() ? '#b91c1c' : 'inherit' }}; font-weight: {{ $req->isOverdue() ? 'bold' : 'normal' }};">
+                        <span style="color: {{ $req->isOverdue() ? '#DC2626' : 'inherit' }}; font-weight: {{ $req->isOverdue() ? 'bold' : 'normal' }};">
                             {{ $req->due_date->format('Y-m-d') }}
                             @if($req->isOverdue())
-                                <small style="display: block; color: #b91c1c;">[Overdue]</small>
+                                <small style="display: block; color: #DC2626;">[Overdue]</small>
                             @endif
                         </span>
                     </td>

@@ -14,72 +14,32 @@
 </header>
 
 <div class="panel">
-    <form action="{{ route('platform.plans.store') }}" method="POST" class="form" style="max-width: 650px;">
+    <form action="{{ route('platform.plans.store') }}" method="POST" class="form" style="max-width: 650px; display: flex; flex-direction: column; gap: 14px;">
         @csrf
         
         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 14px;">
-            <div>
-                <label for="code">Plan Code *</label>
-                <input type="text" id="code" name="code" value="{{ old('code') }}" required autofocus placeholder="e.g. starter">
-                @error('code') <div class="error">{{ $message }}</div> @enderror
-            </div>
-            <div>
-                <label for="name">Plan Display Name *</label>
-                <input type="text" id="name" name="name" value="{{ old('name') }}" required placeholder="e.g. Starter Retail">
-                @error('name') <div class="error">{{ $message }}</div> @enderror
-            </div>
+            <x-input name="code" label="Plan Code" required autofocus placeholder="e.g. starter" />
+            <x-input name="name" label="Plan Display Name" required placeholder="e.g. Starter Retail" />
         </div>
 
-        <div>
-            <label for="description">Description</label>
-            <textarea id="description" name="description" rows="2">{{ old('description') }}</textarea>
-        </div>
+        <x-input type="textarea" name="description" label="Description" rows="2" />
 
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
-            <div>
-                <label for="currency">Currency *</label>
-                <input type="text" id="currency" name="currency" value="{{ old('currency', 'KES') }}" required maxlength="3">
-            </div>
-            <div>
-                <label for="monthly_price">Monthly Price *</label>
-                <input type="number" step="0.01" id="monthly_price" name="monthly_price" value="{{ old('monthly_price', '0.00') }}" required>
-            </div>
-            <div>
-                <label for="annual_price">Annual Price *</label>
-                <input type="number" step="0.01" id="annual_price" name="annual_price" value="{{ old('annual_price', '0.00') }}" required>
-            </div>
+            <x-input name="currency" label="Currency" value="KES" required maxlength="3" />
+            <x-input type="number" step="0.01" name="monthly_price" label="Monthly Price" value="0.00" required />
+            <x-input type="number" step="0.01" name="annual_price" label="Annual Price" value="0.00" required />
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px;">
-            <div>
-                <label for="trial_days">Trial Days *</label>
-                <input type="number" id="trial_days" name="trial_days" value="{{ old('trial_days', 14) }}" required min="0">
-            </div>
-            <div>
-                <label for="max_shops">Max Shops *</label>
-                <input type="number" id="max_shops" name="max_shops" value="{{ old('max_shops', 1) }}" required min="1">
-            </div>
-            <div>
-                <label for="max_users">Max Users *</label>
-                <input type="number" id="max_users" name="max_users" value="{{ old('max_users', 5) }}" required min="1">
-            </div>
-            <div>
-                <label for="max_registers">Max Tills *</label>
-                <input type="number" id="max_registers" name="max_registers" value="{{ old('max_registers', 2) }}" required min="1">
-            </div>
+            <x-input type="number" name="trial_days" label="Trial Days" value="14" required min="0" />
+            <x-input type="number" name="max_shops" label="Max Shops" value="1" required min="1" />
+            <x-input type="number" name="max_users" label="Max Users" value="5" required min="1" />
+            <x-input type="number" name="max_registers" label="Max Tills" value="2" required min="1" />
         </div>
 
-        <div>
-            <label for="max_warehouses">Max Warehouses</label>
-            <input type="number" id="max_warehouses" name="max_warehouses" value="{{ old('max_warehouses', 1) }}" required min="0">
-        </div>
+        <x-input type="number" name="max_warehouses" label="Max Warehouses" value="1" required min="0" />
 
-        <div>
-            <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
-                <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }} style="width: auto;">
-                <span>Active (available for tenant assignment)</span>
-            </label>
-        </div>
+        <x-input type="toggle" name="is_active" value="1" :checked="true" label="Active (available for tenant assignment)" />
 
         <div style="margin-top: 10px;">
             <button type="submit">Save Plan</button>

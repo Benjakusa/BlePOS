@@ -8,9 +8,13 @@
         <h2>Invite platform staff</h2>
         <form class="form" method="post" action="{{ route('platform.users.invite') }}">
             @csrf
-            <label>Email address<input name="email" type="email" required>@error('email')<span class="error">{{ $message }}</span>@enderror</label>
-            <label>Role<select name="platform_role_id" required>@foreach($roles->where('slug', '!=', 'super-administrator') as $role)<option value="{{ $role->id }}">{{ $role->name }}</option>@endforeach</select></label>
-            <label>Reason<input name="reason" minlength="8" maxlength="1000" required></label>
+            <x-input type="email" name="email" label="Email address" required />
+            <x-input type="select" name="platform_role_id" label="Role" required>
+                @foreach($roles->where('slug', '!=', 'super-administrator') as $role)
+                    <option value="{{ $role->id }}">{{ $role->name }}</option>
+                @endforeach
+            </x-input>
+            <x-input name="reason" label="Reason" minlength="8" maxlength="1000" required />
             <button type="submit">Send invitation</button>
         </form>
     </section>
@@ -29,22 +33,28 @@
                     <td>
                         @if(!$platformUser->is(auth('platform')->user()))
                             @if(auth('platform')->user()->hasPermission('platform.security.users.status'))
-                                <form method="post" action="{{ route('platform.users.status', $platformUser) }}">
+                                <form method="post" action="{{ route('platform.users.status', $platformUser) }}" style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
                                     @csrf @method('PATCH')
-                                    <select name="status"><option value="active">Active</option><option value="locked">Lock</option><option value="disabled">Deactivate</option></select>
-                                    <input name="reason" placeholder="Reason" minlength="8" required>
+                                    <x-input type="select" name="status" :compact="true">
+                                        <option value="active">Active</option>
+                                        <option value="locked">Lock</option>
+                                        <option value="disabled">Deactivate</option>
+                                    </x-input>
+                                    <x-input name="reason" label="Reason" minlength="8" required :compact="true" />
                                     <button type="submit">Save status</button>
                                 </form>
                             @endif
                             @if(auth('platform')->user()->hasPermission('platform.security.users.mfa-reset.request'))
-                                <form method="post" action="{{ route('platform.users.mfa-reset', $platformUser) }}">
-                                    @csrf <input name="reason" placeholder="MFA reset reason" minlength="8" required>
+                                <form method="post" action="{{ route('platform.users.mfa-reset', $platformUser) }}" style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+                                    @csrf
+                                    <x-input name="reason" label="MFA reset reason" minlength="8" required :compact="true" />
                                     <button type="submit">Request MFA reset</button>
                                 </form>
                             @endif
                             @if(auth('platform')->user()->hasPermission('platform.security.users.password-reset'))
-                                <form method="post" action="{{ route('platform.users.password-reset', $platformUser) }}">
-                                    @csrf <input name="reason" placeholder="Password reset reason" minlength="8" required>
+                                <form method="post" action="{{ route('platform.users.password-reset', $platformUser) }}" style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+                                    @csrf
+                                    <x-input name="reason" label="Password reset reason" minlength="8" required :compact="true" />
                                     <button type="submit">Require password reset</button>
                                 </form>
                             @endif
@@ -57,9 +67,9 @@
                         @endif
                         @if(!$platformUser->is(auth('platform')->user()) && auth('platform')->user()->hasPermission('platform.security.users.roles.manage'))
                             @foreach($platformUser->roles as $assignedRole)
-                                <form method="post" action="{{ route('platform.users.roles.remove', [$platformUser, $assignedRole]) }}">
+                                <form method="post" action="{{ route('platform.users.roles.remove', [$platformUser, $assignedRole]) }}" style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
                                     @csrf @method('DELETE')
-                                    <input name="reason" placeholder="Reason to remove {{ $assignedRole->name }}" minlength="8" required>
+                                    <x-input name="reason" label="Reason to remove {{ $assignedRole->name }}" minlength="8" required :compact="true" />
                                     <button type="submit">Remove {{ $assignedRole->name }}</button>
                                 </form>
                             @endforeach
@@ -67,9 +77,9 @@
                         @if(!$platformUser->is(auth('platform')->user()) && auth('platform')->user()->hasPermission('platform.security.users.roles.manage'))
                             @foreach($roles as $role)
                                 @if(!$platformUser->roles->contains('id', $role->id))
-                                    <form method="post" action="{{ route('platform.users.roles.assign', $platformUser) }}">
+                                    <form method="post" action="{{ route('platform.users.roles.assign', $platformUser) }}" style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
                                         @csrf <input type="hidden" name="platform_role_id" value="{{ $role->id }}">
-                                        <input name="reason" placeholder="Reason to grant {{ $role->name }}" minlength="8" required>
+                                        <x-input name="reason" label="Reason to grant {{ $role->name }}" minlength="8" required :compact="true" />
                                         <button type="submit">Grant {{ $role->name }}</button>
                                     </form>
                                 @endif
@@ -90,12 +100,12 @@
                 @if(auth('platform')->user()->hasPermission('platform.security.users.invite'))
                     <form method="post" action="{{ route('platform.users.invitations.resend', $invitation) }}" style="display:flex;gap:8px;margin-bottom:8px">
                         @csrf
-                        <input name="reason" placeholder="Reason to resend" minlength="8" required>
+                        <x-input name="reason" label="Reason to resend" minlength="8" required :compact="true" />
                         <button type="submit">Resend</button>
                     </form>
                     <form method="post" action="{{ route('platform.users.invitations.cancel', $invitation) }}" style="display:flex;gap:8px">
                         @csrf @method('DELETE')
-                        <input name="reason" placeholder="Reason to cancel" minlength="8" required>
+                        <x-input name="reason" label="Reason to cancel" minlength="8" required :compact="true" />
                         <button type="submit">Cancel</button>
                     </form>
                 @endif

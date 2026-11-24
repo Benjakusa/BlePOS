@@ -9,9 +9,13 @@
         <div class="muted">Income and expense performance from {{ date('M d, Y', strtotime($startDate)) }} to {{ date('M d, Y', strtotime($endDate)) }}</div>
     </div>
     <form method="GET" action="{{ route('tenant.accounting.reports.profit-loss') }}" style="display: flex; gap: 8px; align-items: center;">
-        <input type="date" name="start_date" value="{{ $startDate }}" style="width: auto;">
+        <div style="width: 160px;">
+            <x-input type="date" name="start_date" label="From Date" :value="$startDate" :compact="true" />
+        </div>
         <span>to</span>
-        <input type="date" name="end_date" value="{{ $endDate }}" style="width: auto;">
+        <div style="width: 160px;">
+            <x-input type="date" name="end_date" label="To Date" :value="$endDate" :compact="true" />
+        </div>
         <button type="submit" class="btn btn-secondary">Filter</button>
     </form>
 </header>
@@ -73,7 +77,7 @@
                 <td colspan="2">Total Cost of Goods Sold</td>
                 <td style="text-align: right; font-family: monospace;">KES {{ number_format((float) $report['total_cogs'], 2) }}</td>
             </tr>
-            <tr style="font-weight: 800; background: #f0fdf4; border-top: 2px solid #86efac; color: #166534;">
+            <tr style="font-weight: 800; background: #EAEEF3; border-top: 2px solid #86efac; color: #166534;">
                 <td colspan="2">Gross Profit (Revenue - COGS)</td>
                 <td style="text-align: right; font-family: monospace;">KES {{ number_format((float) $report['gross_profit'], 2) }}</td>
             </tr>

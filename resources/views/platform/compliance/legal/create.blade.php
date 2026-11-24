@@ -11,51 +11,29 @@
     <a href="{{ route('platform.compliance.legal.index') }}" class="btn secondary">Back to Documents</a>
 </header>
 
-@if($errors->any())
-    <div class="error" style="margin-bottom: 16px;">
-        <ul>
-            @foreach($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
-
 <div class="panel">
-    <form method="POST" action="{{ route('platform.compliance.legal.store') }}" class="form" style="max-width: 680px;">
+    <form method="POST" action="{{ route('platform.compliance.legal.store') }}" class="form" style="max-width: 680px; display: flex; flex-direction: column; gap: 14px;">
         @csrf
 
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px;">
-            <label>Policy Identifier (Slug)
-                <select name="slug" required style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 11px 12px; font: inherit;">
-                    <option value="terms-of-service" @selected(old('slug') === 'terms-of-service')>Terms of Service (terms-of-service)</option>
-                    <option value="privacy-policy" @selected(old('slug') === 'privacy-policy')>Privacy Policy (privacy-policy)</option>
-                    <option value="data-processing-agreement" @selected(old('slug') === 'data-processing-agreement')>Data Processing Agreement (data-processing-agreement)</option>
-                    <option value="sla-policy" @selected(old('slug') === 'sla-policy')>Service Level Agreement (sla-policy)</option>
-                    <option value="acceptable-use" @selected(old('slug') === 'acceptable-use')>Acceptable Use Policy (acceptable-use)</option>
-                </select>
-            </label>
+            <x-input type="select" name="slug" label="Policy Identifier (Slug)" required>
+                <option value="terms-of-service" @selected(old('slug') === 'terms-of-service')>Terms of Service (terms-of-service)</option>
+                <option value="privacy-policy" @selected(old('slug') === 'privacy-policy')>Privacy Policy (privacy-policy)</option>
+                <option value="data-processing-agreement" @selected(old('slug') === 'data-processing-agreement')>Data Processing Agreement (data-processing-agreement)</option>
+                <option value="sla-policy" @selected(old('slug') === 'sla-policy')>Service Level Agreement (sla-policy)</option>
+                <option value="acceptable-use" @selected(old('slug') === 'acceptable-use')>Acceptable Use Policy (acceptable-use)</option>
+            </x-input>
 
-            <label>Version
-                <input name="version" value="{{ old('version', '1.1') }}" required placeholder="e.g. 1.1">
-            </label>
+            <x-input name="version" label="Version" value="1.1" required placeholder="e.g. 1.1" />
         </div>
 
-        <label>Document Title
-            <input name="title" value="{{ old('title') }}" required placeholder="e.g. BlePOS Master Terms of Service">
-        </label>
+        <x-input name="title" label="Document Title" required placeholder="e.g. BlePOS Master Terms of Service" />
 
-        <label>Effective Date
-            <input type="date" name="effective_from" value="{{ old('effective_from', date('Y-m-d')) }}">
-        </label>
+        <x-input type="date" name="effective_from" label="Effective Date" :value="date('Y-m-d')" />
 
-        <label>Changelog / Revision Summary
-            <input name="changelog" value="{{ old('changelog') }}" placeholder="e.g. Updated Section 4 regarding Kenyan eTIMS fiscalization requirements">
-        </label>
+        <x-input name="changelog" label="Changelog / Revision Summary" placeholder="e.g. Updated Section 4 regarding Kenyan eTIMS fiscalization requirements" />
 
-        <label>Document Content (Markdown / Plain Text)
-            <textarea name="content" rows="12" required style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 11px 12px; font: inherit; font-family: monospace;">{{ old('content') }}</textarea>
-        </label>
+        <x-input type="textarea" name="content" label="Document Content (Markdown / Plain Text)" rows="12" required style="font-family: monospace;" />
 
         <div style="margin-top: 10px;">
             <button type="submit">Publish Version</button>

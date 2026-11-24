@@ -17,19 +17,19 @@
         </div>
     </div>
 
-    <form method="GET" action="{{ route('tenant.accounting.accounts.index') }}" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 24px;">
+    <form method="GET" action="{{ route('tenant.accounting.accounts.index') }}" style="display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 24px;">
         <div style="flex: 1; min-width: 220px; max-width: 360px;">
-            <input type="text" name="q" value="{{ $q ?? '' }}" placeholder="Search by code or account name..." style="width: 100%;">
+            <x-input type="search" name="q" label="Search by code or account name..." :value="$q ?? ''" />
         </div>
-        <div>
-            <select name="type">
+        <div style="min-width: 180px;">
+            <x-input type="select" name="type" label="Account Type" :selected="$type ?? ''">
                 <option value="">All Account Types</option>
                 <option value="asset" {{ ($type ?? '') === 'asset' ? 'selected' : '' }}>Assets</option>
                 <option value="liability" {{ ($type ?? '') === 'liability' ? 'selected' : '' }}>Liabilities</option>
                 <option value="equity" {{ ($type ?? '') === 'equity' ? 'selected' : '' }}>Equity</option>
                 <option value="revenue" {{ ($type ?? '') === 'revenue' ? 'selected' : '' }}>Revenue</option>
                 <option value="expense" {{ ($type ?? '') === 'expense' ? 'selected' : '' }}>Expenses</option>
-            </select>
+            </x-input>
         </div>
         <button type="submit" class="btn btn-secondary">
             <i class="bi bi-funnel"></i>

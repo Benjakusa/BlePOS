@@ -100,10 +100,10 @@
                     </td>
                     <td>
                         <details>
-                            <summary style="cursor: pointer; color: #146b4d; font-weight: 600;">Rotate Key</summary>
-                            <form method="POST" action="{{ route('platform.security.keys.rotate', $key) }}" style="margin-top: 8px; display: grid; gap: 6px;">
+                            <summary style="cursor: pointer; color: #16A34A; font-weight: 600;">Rotate Key</summary>
+                            <form method="POST" action="{{ route('platform.security.keys.rotate', $key) }}" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
                                 @csrf
-                                <input name="reason" required placeholder="Rotation justification..." style="padding: 4px 6px; font-size: 12px;">
+                                <x-input name="reason" label="Rotation justification" required :compact="true" />
                                 <button type="submit" class="btn" style="padding: 4px 8px; font-size: 11px;">Confirm Rotation</button>
                             </form>
                         </details>

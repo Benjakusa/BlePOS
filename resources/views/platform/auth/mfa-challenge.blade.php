@@ -9,23 +9,17 @@
 <form method="post" action="{{ route('platform.mfa.verify') }}">
     @csrf
 
-    <div class="ath-field {{ $errors->has('code') ? 'has-error' : '' }}">
-        <label for="code">Authenticator or Recovery Code</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-key ath-icon" aria-hidden="true"></i>
-            <input name="code" id="code"
-                   autocomplete="one-time-code"
-                   maxlength="32"
-                   placeholder="123456"
-                   required autofocus>
-        </div>
-        @error('code')
-            <div class="ath-field-error">
-                <i class="bi bi-exclamation-circle"></i>
-                <span>{{ $message }}</span>
-            </div>
-        @enderror
-    </div>
+    <x-input
+        type="text"
+        name="code"
+        id="code"
+        label="Authenticator or Recovery Code"
+        leadingIcon="bi-key"
+        autocomplete="one-time-code"
+        maxlength="32"
+        :required="true"
+        :autofocus="true"
+    />
 
     <button type="submit" class="ath-submit">
         <i class="bi bi-check-circle" style="font-size:17px;"></i>

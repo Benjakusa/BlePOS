@@ -7,7 +7,7 @@
     <div>
         <div style="display: flex; align-items: center; gap: 10px;">
             <h1>{{ $dpa->request_number }}</h1>
-            <span class="badge" style="background: {{ $dpa->status === 'completed' ? '#dcfce7' : ($dpa->status === 'rejected' ? '#fee2e2' : '#e0e7ff') }}; color: {{ $dpa->status === 'completed' ? '#166534' : ($dpa->status === 'rejected' ? '#991b1b' : '#3730a3') }}; padding: 4px 8px; border-radius: 4px;">
+            <span class="badge" style="background: #EAEEF3; color: {{ $dpa->status === 'completed' ? '#16A34A' : ($dpa->status === 'rejected' ? '#DC2626' : '#2563EB') }}; padding: 4px 8px; border-radius: 4px;">
                 {{ strtoupper($dpa->status) }}
             </span>
         </div>
@@ -63,12 +63,12 @@
 
             @if($dpa->resolution_summary)
                 <h3 style="font-size: 15px; margin-top: 20px; color: #166534;">Resolution Summary</h3>
-                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px; white-space: pre-wrap;">{{ $dpa->resolution_summary }}</div>
+                <div style="background: #EAEEF3; border: 1px solid #CBD5E1; border-radius: 6px; padding: 12px; white-space: pre-wrap;">{{ $dpa->resolution_summary }}</div>
             @endif
 
             @if($dpa->rejection_reason)
                 <h3 style="font-size: 15px; margin-top: 20px; color: #991b1b;">Rejection Justification</h3>
-                <div style="background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; padding: 12px; white-space: pre-wrap;">{{ $dpa->rejection_reason }}</div>
+                <div style="background: #EAEEF3; border: 1px solid #DC2626; border-radius: 6px; padding: 12px; white-space: pre-wrap;">{{ $dpa->rejection_reason }}</div>
             @endif
         </div>
     </div>
@@ -76,23 +76,17 @@
     <div>
         <div class="panel" style="max-width: none;">
             <h3 style="font-size: 16px; margin-top: 0;">Update Request Status</h3>
-            <form method="POST" action="{{ route('platform.compliance.dpa.status', $dpa) }}" style="display: grid; gap: 12px;">
+            <form method="POST" action="{{ route('platform.compliance.dpa.status', $dpa) }}" style="display: flex; flex-direction: column; gap: 12px;">
                 @csrf
-                <label style="font-size: 13px;">Status
-                    <select name="status" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 8px 10px; font: inherit; width: 100%;">
-                        @foreach(['pending' => 'Pending', 'under_review' => 'Under Review', 'processing' => 'Processing', 'completed' => 'Completed', 'rejected' => 'Rejected'] as $st => $lbl)
-                            <option value="{{ $st }}" @selected($dpa->status === $st)>{{ $lbl }}</option>
-                        @endforeach
-                    </select>
-                </label>
+                <x-input type="select" name="status" label="Status" :selected="$dpa->status">
+                    @foreach(['pending' => 'Pending', 'under_review' => 'Under Review', 'processing' => 'Processing', 'completed' => 'Completed', 'rejected' => 'Rejected'] as $st => $lbl)
+                        <option value="{{ $st }}" @selected($dpa->status === $st)>{{ $lbl }}</option>
+                    @endforeach
+                </x-input>
 
-                <label style="font-size: 13px;">Resolution Summary (for Completed)
-                    <textarea name="resolution_summary" rows="3" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 8px 10px; font: inherit; width: 100%;" placeholder="Summary of data exported, rectified or deleted...">{{ $dpa->resolution_summary }}</textarea>
-                </label>
+                <x-input type="textarea" name="resolution_summary" label="Resolution Summary (for Completed)" rows="3" :value="$dpa->resolution_summary" placeholder="Summary of data exported, rectified or deleted..." />
 
-                <label style="font-size: 13px;">Rejection Reason (for Rejected)
-                    <textarea name="rejection_reason" rows="2" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 8px 10px; font: inherit; width: 100%;" placeholder="Statutory exemption or reason for rejection...">{{ $dpa->rejection_reason }}</textarea>
-                </label>
+                <x-input type="textarea" name="rejection_reason" label="Rejection Reason (for Rejected)" rows="2" :value="$dpa->rejection_reason" placeholder="Statutory exemption or reason for rejection..." />
 
                 <div>
                     <button type="submit" style="width: 100%;">Update Status</button>

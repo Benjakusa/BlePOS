@@ -17,24 +17,30 @@
         @endif
     </div>
 
-    <form method="get" action="{{ route('platform.tenants.index') }}" style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: center;">
+    <form method="get" action="{{ route('platform.tenants.index') }}" style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: flex-start;">
         <div style="flex: 1; min-width: 260px; max-width: 400px;">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name, tenant code, owner email..." style="width: 100%;">
+            <x-input
+                type="search"
+                name="search"
+                label="Search by name, tenant code, owner email"
+                :value="request('search')"
+                wrapperClass="mb-0"
+            />
         </div>
-        <div>
-            <select name="status">
+        <div style="min-width: 200px;">
+            <x-input type="select" name="status" label="Status" wrapperClass="mb-0">
                 <option value="">All Statuses ({{ $statusCounts['all'] }})</option>
                 <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active ({{ $statusCounts['active'] }})</option>
                 <option value="trial" {{ request('status') === 'trial' ? 'selected' : '' }}>Trial ({{ $statusCounts['trial'] }})</option>
                 <option value="suspended" {{ request('status') === 'suspended' ? 'selected' : '' }}>Suspended ({{ $statusCounts['suspended'] }})</option>
-            </select>
+            </x-input>
         </div>
-        <button type="submit" class="btn btn-secondary">
+        <button type="submit" class="btn btn-secondary" style="height: 40px;">
             <i class="bi bi-funnel"></i>
             <span>Filter</span>
         </button>
         @if(request('search') || request('status'))
-            <a href="{{ route('platform.tenants.index') }}" class="btn btn-ghost" aria-label="Clear filters">
+            <a href="{{ route('platform.tenants.index') }}" class="btn btn-ghost" aria-label="Clear filters" style="height: 40px;">
                 <i class="bi bi-x-circle"></i>
                 <span>Clear</span>
             </a>

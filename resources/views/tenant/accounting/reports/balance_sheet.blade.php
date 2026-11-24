@@ -9,7 +9,9 @@
         <div class="muted">Financial position statement as of {{ date('F d, Y', strtotime($asOfDate)) }}</div>
     </div>
     <form method="GET" action="{{ route('tenant.accounting.reports.balance-sheet') }}" style="display: flex; gap: 8px; align-items: center;">
-        <input type="date" name="as_of_date" value="{{ $asOfDate }}" style="width: auto;">
+        <div style="width: 170px;">
+            <x-input type="date" name="as_of_date" label="As of Date" :value="$asOfDate" :compact="true" />
+        </div>
         <button type="submit" class="btn btn-secondary">Update Date</button>
     </form>
 </header>

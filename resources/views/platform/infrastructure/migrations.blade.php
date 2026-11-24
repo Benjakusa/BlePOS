@@ -19,9 +19,9 @@
     <p><strong>Latest Migration Batch:</strong> Batch #{{ $migrationStatus['last_batch'] }}</p>
     <p><strong>Pending Migrations:</strong>
         @if(empty($migrationStatus['pending_migrations']))
-            <span class="badge" style="background: #dcfce7; color: #166534;">UP TO DATE (0 PENDING)</span>
+            <span class="badge" style="background: #EAEEF3; color: #166534;">UP TO DATE (0 PENDING)</span>
         @else
-            <span class="badge" style="background: #fee2e2; color: #991b1b;">{{ count($migrationStatus['pending_migrations']) }} PENDING</span>
+            <span class="badge" style="background: #EAEEF3; color: #991b1b;">{{ count($migrationStatus['pending_migrations']) }} PENDING</span>
         @endif
     </p>
 </div>
@@ -40,7 +40,7 @@
                 <tr style="border-bottom: 1px solid #f1f5f9;">
                     <td style="padding: 8px;"><code>{{ $mig }}</code></td>
                     <td style="text-align: center; padding: 8px;">
-                        <span class="badge" style="background: #dcfce7; color: #166534;">MIGRATED</span>
+                        <span class="badge" style="background: #EAEEF3; color: #166534;">MIGRATED</span>
                     </td>
                 </tr>
             @endforeach

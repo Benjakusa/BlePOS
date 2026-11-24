@@ -17,124 +17,49 @@
         </div>
     </div>
 
-    <form action="{{ route('tenant.products.store') }}" method="POST">
+    <form action="{{ route('tenant.products.store') }}" method="POST" style="display: flex; flex-direction: column; gap: 16px;">
         @csrf
         
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
-            <div class="field {{ $errors->has('name') ? 'has-error' : '' }}">
-                <input type="text" id="name" name="name" value="{{ old('name') }}" placeholder=" " required autofocus>
-                <label for="name">Product Name *</label>
-                @error('name')
-                    <div class="field-error">
-                        <i class="bi bi-exclamation-circle"></i>
-                        <span>{{ $message }}</span>
-                    </div>
-                @enderror
-            </div>
-            <div class="field {{ $errors->has('sku') ? 'has-error' : '' }}">
-                <input type="text" id="sku" name="sku" value="{{ old('sku') }}" placeholder=" " required>
-                <label for="sku">SKU Code *</label>
-                @error('sku')
-                    <div class="field-error">
-                        <i class="bi bi-exclamation-circle"></i>
-                        <span>{{ $message }}</span>
-                    </div>
-                @enderror
-            </div>
+            <x-input name="name" label="Product Name" required autofocus />
+            <x-input name="sku" label="SKU Code" required />
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-            <div class="field {{ $errors->has('barcode') ? 'has-error' : '' }}">
-                <input type="text" id="barcode" name="barcode" value="{{ old('barcode') }}" placeholder=" ">
-                <label for="barcode">Barcode / EAN</label>
-                @error('barcode')
-                    <div class="field-error">
-                        <i class="bi bi-exclamation-circle"></i>
-                        <span>{{ $message }}</span>
-                    </div>
-                @enderror
-            </div>
-            <div class="field {{ $errors->has('category_id') ? 'has-error' : '' }}">
-                <select id="category_id" name="category_id">
-                    <option value="">— Uncategorized —</option>
-                    @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
-                    @endforeach
-                </select>
-                <label for="category_id">Category</label>
-                @error('category_id')
-                    <div class="field-error">
-                        <i class="bi bi-exclamation-circle"></i>
-                        <span>{{ $message }}</span>
-                    </div>
-                @enderror
-            </div>
+            <x-input name="barcode" label="Barcode / EAN" />
+            <x-input type="select" name="category_id" label="Category">
+                <option value="">— Uncategorized —</option>
+                @foreach($categories as $cat)
+                    <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                @endforeach
+            </x-input>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
-            <div class="field {{ $errors->has('cost_price') ? 'has-error' : '' }}">
-                <input type="number" step="0.01" id="cost_price" name="cost_price" value="{{ old('cost_price', '0.00') }}" placeholder=" " required>
-                <label for="cost_price">Cost Price (KES) *</label>
-                @error('cost_price')
-                    <div class="field-error">
-                        <i class="bi bi-exclamation-circle"></i>
-                        <span>{{ $message }}</span>
-                    </div>
-                @enderror
-            </div>
-            <div class="field {{ $errors->has('selling_price') ? 'has-error' : '' }}">
-                <input type="number" step="0.01" id="selling_price" name="selling_price" value="{{ old('selling_price') }}" placeholder=" " required>
-                <label for="selling_price">Selling Price (KES) *</label>
-                @error('selling_price')
-                    <div class="field-error">
-                        <i class="bi bi-exclamation-circle"></i>
-                        <span>{{ $message }}</span>
-                    </div>
-                @enderror
-            </div>
-            <div class="field {{ $errors->has('tax_rate') ? 'has-error' : '' }}">
-                <input type="number" step="0.01" id="tax_rate" name="tax_rate" value="{{ old('tax_rate', '16.00') }}" placeholder=" ">
-                <label for="tax_rate">Tax Rate (%)</label>
-                @error('tax_rate')
-                    <div class="field-error">
-                        <i class="bi bi-exclamation-circle"></i>
-                        <span>{{ $message }}</span>
-                    </div>
-                @enderror
-            </div>
+            <x-input type="number" step="0.01" name="cost_price" label="Cost Price (KES)" value="0.00" required />
+            <x-input type="number" step="0.01" name="selling_price" label="Selling Price (KES)" required />
+            <x-input type="number" step="0.01" name="tax_rate" label="Tax Rate (%)" value="16.00" />
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-            <div class="field">
-                <input type="text" id="unit_of_measure" name="unit_of_measure" value="{{ old('unit_of_measure', 'piece') }}" placeholder=" ">
-                <label for="unit_of_measure">Unit of Measure (piece, kg, etc.)</label>
-            </div>
-            <div class="field">
-                <input type="number" step="1" id="reorder_level" name="reorder_level" value="{{ old('reorder_level', 5) }}" placeholder=" ">
-                <label for="reorder_level">Reorder Level Warning</label>
-            </div>
+            <x-input name="unit_of_measure" label="Unit of Measure" placeholder="e.g. pcs, kg, litre" />
+            <x-input type="number" step="1" name="reorder_level" label="Reorder Alert Level" value="10" />
         </div>
 
-        <div class="field">
-            <textarea id="description" name="description" placeholder=" ">{{ old('description') }}</textarea>
-            <label for="description">Product Description (Optional)</label>
+        <x-input type="textarea" name="description" label="Product Description (Optional)" rows="3" />
+
+        <div style="display: flex; gap: 24px; margin-top: 4px;">
+            <x-input type="toggle" name="track_stock" value="1" :checked="true" label="Track Inventory Stock" />
+            <x-input type="toggle" name="is_active" value="1" :checked="true" label="Active (Available in POS)" />
         </div>
 
-        <div style="display: flex; gap: 24px; margin-bottom: 24px;">
-            <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
-                <input type="checkbox" name="track_stock" value="1" {{ old('track_stock', true) ? 'checked' : '' }} style="width: auto;">
-                <span>Track Inventory Stock</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
-                <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }} style="width: auto;">
-                <span>Active</span>
-            </label>
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 16px;">
+            <a href="{{ route('tenant.products.index') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg"></i>
+                <span>Save Product</span>
+            </button>
         </div>
-
-        <button type="submit" class="btn btn-primary" style="padding: 12px 24px;">
-            <i class="bi bi-check-lg"></i>
-            <span>Save Product</span>
-        </button>
     </form>
 </div>
 @endsection

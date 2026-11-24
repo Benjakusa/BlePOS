@@ -9,50 +9,36 @@
 <form method="post" action="{{ route('platform.password.change.store') }}">
     @csrf
 
-    <div class="ath-field {{ $errors->has('current_password') ? 'has-error' : '' }}">
-        <label for="current_password">Current password</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-lock ath-icon" aria-hidden="true"></i>
-            <input type="password" name="current_password" id="current_password"
-                   autocomplete="current-password"
-                   placeholder="••••••••"
-                   required autofocus>
-        </div>
-        @error('current_password')
-            <div class="ath-field-error">
-                <i class="bi bi-exclamation-circle"></i>
-                <span>{{ $message }}</span>
-            </div>
-        @enderror
-    </div>
+    <x-input
+        type="password"
+        name="current_password"
+        id="current_password"
+        label="Current password"
+        leadingIcon="bi-lock"
+        autocomplete="current-password"
+        :required="true"
+        :autofocus="true"
+    />
 
-    <div class="ath-field {{ $errors->has('password') ? 'has-error' : '' }}">
-        <label for="password">New password</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-lock-fill ath-icon" aria-hidden="true"></i>
-            <input type="password" name="password" id="password"
-                   autocomplete="new-password"
-                   placeholder="••••••••"
-                   required>
-        </div>
-        @error('password')
-            <div class="ath-field-error">
-                <i class="bi bi-exclamation-circle"></i>
-                <span>{{ $message }}</span>
-            </div>
-        @enderror
-    </div>
+    <x-input
+        type="password"
+        name="password"
+        id="password"
+        label="New password"
+        leadingIcon="bi-lock-fill"
+        autocomplete="new-password"
+        :required="true"
+    />
 
-    <div class="ath-field">
-        <label for="password_confirmation">Confirm password</label>
-        <div class="ath-input-wrap">
-            <i class="bi bi-lock-fill ath-icon" aria-hidden="true"></i>
-            <input type="password" name="password_confirmation" id="password_confirmation"
-                   autocomplete="new-password"
-                   placeholder="••••••••"
-                   required>
-        </div>
-    </div>
+    <x-input
+        type="password"
+        name="password_confirmation"
+        id="password_confirmation"
+        label="Confirm password"
+        leadingIcon="bi-lock-fill"
+        autocomplete="new-password"
+        :required="true"
+    />
 
     <p style="font-size:12px;color:#64748B;margin:0 0 20px;">Use at least 14 characters with uppercase, lowercase, a number, and a symbol.</p>
 

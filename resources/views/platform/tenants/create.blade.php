@@ -5,94 +5,105 @@
 @section('content')
 <section class="panel" style="max-width: 720px;">
     <h2>Tenant Onboarding Wizard</h2>
-    <p class="muted">Provision a new multi-shop business entity with automated database setup and industry template installation.</p>
+    <p class="muted" style="margin-bottom: 20px;">Provision a new multi-shop business entity with automated database setup and industry template installation.</p>
 
     <form method="post" action="{{ route('platform.tenants.store') }}" class="form" style="max-width: 100%;">
         @csrf
 
-        <h3>1. Business Identity</h3>
-        <label>
-            Legal Business Name
-            <input type="text" name="legal_name" value="{{ old('legal_name') }}" required placeholder="e.g. Acme Supermarkets Kenya Ltd">
-            @error('legal_name') <span class="error">{{ $message }}</span> @enderror
-        </label>
+        <h3 style="margin-bottom: 12px;">1. Business Identity</h3>
+        <x-input
+            type="text"
+            name="legal_name"
+            label="Legal Business Name"
+            :required="true"
+        />
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <label>
-                Tenant Code (Unique)
-                <input type="text" name="code" value="{{ old('code') }}" required placeholder="e.g. ACME01">
-                @error('code') <span class="error">{{ $message }}</span> @enderror
-            </label>
-            <label>
-                URL Slug
-                <input type="text" name="slug" value="{{ old('slug') }}" required placeholder="e.g. acme-supermarkets">
-                @error('slug') <span class="error">{{ $message }}</span> @enderror
-            </label>
+            <x-input
+                type="text"
+                name="code"
+                label="Tenant Code (Unique)"
+                :required="true"
+            />
+            <x-input
+                type="text"
+                name="slug"
+                label="URL Slug"
+                :required="true"
+            />
         </div>
 
-        <label>
-            KRA PIN (Optional)
-            <input type="text" name="kra_pin" value="{{ old('kra_pin') }}" placeholder="e.g. P051234567X">
-            @error('kra_pin') <span class="error">{{ $message }}</span> @enderror
-        </label>
+        <x-input
+            type="text"
+            name="kra_pin"
+            label="KRA PIN (Optional)"
+        />
 
-        <h3>2. Industry Blueprint & Subscription</h3>
+        <h3 style="margin: 18px 0 12px;">2. Industry Blueprint &amp; Subscription</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <label>
-                Industry Blueprint
-                <select name="industry" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 11px 12px; font: inherit;">
-                    @forelse($industries as $ind)
-                        <option value="{{ $ind->slug }}" @selected(old('industry') === $ind->slug)>{{ $ind->name }}</option>
-                    @empty
-                        <option value="retail">Retail Supermarket & General Store</option>
-                    @endforelse
-                </select>
-                @error('industry') <span class="error">{{ $message }}</span> @enderror
-            </label>
-            <label>
-                Subscription Plan
-                <select name="plan_code" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 11px 12px; font: inherit;">
-                    @forelse($plans as $plan)
-                        <option value="{{ $plan->code }}">{{ $plan->name }} (KES {{ number_format($plan->monthly_price) }}/mo)</option>
-                    @empty
-                        <option value="starter">Starter Plan</option>
-                    @endforelse
-                </select>
-            </label>
+            <x-input type="select" name="industry" label="Industry Blueprint">
+                @forelse($industries as $ind)
+                    <option value="{{ $ind->slug }}" @selected(old('industry') === $ind->slug)>{{ $ind->name }}</option>
+                @empty
+                    <option value="retail">Retail Supermarket &amp; General Store</option>
+                @endforelse
+            </x-input>
+
+            <x-input type="select" name="plan_code" label="Subscription Plan">
+                @forelse($plans as $plan)
+                    <option value="{{ $plan->code }}" @selected(old('plan_code') === $plan->code)>{{ $plan->name }} (KES {{ number_format($plan->monthly_price) }}/mo)</option>
+                @empty
+                    <option value="starter">Starter Plan</option>
+                @endforelse
+            </x-input>
         </div>
 
-        <label>
-            Dedicated Custom Subdomain or Domain
-            <input type="text" name="domain" value="{{ old('domain') }}" required placeholder="e.g. acme.blepos.co.ke">
-            @error('domain') <span class="error">{{ $message }}</span> @enderror
-        </label>
+        <x-input
+            type="text"
+            name="domain"
+            label="Dedicated Custom Subdomain or Domain"
+            :required="true"
+        />
 
-        <h3>3. Initial Branch & Owner</h3>
+        <h3 style="margin: 18px 0 12px;">3. Initial Branch &amp; Owner</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <label>
-                Initial Shop Name
-                <input type="text" name="initial_shop_name" value="{{ old('initial_shop_name', 'Main Branch') }}" required>
-            </label>
-            <label>
-                Shop Code
-                <input type="text" name="initial_shop_code" value="{{ old('initial_shop_code', 'MAIN') }}" required>
-            </label>
+            <x-input
+                type="text"
+                name="initial_shop_name"
+                label="Initial Shop Name"
+                value="Main Branch"
+                :required="true"
+            />
+            <x-input
+                type="text"
+                name="initial_shop_code"
+                label="Shop Code"
+                value="MAIN"
+                :required="true"
+            />
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <label>
-                Owner Full Name
-                <input type="text" name="owner_name" value="{{ old('owner_name') }}" required>
-            </label>
-            <label>
-                Owner Email (Invitation Recipient)
-                <input type="email" name="owner_email" value="{{ old('owner_email') }}" required>
-            </label>
+            <x-input
+                type="text"
+                name="owner_name"
+                label="Owner Full Name"
+                :required="true"
+            />
+            <x-input
+                type="email"
+                name="owner_email"
+                label="Owner Email (Invitation Recipient)"
+                :required="true"
+            />
         </div>
 
-        <div style="margin-top: 10px;">
-            <button type="submit">Start 30-Step Provisioning</button>
-            <a href="{{ route('platform.tenants.index') }}" style="margin-left: 12px; color: #63736b;">Cancel</a>
+        <div style="margin-top: 16px; display: flex; align-items: center; gap: 12px;">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-rocket-takeoff"></i>
+                <span>Start 30-Step Provisioning</span>
+            </button>
+            <a href="{{ route('platform.tenants.index') }}" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </section>

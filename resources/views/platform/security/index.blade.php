@@ -77,7 +77,7 @@
                         </td>
                         <td>{{ Str::limit($inc->title, 35) }}</td>
                         <td>
-                            <span class="badge" style="background: {{ $inc->severity === 'critical' ? '#fee2e2' : ($inc->severity === 'high' ? '#ffedd5' : '#fef9c3') }}; color: {{ $inc->severity === 'critical' ? '#991b1b' : ($inc->severity === 'high' ? '#9a3412' : '#854d0e') }}; padding: 2px 6px; border-radius: 4px;">
+                            <span class="badge" style="background: {{ $inc->severity === 'critical' ? '#EAEEF3' : ($inc->severity === 'high' ? '#ffedd5' : '#fef9c3') }}; color: {{ $inc->severity === 'critical' ? '#991b1b' : ($inc->severity === 'high' ? '#9a3412' : '#854d0e') }}; padding: 2px 6px; border-radius: 4px;">
                                 {{ strtoupper($inc->severity) }}
                             </span>
                         </td>
@@ -112,7 +112,7 @@
                     <tr>
                         <td>{{ $event->occurred_at->format('M d H:i') }}</td>
                         <td>
-                            <span class="badge" style="background: {{ $event->severity === 'critical' ? '#fee2e2' : ($event->severity === 'warning' ? '#fef3c7' : '#f0fdf4') }}; color: {{ $event->severity === 'critical' ? '#991b1b' : ($event->severity === 'warning' ? '#92400e' : '#166534') }}; padding: 2px 6px; border-radius: 4px;">
+                            <span class="badge" style="background: {{ $event->severity === 'critical' ? '#EAEEF3' : ($event->severity === 'warning' ? '#fef3c7' : '#EAEEF3') }}; color: {{ $event->severity === 'critical' ? '#991b1b' : ($event->severity === 'warning' ? '#92400e' : '#166534') }}; padding: 2px 6px; border-radius: 4px;">
                                 {{ strtoupper($event->severity) }}
                             </span>
                         </td>
@@ -154,7 +154,7 @@
                     <td>{{ $k->algorithm }}</td>
                     <td>v{{ $k->version }}</td>
                     <td>
-                        <span class="badge" style="background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 4px;">
+                        <span class="badge" style="background: #EAEEF3; color: #166534; padding: 2px 6px; border-radius: 4px;">
                             {{ strtoupper($k->status) }}
                         </span>
                     </td>

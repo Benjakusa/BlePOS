@@ -19,7 +19,7 @@
 @endif
 
 @if ($errors->any())
-    <div class="notice" style="border-color: #fca5a5; background: #fef2f2; color: #991b1b;" role="alert">
+    <div class="notice" style="border-color: #DC2626; background: #EAEEF3; color: #991b1b;" role="alert">
         <strong>Please check the errors:</strong>
         <ul style="margin: 8px 0 0; padding-left: 20px;">
             @foreach ($errors->all() as $error)
@@ -36,7 +36,7 @@
             <div style="white-space: pre-wrap; margin-top: 10px; line-height: 1.5; color: #1e293b;">{{ $case->description }}</div>
 
             @if($case->resolution_notes)
-                <div style="margin-top: 16px; padding: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
+                <div style="margin-top: 16px; padding: 12px; background: #EAEEF3; border: 1px solid #CBD5E1; border-radius: 6px;">
                     <strong style="color: #166534;">Resolution Notes:</strong>
                     <div style="margin-top: 4px; color: #14532d;">{{ $case->resolution_notes }}</div>
                 </div>
@@ -67,18 +67,12 @@
                 @endforelse
             </div>
 
-            <form method="POST" action="{{ route('platform.support.cases.notes.store', $case) }}" class="form" style="margin-top: 18px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+            <form method="POST" action="{{ route('platform.support.cases.notes.store', $case) }}" class="form" style="margin-top: 18px; border-top: 1px solid #e2e8f0; padding-top: 14px; display: flex; flex-direction: column; gap: 12px;">
                 @csrf
-                <label>
-                    Add Case Note / Reply:
-                    <textarea name="content" rows="3" required placeholder="Type notes or updates here..." style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 11px 12px; font: inherit; width: 100%;"></textarea>
-                </label>
+                <x-input type="textarea" name="content" label="Add Case Note / Reply" rows="3" required placeholder="Type notes or updates here..." />
 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                    <label style="display: flex; align-items: center; gap: 6px; font-weight: normal; font-size: 13px;">
-                        <input type="checkbox" name="is_internal" value="1" checked style="width: auto;">
-                        Internal platform note (hidden from tenant)
-                    </label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                    <x-input type="checkbox" name="is_internal" value="1" :checked="true" label="Internal platform note (hidden from tenant)" />
 
                     <button type="submit" style="padding: 8px 16px;">Post Note</button>
                 </div>
@@ -99,46 +93,37 @@
 
         <div class="panel" style="margin-bottom: 20px;">
             <h3>Update Status</h3>
-            <form method="POST" action="{{ route('platform.support.cases.status', $case) }}" class="form" style="margin-top: 10px;">
+            <form method="POST" action="{{ route('platform.support.cases.status', $case) }}" class="form" style="margin-top: 10px; display: flex; flex-direction: column; gap: 12px;">
                 @csrf
-                <label>
-                    Status:
-                    <select name="status" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 9px 10px; font: inherit; width: 100%;">
-                        <option value="open" @selected($case->status === 'open')>Open</option>
-                        <option value="in_progress" @selected($case->status === 'in_progress')>In Progress</option>
-                        <option value="waiting_on_tenant" @selected($case->status === 'waiting_on_tenant')>Waiting on Tenant</option>
-                        <option value="waiting_on_platform" @selected($case->status === 'waiting_on_platform')>Waiting on Platform</option>
-                        <option value="resolved" @selected($case->status === 'resolved')>Resolved</option>
-                        <option value="closed" @selected($case->status === 'closed')>Closed</option>
-                    </select>
-                </label>
+                <x-input type="select" name="status" label="Status" :selected="$case->status">
+                    <option value="open" @selected($case->status === 'open')>Open</option>
+                    <option value="in_progress" @selected($case->status === 'in_progress')>In Progress</option>
+                    <option value="waiting_on_tenant" @selected($case->status === 'waiting_on_tenant')>Waiting on Tenant</option>
+                    <option value="waiting_on_platform" @selected($case->status === 'waiting_on_platform')>Waiting on Platform</option>
+                    <option value="resolved" @selected($case->status === 'resolved')>Resolved</option>
+                    <option value="closed" @selected($case->status === 'closed')>Closed</option>
+                </x-input>
 
-                <label>
-                    Resolution Notes (optional):
-                    <textarea name="resolution_notes" rows="2" placeholder="Summary of resolution if closing..." style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 9px 10px; font: inherit; width: 100%;">{{ $case->resolution_notes }}</textarea>
-                </label>
+                <x-input type="textarea" name="resolution_notes" label="Resolution Notes (optional)" rows="2" placeholder="Summary of resolution if closing..." :value="$case->resolution_notes" />
 
-                <button type="submit" style="margin-top: 8px;">Update Status</button>
+                <button type="submit" style="margin-top: 4px;">Update Status</button>
             </form>
         </div>
 
         <div class="panel">
             <h3>Assign Agent</h3>
-            <form method="POST" action="{{ route('platform.support.cases.assign', $case) }}" class="form" style="margin-top: 10px;">
+            <form method="POST" action="{{ route('platform.support.cases.assign', $case) }}" class="form" style="margin-top: 10px; display: flex; flex-direction: column; gap: 12px;">
                 @csrf
-                <label>
-                    Agent:
-                    <select name="agent_id" style="border: 1px solid #b9c9bf; border-radius: 5px; padding: 9px 10px; font: inherit; width: 100%;">
-                        <option value="">Unassigned</option>
-                        @foreach($agents as $agent)
-                            <option value="{{ $agent->id }}" @selected($case->assigned_agent_id === $agent->id)>
-                                {{ $agent->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </label>
+                <x-input type="select" name="agent_id" label="Agent">
+                    <option value="">Unassigned</option>
+                    @foreach($agents as $agent)
+                        <option value="{{ $agent->id }}" @selected($case->assigned_agent_id === $agent->id)>
+                            {{ $agent->name }}
+                        </option>
+                    @endforeach
+                </x-input>
 
-                <button type="submit" style="margin-top: 8px;">Update Assignment</button>
+                <button type="submit" style="margin-top: 4px;">Update Assignment</button>
             </form>
         </div>
     </div>

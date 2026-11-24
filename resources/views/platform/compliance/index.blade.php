@@ -18,11 +18,11 @@
     <div class="notice" role="alert">{{ session('notice') }}</div>
 @endif
 
-<div style="background: {{ $metrics['etims_status'] === 'CERTIFIED' ? '#f0fdf4' : '#fffbeb' }}; border: 1px solid {{ $metrics['etims_status'] === 'CERTIFIED' ? '#bbf7d0' : '#fde68a' }}; border-radius: 8px; padding: 18px 22px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+<div style="background: {{ $metrics['etims_status'] === 'CERTIFIED' ? '#EAEEF3' : '#fffbeb' }}; border: 1px solid {{ $metrics['etims_status'] === 'CERTIFIED' ? '#CBD5E1' : '#fde68a' }}; border-radius: 8px; padding: 18px 22px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
     <div>
         <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-weight: 700; font-size: 16px;">KRA eTIMS Platform Certification Status:</span>
-            <span class="badge" style="background: {{ $metrics['etims_status'] === 'CERTIFIED' ? '#dcfce7' : '#fee2e2' }}; color: {{ $metrics['etims_status'] === 'CERTIFIED' ? '#166534' : '#991b1b' }}; padding: 4px 10px; border-radius: 4px; font-weight: 700;">
+            <span class="badge" style="background: #EAEEF3; color: {{ $metrics['etims_status'] === 'CERTIFIED' ? '#16A34A' : '#DC2626' }}; padding: 4px 10px; border-radius: 4px; font-weight: 700;">
                 {{ $metrics['etims_status'] }}
             </span>
         </div>
@@ -84,7 +84,7 @@
                     <td><strong>{{ $cert->component_name }}</strong></td>
                     <td><code>{{ $cert->certification_stage }}</code></td>
                     <td>
-                        <span class="badge" style="background: {{ $cert->status === 'passed' ? '#dcfce7' : ($cert->status === 'blocked' ? '#fee2e2' : '#fef3c7') }}; color: {{ $cert->status === 'passed' ? '#166534' : ($cert->status === 'blocked' ? '#991b1b' : '#92400e') }}; padding: 3px 8px; border-radius: 4px; font-weight: 600;">
+                        <span class="badge" style="background: #EAEEF3; color: {{ $cert->status === 'passed' ? '#16A34A' : ($cert->status === 'blocked' ? '#DC2626' : '#B45309') }}; padding: 3px 8px; border-radius: 4px; font-weight: 600;">
                             {{ strtoupper($cert->status) }}
                         </span>
                     </td>
@@ -92,16 +92,16 @@
                     <td>{{ $cert->details }}</td>
                     <td>
                         <details>
-                            <summary style="cursor: pointer; color: #146b4d; font-weight: 600;">Update</summary>
-                            <form method="POST" action="{{ route('platform.compliance.etims-cert.update', $cert) }}" style="margin-top: 8px; display: grid; gap: 6px;">
+                            <summary style="cursor: pointer; color: #16A34A; font-weight: 600;">Update</summary>
+                            <form method="POST" action="{{ route('platform.compliance.etims-cert.update', $cert) }}" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
                                 @csrf
-                                <select name="status" style="padding: 4px 6px; font-size: 12px;">
+                                <x-input type="select" name="status" :compact="true">
                                     <option value="passed" @selected($cert->status === 'passed')>Passed</option>
                                     <option value="pending" @selected($cert->status === 'pending')>Pending</option>
                                     <option value="blocked" @selected($cert->status === 'blocked')>Blocked</option>
                                     <option value="failed" @selected($cert->status === 'failed')>Failed</option>
-                                </select>
-                                <input name="kra_reference" value="{{ $cert->kra_reference }}" placeholder="KRA Reference..." style="padding: 4px 6px; font-size: 12px;">
+                                </x-input>
+                                <x-input name="kra_reference" label="KRA Reference" :value="$cert->kra_reference" :compact="true" />
                                 <button type="submit" class="btn" style="padding: 4px 8px; font-size: 11px;">Save Status</button>
                             </form>
                         </details>
@@ -139,7 +139,7 @@
                         <td>{{ $dpa->subject_name }}</td>
                         <td><code>{{ $dpa->request_type }}</code></td>
                         <td>
-                            <span class="badge" style="background: {{ $dpa->status === 'completed' ? '#dcfce7' : ($dpa->status === 'rejected' ? '#fee2e2' : '#e0e7ff') }}; color: {{ $dpa->status === 'completed' ? '#166534' : ($dpa->status === 'rejected' ? '#991b1b' : '#3730a3') }}; padding: 2px 6px; border-radius: 4px;">
+                            <span class="badge" style="background: #EAEEF3; color: {{ $dpa->status === 'completed' ? '#16A34A' : ($dpa->status === 'rejected' ? '#DC2626' : '#2563EB') }}; padding: 2px 6px; border-radius: 4px;">
                                 {{ strtoupper($dpa->status) }}
                             </span>
                         </td>

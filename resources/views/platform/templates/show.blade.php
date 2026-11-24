@@ -45,7 +45,7 @@
     <div class="notice" role="alert">{{ session('notice') }}</div>
 @endif
 @if(session('error'))
-    <div class="alert alert-danger" style="background: #fee2e2; border: 1px solid #fecaca; color: #b91c1c; padding: 12px 16px; border-radius: var(--radius-btn); margin-bottom: 20px;" role="alert">
+    <div class="alert alert-danger" style="background: #EAEEF3; border: 1px solid #DC2626; color: #b91c1c; padding: 12px 16px; border-radius: var(--radius-btn); margin-bottom: 20px;" role="alert">
         {{ session('error') }}
     </div>
 @endif
@@ -171,15 +171,12 @@
                 <form method="POST" action="{{ route('platform.templates.apply', $template) }}" id="apply-form">
                     @csrf
                     <div style="display: grid; gap: 12px;">
-                        <label>
-                            Select Target Tenant
-                            <select name="tenant_id" id="target-tenant-select" required style="padding: 10px 12px; font-size: 14px;">
-                                <option value="">-- Choose Tenant --</option>
-                                @foreach($allTenants as $tenantOption)
-                                    <option value="{{ $tenantOption->id }}">{{ $tenantOption->name }} ({{ $tenantOption->code }})</option>
-                                @endforeach
-                            </select>
-                        </label>
+                        <x-input type="select" name="tenant_id" id="target-tenant-select" label="Select Target Tenant" :required="true">
+                            <option value="">-- Choose Tenant --</option>
+                            @foreach($allTenants as $tenantOption)
+                                <option value="{{ $tenantOption->id }}">{{ $tenantOption->name }} ({{ $tenantOption->code }})</option>
+                            @endforeach
+                        </x-input>
 
                         <!-- Preview Area -->
                         <div id="preview-box" style="display: none; background: var(--color-neutral-50); border: 1px solid var(--color-neutral-200); border-radius: 8px; padding: 12px; font-size: 12.5px;">

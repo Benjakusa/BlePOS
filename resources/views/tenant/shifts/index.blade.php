@@ -18,7 +18,7 @@
 </header>
 
 @if($currentOpenShift)
-    <div class="panel" style="background: #f0fdf4; border-color: #bbf7d0; margin-bottom: 24px;">
+    <div class="panel" style="background: #EAEEF3; border: 1px solid #CBD5E1; margin-bottom: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <span class="badge badge-success">Your Open Shift</span>
@@ -35,22 +35,20 @@
 
 <div class="panel" style="margin-bottom: 20px;">
     <form action="{{ route('tenant.shifts.index') }}" method="GET" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
-        <div>
-            <label for="status" style="font-size: 12px;">Status</label>
-            <select id="status" name="status">
+        <div style="min-width: 160px;">
+            <x-input type="select" name="status" label="Status" :selected="request('status')">
                 <option value="">All Shifts</option>
                 <option value="open" {{ request('status') === 'open' ? 'selected' : '' }}>Open</option>
                 <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>Closed</option>
-            </select>
+            </x-input>
         </div>
-        <div>
-            <label for="shop_id" style="font-size: 12px;">Shop</label>
-            <select id="shop_id" name="shop_id">
+        <div style="min-width: 180px;">
+            <x-input type="select" name="shop_id" label="Shop" :selected="request('shop_id')">
                 <option value="">All Shops</option>
                 @foreach($shops as $s)
                     <option value="{{ $s->id }}" {{ request('shop_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
                 @endforeach
-            </select>
+            </x-input>
         </div>
         <div>
             <button type="submit" class="btn btn-secondary">Filter</button>

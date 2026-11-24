@@ -23,7 +23,7 @@
                 @if($approval->requested_by === auth('platform')->id())
                     <form method="post" action="{{ route('platform.approvals.cancel', $approval) }}" class="form">
                         @csrf
-                        <label>Cancellation reason<input name="reason" minlength="8" maxlength="1000" required></label>
+                        <x-input name="reason" label="Cancellation reason" minlength="8" maxlength="1000" required />
                         <button type="submit">Cancel request</button>
                     </form>
                 @endif

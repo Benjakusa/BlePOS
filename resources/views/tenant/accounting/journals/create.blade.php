@@ -18,19 +18,12 @@
         @csrf
 
         <div style="display: grid; grid-template-columns: 200px 1fr; gap: 16px; margin-bottom: 24px;">
-            <label>
-                Entry Date
-                <input type="date" name="entry_date" value="{{ old('entry_date', now()->toDateString()) }}" required>
-            </label>
-
-            <label>
-                Description / Memo
-                <input type="text" name="description" value="{{ old('description') }}" placeholder="e.g. Month-end depreciation adjustment" required>
-            </label>
+            <x-input type="date" name="entry_date" label="Entry Date" :value="now()->toDateString()" required />
+            <x-input name="description" label="Description / Memo" placeholder="e.g. Month-end depreciation adjustment" required />
         </div>
 
         <h3 style="font-size: 16px; margin-bottom: 12px;">Journal Entry Lines</h3>
-        <table id="linesTable" style="margin-bottom: 20px;">
+        <table id="linesTable" style="margin-bottom: 20px; width: 100%;">
             <thead>
                 <tr>
                     <th style="width: 40%;">Account</th>
@@ -44,23 +37,23 @@
                 @for($i = 0; $i < 4; $i++)
                     <tr>
                         <td>
-                            <select name="lines[{{ $i }}][account_id]" {{ $i < 2 ? 'required' : '' }}>
+                            <x-input type="select" name="lines[{{ $i }}][account_id]" :compact="true" :required="$i < 2">
                                 <option value="">Select Account...</option>
                                 @foreach($accounts as $acc)
                                     <option value="{{ $acc->id }}" {{ old("lines.{$i}.account_id") == $acc->id ? 'selected' : '' }}>
                                         [{{ $acc->code }}] {{ $acc->name }} ({{ ucfirst($acc->type) }})
                                     </option>
                                 @endforeach
-                            </select>
+                            </x-input>
                         </td>
                         <td>
-                            <input type="text" name="lines[{{ $i }}][memo]" value="{{ old("lines.{$i}.memo") }}" placeholder="Line note...">
+                            <x-input name="lines[{{ $i }}][memo]" :compact="true" placeholder="Line note..." />
                         </td>
                         <td>
-                            <input type="number" step="0.01" min="0" name="lines[{{ $i }}][debit]" value="{{ old("lines.{$i}.debit", '0.00') }}" style="text-align: right;" class="debit-input">
+                            <x-input type="number" step="0.01" min="0" name="lines[{{ $i }}][debit]" :compact="true" class="debit-input" value="0.00" />
                         </td>
                         <td>
-                            <input type="number" step="0.01" min="0" name="lines[{{ $i }}][credit]" value="{{ old("lines.{$i}.credit", '0.00') }}" style="text-align: right;" class="credit-input">
+                            <x-input type="number" step="0.01" min="0" name="lines[{{ $i }}][credit]" :compact="true" class="credit-input" value="0.00" />
                         </td>
                         <td></td>
                     </tr>
