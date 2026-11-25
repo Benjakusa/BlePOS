@@ -77,7 +77,7 @@
                                 <a href="{{ route('tenant.mpesa.edit', $cred) }}" class="btn btn-secondary" style="font-size: 12px; padding: 6px 10px; text-decoration: none;">
                                     <i class="bi bi-pencil"></i> Edit
                                 </a>
-                                <form action="{{ route('tenant.mpesa.destroy', $cred) }}" method="POST" onsubmit="return confirm('Delete this M-Pesa credential?');" style="margin: 0; margin-left: auto;">
+                                <form action="{{ route('tenant.mpesa.destroy', $cred) }}" method="POST" data-motion-confirm="Delete this M-Pesa credential?" style="margin: 0; margin-left: auto;">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-secondary" style="font-size: 12px; padding: 6px 10px; color: #dc2626;">

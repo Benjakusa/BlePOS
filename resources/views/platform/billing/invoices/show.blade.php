@@ -11,7 +11,7 @@
     <div style="display: flex; gap: 8px;">
         <a href="{{ route('platform.invoices.index') }}" class="btn secondary">Back to Invoices</a>
         @if($invoice->amount_paid == '0.00' && !in_array($invoice->status, ['voided', 'cancelled'], true) && auth('platform')->user()->hasPermission('platform.billing.subscriptions.manage'))
-            <form method="POST" action="{{ route('platform.invoices.void', $invoice) }}" onsubmit="return confirm('Void this unpaid invoice?');" style="display: inline;">
+            <form method="POST" action="{{ route('platform.invoices.void', $invoice) }}" data-motion-confirm="Void this unpaid invoice?" style="display: inline;">
                 @csrf
                 <input type="hidden" name="reason" value="Voided by billing administrator">
                 <button type="submit" class="btn" style="background: #dc2626;">Void Invoice</button>
@@ -106,7 +106,7 @@
                             <td style="text-align: center; padding: 8px;"><span class="badge">{{ strtoupper($payment->status) }}</span></td>
                             <td style="text-align: right; padding: 8px;">
                                 @if(bccomp((string) $payment->refundableBalance(), '0.00', 2) > 0 && auth('platform')->user()->hasPermission('platform.billing.subscriptions.manage'))
-                                    <form method="POST" action="{{ route('platform.invoices.refund', [$invoice, $payment]) }}" style="display: inline;" onsubmit="return confirm('Process refund of {{ $payment->currency }} {{ $payment->refundableBalance() }}?');">
+                                    <form method="POST" action="{{ route('platform.invoices.refund', [$invoice, $payment]) }}" style="display: inline;" data-motion-confirm="Process refund of {{ $payment->currency }} {{ $payment->refundableBalance() }}?">
                                         @csrf
                                         <input type="hidden" name="amount" value="{{ $payment->refundableBalance() }}">
                                         <input type="hidden" name="reason" value="Customer refund request">

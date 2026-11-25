@@ -57,7 +57,7 @@
                     </td>
                     <td style="text-align: right; padding: 10px 8px;">
                         @if($announcement->status === 'published')
-                            <form method="POST" action="{{ route('platform.announcements.archive', $announcement) }}" style="display: inline;" onsubmit="return confirm('Archive this announcement?');">
+                            <form method="POST" action="{{ route('platform.announcements.archive', $announcement) }}" style="display: inline;" data-motion-confirm="Archive this announcement?">
                                 @csrf
                                 <button type="submit" class="btn secondary" style="padding: 4px 8px; font-size: 12px; color: #64748b;">Archive</button>
                             </form>

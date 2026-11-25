@@ -50,6 +50,11 @@
 
         <x-input type="file" name="image" label="Product Image (Optional)" accept="image/*" helper="PNG, JPG, or WEBP up to 2MB. Shown on POS product cards." />
 
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center;">
+            <x-input type="toggle" name="is_reusable" value="1" label="Reusable / time-limited item" helper="Rooms and equipment return to availability after their period ends." />
+            <x-input type="number" step="1" min="1" max="720" name="availability_period_hours" label="Availability period (hours)" value="24" helper="Stock is restored after this many hours from sale." />
+        </div>
+
         <div style="display: flex; gap: 24px; margin-top: 4px;">
             <x-input type="toggle" name="track_stock" value="1" :checked="true" label="Track Inventory Stock" />
             <x-input type="toggle" name="is_active" value="1" :checked="true" label="Active (Available in POS)" />

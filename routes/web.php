@@ -39,16 +39,22 @@ use App\Http\Controllers\Tenant\Accounting\AccountingReportController;
 use App\Http\Controllers\Tenant\Accounting\ChartOfAccountsController;
 use App\Http\Controllers\Tenant\Accounting\ExpenseController;
 use App\Http\Controllers\Tenant\Accounting\JournalEntryController;
+use App\Http\Controllers\Tenant\Agrovet\AgrovetController;
 use App\Http\Controllers\Tenant\Auth\TenantAuthController;
 use App\Http\Controllers\Tenant\Auth\TenantMfaController;
 use App\Http\Controllers\Tenant\CashierShiftController;
 use App\Http\Controllers\Tenant\CategoryController;
+use App\Http\Controllers\Tenant\Fleet\FleetController;
+use App\Http\Controllers\Tenant\Garage\GarageController;
+use App\Http\Controllers\Tenant\Gym\GymController;
 use App\Http\Controllers\Tenant\InventoryController;
 use App\Http\Controllers\Tenant\MpesaCredentialController;
 use App\Http\Controllers\Tenant\PharmacyController;
 use App\Http\Controllers\Tenant\PosController;
+use App\Http\Controllers\Tenant\Printing\PrintingController;
 use App\Http\Controllers\Tenant\ProductController;
 use App\Http\Controllers\Tenant\TableController;
+use App\Http\Controllers\Tenant\TenantActivityController;
 use App\Http\Controllers\Tenant\TenantAnnouncementController;
 use App\Http\Controllers\Tenant\TenantDashboardController;
 use App\Http\Controllers\Tenant\TenantSubscriptionController;
@@ -415,8 +421,9 @@ Route::middleware(['web', 'auth'])->prefix('tenant/mfa')->name('tenant.mfa.')->g
     Route::post('/challenge', [TenantMfaController::class, 'verify'])->middleware('throttle:10,1')->name('verify');
 });
 
-Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.resolve', 'tenant.mfa', 'tenant.isolate', 'shop.isolate'])->group(function (): void {
+Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.resolve', 'tenant.mfa', 'tenant.isolate', 'shop.isolate', 'tenant.activity'])->group(function (): void {
     Route::get('/', TenantDashboardController::class)->name('dashboard');
+    Route::get('/activity', [TenantActivityController::class, 'index'])->middleware('tenant.permission:users.manage')->name('activity.index');
     Route::get('/notifications', [NotificationCenterController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/read', [NotificationCenterController::class, 'read'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationCenterController::class, 'readAll'])->name('notifications.read-all');
@@ -507,5 +514,117 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
         // Self-service Subscription & Billing
         Route::get('/subscription', [TenantSubscriptionController::class, 'index'])->name('subscription.index');
         Route::post('/subscription/pay', [TenantSubscriptionController::class, 'pay'])->name('subscription.pay');
+    });
+
+    // Gym & Fitness Studio
+    Route::middleware('module.enabled:gym')->prefix('gym')->name('gym.')->group(function (): void {
+        Route::get('/', [GymController::class, 'index'])->name('index');
+        Route::get('/members', [GymController::class, 'members'])->name('members');
+        Route::get('/members/create', [GymController::class, 'createMember'])->name('members.create');
+        Route::post('/members', [GymController::class, 'storeMember'])->name('members.store');
+        Route::get('/members/{member}/edit', [GymController::class, 'editMember'])->name('members.edit');
+        Route::put('/members/{member}', [GymController::class, 'updateMember'])->name('members.update');
+        Route::get('/plans', [GymController::class, 'plans'])->name('plans');
+        Route::get('/plans/create', [GymController::class, 'createPlan'])->name('plans.create');
+        Route::post('/plans', [GymController::class, 'storePlan'])->name('plans.store');
+        Route::get('/subscriptions', [GymController::class, 'subscriptions'])->name('subscriptions');
+        Route::get('/subscriptions/create', [GymController::class, 'createSubscription'])->name('subscriptions.create');
+        Route::post('/subscriptions', [GymController::class, 'storeSubscription'])->name('subscriptions.store');
+        Route::post('/subscriptions/{subscription}/freeze', [GymController::class, 'freezeSubscription'])->name('subscriptions.freeze');
+        Route::post('/subscriptions/{subscription}/renew', [GymController::class, 'renewSubscription'])->name('subscriptions.renew');
+        Route::get('/checkin', [GymController::class, 'checkin'])->name('checkin');
+        Route::post('/checkin', [GymController::class, 'processCheckin'])->name('checkin.store');
+        Route::get('/classes', [GymController::class, 'classes'])->name('classes');
+        Route::get('/classes/create', [GymController::class, 'createClass'])->name('classes.create');
+        Route::post('/classes', [GymController::class, 'storeClass'])->name('classes.store');
+        Route::post('/classes/book', [GymController::class, 'bookClass'])->name('classes.book');
+        Route::post('/bookings/{booking}/attend', [GymController::class, 'markAttendance'])->name('classes.attend');
+        Route::get('/trainers', [GymController::class, 'trainers'])->name('trainers');
+        Route::get('/trainers/create', [GymController::class, 'createTrainer'])->name('trainers.create');
+        Route::post('/trainers', [GymController::class, 'storeTrainer'])->name('trainers.store');
+    });
+
+    // Printing & Branding
+    Route::middleware('module.enabled:printing')->prefix('printing')->name('printing.')->group(function (): void {
+        Route::get('/', [PrintingController::class, 'index'])->name('index');
+        Route::get('/jobs', [PrintingController::class, 'jobs'])->name('jobs');
+        Route::get('/jobs/create', [PrintingController::class, 'createJob'])->name('jobs.create');
+        Route::post('/jobs', [PrintingController::class, 'storeJob'])->name('jobs.store');
+        Route::post('/jobs/{job}/quote', [PrintingController::class, 'storeQuote'])->name('jobs.quote');
+        Route::post('/jobs/{job}/accept-quote', [PrintingController::class, 'acceptQuote'])->name('jobs.accept-quote');
+        Route::post('/jobs/{job}/deposit', [PrintingController::class, 'recordDeposit'])->name('jobs.deposit');
+        Route::post('/jobs/{job}/advance', [PrintingController::class, 'advanceStatus'])->name('jobs.advance');
+        Route::get('/materials', [PrintingController::class, 'materials'])->name('materials');
+        Route::get('/materials/create', [PrintingController::class, 'createMaterial'])->name('materials.create');
+        Route::post('/materials', [PrintingController::class, 'storeMaterial'])->name('materials.store');
+    });
+
+    // Agrovet Operations
+    Route::middleware('module.enabled:agrovet')->prefix('agrovet')->name('agrovet.')->group(function (): void {
+        Route::get('/', [AgrovetController::class, 'index'])->name('index');
+        Route::get('/products', [AgrovetController::class, 'products'])->name('products');
+        Route::get('/products/create', [AgrovetController::class, 'createProduct'])->name('products.create');
+        Route::post('/products', [AgrovetController::class, 'storeProduct'])->name('products.store');
+        Route::get('/customers', [AgrovetController::class, 'customers'])->name('customers');
+        Route::get('/customers/create', [AgrovetController::class, 'createCustomer'])->name('customers.create');
+        Route::post('/customers', [AgrovetController::class, 'storeCustomer'])->name('customers.store');
+        Route::get('/customers/{customer}/ledger', [AgrovetController::class, 'creditLedger'])->name('credit-ledger');
+        Route::post('/credit/repay', [AgrovetController::class, 'repayCredit'])->name('credit.repay');
+        Route::get('/purchases', [AgrovetController::class, 'purchases'])->name('purchases');
+        Route::get('/purchases/create', [AgrovetController::class, 'createPurchase'])->name('purchases.create');
+        Route::post('/purchases', [AgrovetController::class, 'storePurchase'])->name('purchases.store');
+        Route::get('/sales', [AgrovetController::class, 'sales'])->name('sales');
+        Route::get('/sales/create', [AgrovetController::class, 'createSale'])->name('sales.create');
+        Route::post('/sales', [AgrovetController::class, 'storeSale'])->name('sales.store');
+    });
+
+    // Auto Garage & Repair Shop
+    Route::middleware('module.enabled:garage')->prefix('garage')->name('garage.')->group(function (): void {
+        Route::get('/', [GarageController::class, 'index'])->name('index');
+        Route::get('/jobs', [GarageController::class, 'jobs'])->name('jobs');
+        Route::get('/jobs/create', [GarageController::class, 'createJob'])->name('jobs.create');
+        Route::post('/jobs', [GarageController::class, 'storeJob'])->name('jobs.store');
+        Route::get('/jobs/{jobCard}', [GarageController::class, 'showJob'])->name('jobs.show');
+        Route::post('/jobs/{jobCard}/advance', [GarageController::class, 'advanceStatus'])->name('jobs.advance');
+        Route::post('/jobs/{jobCard}/estimate', [GarageController::class, 'storeEstimate'])->name('estimates.store');
+        Route::post('/jobs/{jobCard}/estimate/approve', [GarageController::class, 'approveEstimate'])->name('estimates.approve');
+        Route::post('/jobs/{jobCard}/consume-part', [GarageController::class, 'consumePart'])->name('parts.consume');
+        Route::post('/jobs/{jobCard}/payment', [GarageController::class, 'recordPayment'])->name('payments.store');
+        Route::get('/vehicles/{vehicle}/history', [GarageController::class, 'vehicleHistory'])->name('vehicles.history');
+        Route::get('/vehicles/create', [GarageController::class, 'createVehicle'])->name('vehicles.create');
+        Route::post('/vehicles', [GarageController::class, 'storeVehicle'])->name('vehicles.store');
+        Route::get('/customers', [GarageController::class, 'customers'])->name('customers');
+        Route::get('/customers/create', [GarageController::class, 'createCustomer'])->name('customers.create');
+        Route::post('/customers', [GarageController::class, 'storeCustomer'])->name('customers.store');
+        Route::get('/parts', [GarageController::class, 'parts'])->name('parts');
+        Route::get('/parts/create', [GarageController::class, 'createPart'])->name('parts.create');
+        Route::post('/parts', [GarageController::class, 'storePart'])->name('parts.store');
+        Route::get('/mechanics', [GarageController::class, 'mechanics'])->name('mechanics');
+        Route::get('/mechanics/create', [GarageController::class, 'createMechanic'])->name('mechanics.create');
+        Route::post('/mechanics', [GarageController::class, 'storeMechanic'])->name('mechanics.store');
+    });
+
+    // Fleet & Car Hire
+    Route::middleware('module.enabled:fleet')->prefix('fleet')->name('fleet.')->group(function (): void {
+        Route::get('/', [FleetController::class, 'index'])->name('index');
+        Route::get('/vehicles', [FleetController::class, 'vehicles'])->name('vehicles');
+        Route::get('/vehicles/create', [FleetController::class, 'createVehicle'])->name('vehicles.create');
+        Route::post('/vehicles', [FleetController::class, 'storeVehicle'])->name('vehicles.store');
+        Route::get('/bookings', [FleetController::class, 'bookings'])->name('bookings');
+        Route::get('/bookings/create', [FleetController::class, 'createBooking'])->name('bookings.create');
+        Route::post('/bookings', [FleetController::class, 'storeBooking'])->name('bookings.store');
+        Route::post('/bookings/{booking}/payment', [FleetController::class, 'recordPayment'])->name('bookings.payment');
+        Route::post('/bookings/{booking}/complete', [FleetController::class, 'completeBooking'])->name('bookings.complete');
+        Route::post('/bookings/{booking}/refund-deposit', [FleetController::class, 'refundDeposit'])->name('bookings.refund-deposit');
+        Route::post('/bookings/{booking}/inspection', [FleetController::class, 'storeInspection'])->name('bookings.inspection');
+        Route::get('/maintenance', [FleetController::class, 'maintenance'])->name('maintenance');
+        Route::post('/maintenance', [FleetController::class, 'logMaintenance'])->name('maintenance.store');
+        Route::post('/maintenance/{maintenance}/complete', [FleetController::class, 'completeMaintenance'])->name('maintenance.complete');
+        Route::get('/customers', [FleetController::class, 'customers'])->name('customers');
+        Route::get('/customers/create', [FleetController::class, 'createCustomer'])->name('customers.create');
+        Route::post('/customers', [FleetController::class, 'storeCustomer'])->name('customers.store');
+        Route::get('/drivers', [FleetController::class, 'drivers'])->name('drivers');
+        Route::get('/drivers/create', [FleetController::class, 'createDriver'])->name('drivers.create');
+        Route::post('/drivers', [FleetController::class, 'storeDriver'])->name('drivers.store');
     });
 });

@@ -108,6 +108,11 @@ class SaleService
             foreach ($items as $itemData) {
                 $product = Product::query()->where('tenant_id', $shop->tenant_id)
                     ->where('is_active', true)->lockForUpdate()->findOrFail($itemData['product_id']);
+                abort_if(
+                    $product->is_reusable && (! $product->track_stock || (int) $product->availability_period_hours < 1),
+                    422,
+                    'Reusable products must track stock and have a positive availability period.'
+                );
                 $qty = (float) ($itemData['quantity'] ?? 1.0);
                 if ($shop->tenant?->industry === 'pharmacy') {
                     abort_if(
@@ -162,6 +167,9 @@ class SaleService
                     'tax_rate' => $taxRate,
                     'tax_amount' => $taxAmount,
                     'total_price' => $lineTotal,
+                    'availability_release_at' => $product->is_reusable && $product->track_stock
+                        ? now()->addHours((int) $product->availability_period_hours)
+                        : null,
                 ]);
 
                 // Stock deduction

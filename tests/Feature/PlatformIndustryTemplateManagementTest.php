@@ -72,18 +72,36 @@ class PlatformIndustryTemplateManagementTest extends TestCase
             ->withCookie(config('session.platform.cookie'), $sessionId);
     }
 
-    public function test_seeder_populates_25_modules_and_7_templates_idempotently(): void
+    public function test_seeder_populates_modules_and_templates_idempotently(): void
     {
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertSame(25, Module::count());
-        $this->assertSame(7, IndustryTemplate::count());
+        $moduleCount = Module::count();
+        $templateCount = IndustryTemplate::count();
 
-        // Run second time to ensure zero duplicates
+        $this->assertGreaterThanOrEqual(25, $moduleCount);
+        $this->assertGreaterThanOrEqual(7, $templateCount);
+
+        // Run second time to ensure zero duplicates (idempotency check)
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertSame(25, Module::count());
-        $this->assertSame(7, IndustryTemplate::count());
+        $this->assertSame($moduleCount, Module::count(), 'Seeder is not idempotent for modules');
+        $this->assertSame($templateCount, IndustryTemplate::count(), 'Seeder is not idempotent for templates');
+
+        // Assert all new industry module slugs exist
+        foreach (['gym', 'gym.classes', 'printing', 'printing.quotes', 'agrovet', 'agrovet.credit', 'garage', 'garage.estimates', 'fleet', 'fleet.inspections', 'parcel-delivery'] as $slug) {
+            $this->assertTrue(Module::where('slug', $slug)->exists(), "Module slug '{$slug}' missing from seeder");
+        }
+
+        // Assert all new industry template slugs exist
+        foreach (['gym-fitness', 'printing-branding', 'agrovet', 'auto-garage', 'car-hire-fleet', 'parcel-delivery'] as $slug) {
+            $this->assertTrue(IndustryTemplate::where('slug', $slug)->exists(), "Template slug '{$slug}' missing from seeder");
+        }
+
+        $parcelTemplate = IndustryTemplate::where('slug', 'parcel-delivery')->firstOrFail();
+        foreach (['parcel-delivery', 'mod-delivery', 'mod-multishop', 'mod-transfers', 'mod-customers'] as $slug) {
+            $this->assertContains($slug, $parcelTemplate->default_modules);
+        }
     }
 
     public function test_index_lists_templates_and_displays_empty_state_when_none_exist(): void

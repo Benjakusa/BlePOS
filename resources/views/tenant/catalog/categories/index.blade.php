@@ -42,7 +42,7 @@
                     <td style="text-align: right;">
                         <div class="actions" style="justify-content: flex-end;">
                             <a href="{{ route('tenant.categories.edit', $category) }}" class="btn btn-secondary btn-sm">Edit</a>
-                            <form action="{{ route('tenant.categories.destroy', $category) }}" method="POST" onsubmit="return confirm('Delete this category?')">
+                            <form action="{{ route('tenant.categories.destroy', $category) }}" method="POST" data-motion-confirm="Delete this category?">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>

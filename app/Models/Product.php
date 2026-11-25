@@ -26,6 +26,7 @@ class Product extends Model
             'selling_price' => 'decimal:2',
             'tax_rate' => 'decimal:2',
             'track_stock' => 'boolean',
+            'is_reusable' => 'boolean',
             'is_active' => 'boolean',
             'metadata' => 'array',
         ];

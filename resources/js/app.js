@@ -683,3 +683,401 @@
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
 })();
+
+/* ============================================================
+   BlePOS Light / Dark Mode Theme Controller
+   ============================================================ */
+(function () {
+    'use strict';
+
+    const STORAGE_KEY = 'blepos_theme';
+
+    function getPreferredTheme() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved === 'light' || saved === 'dark') {
+                return saved;
+            }
+        } catch (e) {}
+
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+    }
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        const btn = document.getElementById('theme-toggle');
+        const icon = document.getElementById('theme-toggle-icon');
+        if (btn) {
+            btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+            btn.setAttribute('data-tooltip', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        if (icon) {
+            icon.className = theme === 'dark' ? 'bi bi-moon-stars' : 'bi bi-sun';
+        }
+    }
+
+    function initThemeToggle() {
+        applyTheme(getPreferredTheme());
+        const btn = document.getElementById('theme-toggle');
+        if (!btn || btn.dataset.themeBound === '1') return;
+        btn.dataset.themeBound = '1';
+        btn.addEventListener('click', function () {
+            const current = document.documentElement.getAttribute('data-theme') || getPreferredTheme();
+            const next = current === 'dark' ? 'light' : 'dark';
+            try {
+                localStorage.setItem(STORAGE_KEY, next);
+            } catch (e) {}
+            applyTheme(next);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initThemeToggle);
+    } else {
+        initThemeToggle();
+    }
+})();
+
+/* ============================================================
+   BlePOS Motion System
+   ============================================================ */
+(function () {
+    'use strict';
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const motionSelector = '.page-title, h1, .page-subtitle, .page-header > *, .stat-card, .chart-card, .form-card, .table-container, .table-wrap, .table-scroll, .card, .panel';
+    let modalTrigger = null;
+    let openModalNode = null;
+    let countFrame = null;
+
+    function animate(el, index = 0) {
+        if (!(el instanceof Element) || el.dataset.motionDone === '1') return;
+        el.dataset.motionDone = '1';
+        el.style.setProperty('--motion-index', String(Math.min(index, 12)));
+        el.classList.add('motion-enter');
+    }
+
+    function animatePage(root = document) {
+        const main = root.querySelector?.('.page-body') || (root.matches?.('.page-body') ? root : null);
+        if (!main) {
+            const auth = document.querySelector('.auth-page');
+            if (auth) { auth.querySelectorAll('.ath-auth-card, .ath-heading, .ath-subhead').forEach((el, i) => animate(el, i)); return; }
+            document.querySelectorAll('.hero-nav, .hero-body, .feature-grid, .hero-footer').forEach((el, i) => animate(el, i));
+            return;
+        }
+        let i = 0;
+        main.querySelectorAll(motionSelector).forEach(el => {
+            // Animate only outer blocks to avoid nested transforms fighting hover effects.
+            if (el.closest('.page-body') !== main || el.parentElement.closest(motionSelector)) return;
+            animate(el, i++);
+        });
+        main.querySelectorAll('tbody tr').forEach((row, index) => {
+            if (index < 12) animate(row, Math.min(i + index, 12));
+        });
+    }
+
+    function tokenMs(name) {
+        const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        if (!value) return 0;
+        return value.endsWith('ms') ? parseFloat(value) : parseFloat(value) * 1000;
+    }
+
+    function countUp(el) {
+        if (el.children.length && !el.hasAttribute('data-count-up')) return;
+        const original = el.textContent.trim();
+        const match = original.match(/^([^\d-]*)(-?[\d,.]+)(.*)$/);
+        if (original.includes('/') || (!el.hasAttribute('data-count-up') && !match)) return;
+        const target = el.hasAttribute('data-count-up') ? Number(el.getAttribute('data-count-up')) : Number(match[2].replace(/,/g, ''));
+        if (!Number.isFinite(target)) return;
+        const prefix = match?.[1] || '';
+        const suffix = match?.[3] || '';
+        const decimals = (match?.[2].match(/\.(\d+)/)?.[1] || '').length;
+        const startValue = 0;
+        if (reducedMotion.matches) {
+            const formatted = decimals ? target.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) : Math.round(target).toLocaleString();
+            el.textContent = prefix + formatted + suffix;
+            return;
+        }
+        window.setTimeout(() => {
+            const start = performance.now();
+            const step = now => {
+                const t = Math.min(1, (now - start) / tokenMs('--dur-count'));
+                const value = startValue + (target - startValue) * (1 - Math.pow(1 - t, 3));
+                const formatted = decimals ? value.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) : Math.round(value).toLocaleString();
+                el.textContent = prefix + formatted + suffix;
+                if (t < 1) countFrame = requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+        }, reducedMotion.matches ? 0 : tokenMs('--dur-base'));
+    }
+
+    function modalDuration(el) {
+        const raw = getComputedStyle(el).transitionDuration.split(',')[0].trim();
+        return raw.endsWith('ms') ? parseFloat(raw) : parseFloat(raw) * 1000;
+    }
+
+    function focusables(modal) {
+        return [...modal.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+            .filter(el => el.offsetParent !== null);
+    }
+
+    function openModal(modal) {
+        if (!(modal instanceof HTMLElement)) return;
+        if (modal.parentElement !== document.body) document.body.appendChild(modal);
+        if (modal._motionCloseTimer) clearTimeout(modal._motionCloseTimer);
+        modalTrigger = document.activeElement;
+        openModalNode = modal;
+        modal.style.display = 'flex';
+        void modal.offsetWidth;
+        modal.classList.remove('motion-closing');
+        modal.classList.add('motion-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('motion-modal-open');
+        const panel = modal.querySelector('[role="dialog"]') || modal.firstElementChild;
+        if (panel && !panel.hasAttribute('role')) panel.setAttribute('role', 'dialog');
+        if (panel && !panel.hasAttribute('aria-modal')) panel.setAttribute('aria-modal', 'true');
+        requestAnimationFrame(() => (focusables(panel)[0] || panel)?.focus?.({ preventScroll: true }));
+    }
+
+    function closeModal(modal = openModalNode) {
+        if (!(modal instanceof HTMLElement) || modal.style.display === 'none') return;
+        if (modal._motionResolve) { const resolve = modal._motionResolve; modal._motionResolve = null; resolve(false); }
+        modal.classList.remove('motion-open');
+        modal.classList.add('motion-closing');
+        modal.setAttribute('aria-hidden', 'true');
+        modal._motionCloseTimer = setTimeout(() => {
+            if (!modal.classList.contains('motion-open')) {
+                modal.style.display = 'none';
+                modal.classList.remove('motion-closing');
+                if (openModalNode === modal) {
+                    openModalNode = null;
+                    document.body.classList.remove('motion-modal-open');
+                    if (modalTrigger?.isConnected) modalTrigger.focus({ preventScroll: true });
+                }
+            }
+        }, reducedMotion.matches ? 0 : modalDuration(modal) || tokenMs('--dur-base'));
+    }
+
+    function confirm(message) {
+        let modal = document.getElementById('motion-confirm-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'motion-confirm-modal';
+            modal.className = 'modal-overlay';
+            modal.setAttribute('aria-hidden', 'true');
+            const panel = document.createElement('section');
+            panel.className = 'card modal-box';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.setAttribute('aria-label', 'Confirm action');
+            panel.tabIndex = -1;
+            const text = document.createElement('p');
+            text.dataset.confirmMessage = '';
+            text.style.whiteSpace = 'pre-line';
+            const actions = document.createElement('div');
+            actions.className = 'motion-confirm-actions';
+            const cancel = document.createElement('button');
+            cancel.type = 'button'; cancel.className = 'btn btn-secondary'; cancel.textContent = 'Cancel';
+            cancel.dataset.confirmCancel = '';
+            const accept = document.createElement('button');
+            accept.type = 'button'; accept.className = 'btn'; accept.textContent = 'Confirm';
+            accept.dataset.confirmAccept = '';
+            actions.append(cancel, accept); panel.append(text, actions); modal.append(panel); document.body.append(modal);
+            cancel.addEventListener('click', () => closeModal(modal));
+            accept.addEventListener('click', () => {
+                const resolve = modal._motionResolve;
+                modal._motionResolve = null;
+                closeModal(modal);
+                resolve?.(true);
+            });
+        }
+        modal.querySelector('[data-confirm-message]').textContent = String(message);
+        return new Promise(resolve => { modal._motionResolve = resolve; openModal(modal); });
+    }
+
+    window.BleMotion = { openModal, closeModal, animatePage, confirm, duration: tokenMs };
+
+    function initOtpForm(form) {
+        if (form.dataset.otpInitialized === '1') return;
+        form.dataset.otpInitialized = '1';
+        const digits = [...form.querySelectorAll('[data-otp-digit]')];
+        const value = form.querySelector('[data-otp-value]');
+        const digitGroup = form.querySelector('[data-otp-digits]');
+        const recoveryGroup = form.querySelector('[data-otp-recovery]');
+        const recoveryInput = form.querySelector('[data-otp-recovery-input]');
+        const toggle = form.querySelector('[data-otp-toggle]');
+        if (!digits.length || !value || !digitGroup || !recoveryGroup || !recoveryInput || !toggle) return;
+
+        let recoveryMode = false;
+        const syncDigits = () => { value.value = digits.map(input => input.value).join(''); };
+        const setMode = useRecovery => {
+            recoveryMode = useRecovery;
+            digitGroup.hidden = useRecovery;
+            recoveryGroup.hidden = !useRecovery;
+            digits.forEach(input => { input.required = !useRecovery; });
+            recoveryInput.required = useRecovery;
+            toggle.textContent = useRecovery ? 'Use an authenticator code' : 'Use a recovery code';
+            value.value = '';
+            (useRecovery ? recoveryInput : digits[0]).focus();
+        };
+
+        digits.forEach((input, index) => {
+            input.addEventListener('input', () => {
+                const entered = input.value.replace(/\D/g, '');
+                if (entered.length > 1) {
+                    [...entered].slice(0, digits.length - index).forEach((digit, offset) => {
+                        digits[index + offset].value = digit;
+                    });
+                    const next = Math.min(index + entered.length, digits.length - 1);
+                    digits[next].focus();
+                } else {
+                    input.value = entered.slice(-1);
+                    if (input.value && index < digits.length - 1) digits[index + 1].focus();
+                }
+                syncDigits();
+            });
+            input.addEventListener('keydown', event => {
+                if (event.key === 'Backspace' && !input.value && index > 0) {
+                    digits[index - 1].value = '';
+                    digits[index - 1].focus();
+                    syncDigits();
+                } else if (event.key === 'ArrowLeft' && index > 0) {
+                    event.preventDefault(); digits[index - 1].focus();
+                } else if (event.key === 'ArrowRight' && index < digits.length - 1) {
+                    event.preventDefault(); digits[index + 1].focus();
+                }
+            });
+            input.addEventListener('paste', event => {
+                const pasted = event.clipboardData?.getData('text').replace(/\D/g, '') || '';
+                if (!pasted) return;
+                event.preventDefault();
+                [...pasted].slice(0, digits.length).forEach((digit, offset) => { digits[offset].value = digit; });
+                digits[Math.min(pasted.length, digits.length) - 1]?.focus();
+                syncDigits();
+            });
+        });
+        toggle.addEventListener('click', () => setMode(!recoveryMode));
+        form.addEventListener('submit', event => {
+            if (recoveryMode) {
+                value.value = recoveryInput.value.trim();
+                if (!value.value) { event.preventDefault(); recoveryInput.focus(); }
+            } else {
+                syncDigits();
+                if (value.value.length !== digits.length) {
+                    event.preventDefault();
+                    digits.find(input => !input.value)?.focus();
+                }
+            }
+        });
+    }
+
+    function initActivityPeriodFilter(root = document) {
+        root.querySelectorAll?.('[data-period-filter]').forEach(filter => {
+            const select = filter.querySelector('select');
+            const form = filter.closest('form');
+            if (!select || !form || select.dataset.periodFilterReady === '1') return;
+            select.dataset.periodFilterReady = '1';
+            const sync = () => form.querySelectorAll('[data-period-field]').forEach(field => {
+                field.hidden = field.dataset.periodField !== select.value;
+            });
+            select.addEventListener('change', sync);
+            sync();
+        });
+    }
+
+    function init() {
+        animatePage();
+        initActivityPeriodFilter();
+        document.querySelectorAll('[data-otp-form]').forEach(initOtpForm);
+        document.querySelectorAll('[data-count-up], .stat-value').forEach(countUp);
+        document.querySelectorAll('[data-progress]').forEach(el => {
+            const progress = Math.max(0, Math.min(100, Number(el.dataset.progress) || 0)) / 100;
+            el.style.setProperty('--motion-progress', String(progress));
+            requestAnimationFrame(() => el.classList.add('is-ready'));
+        });
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            const panel = modal.querySelector('[role="dialog"]') || modal.firstElementChild;
+            if (panel && !panel.hasAttribute('tabindex')) panel.setAttribute('tabindex', '-1');
+        });
+
+        document.addEventListener('keydown', event => {
+            if (!openModalNode) return;
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeModal(openModalNode);
+            } else if (event.key === 'Tab') {
+                const panel = openModalNode.querySelector('[role="dialog"]') || openModalNode;
+                const list = focusables(panel);
+                if (!list.length) { event.preventDefault(); panel.focus(); return; }
+                if (event.shiftKey && document.activeElement === list[0]) { event.preventDefault(); list.at(-1).focus(); }
+                else if (!event.shiftKey && document.activeElement === list.at(-1)) { event.preventDefault(); list[0].focus(); }
+            }
+        });
+        document.addEventListener('submit', event => {
+            const form = event.target;
+            if (!(form instanceof HTMLFormElement) || !form.hasAttribute('data-motion-confirm')) return;
+            if (form.dataset.motionConfirmed === '1') { delete form.dataset.motionConfirmed; return; }
+            event.preventDefault();
+            confirm(form.dataset.motionConfirm).then(confirmed => { if (confirmed) { form.dataset.motionConfirmed = '1'; form.requestSubmit(event.submitter || undefined); } });
+        }, true);
+        document.addEventListener('click', event => {
+            const confirmedControl = event.target.closest?.('[data-motion-confirm]');
+            if (confirmedControl && confirmedControl.dataset.motionProceed !== '1') {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                confirm(confirmedControl.dataset.motionConfirm).then(confirmed => {
+                    if (!confirmed) return;
+                    if (confirmedControl instanceof HTMLButtonElement && confirmedControl.type === 'submit' && confirmedControl.form) {
+                        confirmedControl.form.requestSubmit(confirmedControl);
+                    } else if (confirmedControl instanceof HTMLFormElement) {
+                        confirmedControl.dataset.motionConfirmed = '1';
+                        confirmedControl.requestSubmit();
+                    } else {
+                        confirmedControl.dataset.motionProceed = '1';
+                        confirmedControl.click();
+                        delete confirmedControl.dataset.motionProceed;
+                    }
+                });
+                return;
+            }
+            if (openModalNode && event.target === openModalNode) closeModal(openModalNode);
+            const link = event.target.closest?.('a[href]');
+            if (link && !event.defaultPrevented && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && link.target !== '_blank') {
+                const url = new URL(link.href, location.href);
+                const main = document.querySelector('.page-body');
+                if (main && url.origin === location.origin && url.pathname !== location.pathname) {
+                    main.classList.add('motion-exit');
+                    event.preventDefault();
+                    setTimeout(() => { location.href = link.href; }, tokenMs('--dur-exit'));
+                }
+            }
+        });
+
+        // Dynamic content gets a short entrance when it arrives; cap row stagger at twelve.
+        let newRows = 0;
+        const observer = new MutationObserver(mutations => {
+            for (const mutation of mutations) {
+                if (mutation.type === 'attributes' && mutation.target.matches?.('[data-count-up]')) {
+                    countUp(mutation.target);
+                }
+                mutation.addedNodes.forEach(node => {
+                    if (!(node instanceof Element) || node.matches('.modal-overlay, [data-motion-overlay]')) return;
+                    initActivityPeriodFilter(node.parentElement || document);
+                    if (node.matches('[data-otp-form]')) initOtpForm(node);
+                    node.querySelectorAll?.('[data-otp-form]').forEach(initOtpForm);
+                    if (node.matches('[data-count-up]')) countUp(node);
+                    if (node.matches(motionSelector)) animate(node, newRows++);
+                    node.querySelectorAll?.(motionSelector).forEach(el => animate(el, newRows++));
+                    if (node.matches('tbody tr')) { if (newRows < 12) animate(node, newRows++); }
+                    node.querySelectorAll?.('tbody tr').forEach(row => { if (newRows < 12) animate(row, newRows++); });
+                });
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-count-up'] });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+    else init();
+})();

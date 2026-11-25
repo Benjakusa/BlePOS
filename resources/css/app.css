@@ -53,19 +53,71 @@
   --shadow-lg:          0 10px 28px rgba(15, 23, 42, 0.09), 0 4px 8px rgba(15, 23, 42, 0.04);
 
   /* Easing and Durations */
-  --ease:               cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring:        cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth:        cubic-bezier(0.4, 0, 0.2, 1);
   --dur-fast:           150ms;
-  --dur-base:           180ms;
-  --dur-med:            280ms;
-  --dur-slow:           550ms;
+  --dur-base:           250ms;
+  --dur-spring:         500ms;
+  --stagger:            45ms;
+  --dur-count:          900ms;
+  --dur-chart:           700ms;
+  --dur-progress:        800ms;
+  --dur-spinner:         650ms;
+  --dur-pulse:           1.6s;
+  --dur-exit:            120ms;
+  --dur-instant:         0.01ms;
+  --delay-toast-dismiss:  6000ms;
+  --delay-chart:         350ms;
+  --stagger-chart:       35ms;
 
   /* Input font token */
   --font-input:         "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-/* Dark theme via prefers-color-scheme */
+/* Dark theme via explicit toggle OR OS preference (unless overridden to light) */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --clr-bg:          #0B1220;
+  --clr-surface:     #111A2E;
+  --clr-grey-tint:   #1C2A45;
+  --clr-header-tint: #1C2A45;
+  --clr-sidebar-bg:  #16223A;
+  --clr-border:      #334155;
+  --clr-text:        #E5E7EB;
+  --clr-muted:       #94A3B8;
+  --shadow-sm:       0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-md:       0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-lg:       0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="dark"] .product-card-btn {
+  background: var(--clr-surface);
+  border-color: var(--clr-border);
+}
+
+:root[data-theme="dark"] .product-card-name {
+  color: var(--clr-text);
+}
+
+:root[data-theme="dark"] .product-card-thumb {
+  background: var(--clr-grey-tint);
+}
+
+:root[data-theme="dark"] .cat-pill {
+  background: var(--clr-grey-tint);
+  color: var(--clr-text);
+  border-color: var(--clr-border);
+}
+
+:root[data-theme="dark"] .cat-pill.active {
+  background: var(--clr-green);
+  color: #FFFFFF;
+  border-color: var(--clr-green);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --clr-bg:          #0B1220;
     --clr-surface:     #111A2E;
     --clr-grey-tint:   #1C2A45;
@@ -150,7 +202,7 @@ small, .caption, .muted {
 a {
   color: var(--clr-blue);
   text-decoration: none;
-  transition: color var(--dur-fast) var(--ease);
+  transition: color var(--dur-fast) var(--ease-smooth);
 }
 a:hover {
   color: var(--clr-blue-hover);
@@ -179,7 +231,7 @@ a:hover {
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
-  transition: width var(--dur-med) var(--ease);
+  transition: width var(--dur-base) var(--ease-smooth);
   z-index: 40;
 }
 
@@ -272,7 +324,7 @@ a:hover {
   justify-content: center;
   font-size: 20px;
   flex-shrink: 0;
-  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  transition: background-color var(--dur-fast) var(--ease-smooth), color var(--dur-fast) var(--ease-smooth);
 }
 
 .sidebar-hamburger-btn:hover {
@@ -364,9 +416,9 @@ a:hover {
   font-weight: 500;
   text-decoration: none;
   position: relative;
-  transition: background var(--dur-fast) var(--ease),
-              color var(--dur-fast) var(--ease),
-              transform var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease-smooth),
+              color var(--dur-fast) var(--ease-smooth),
+              transform var(--dur-fast) var(--ease-smooth);
   white-space: nowrap;
 }
 .nav-link i {
@@ -467,7 +519,7 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease-smooth), color var(--dur-fast) var(--ease-smooth);
 }
 .top-bar-toggle:hover {
   background-color: var(--clr-grey-tint);
@@ -494,7 +546,7 @@ a:hover {
   display: flex;
   align-items: center;
   position: relative;
-  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease-smooth), color var(--dur-fast) var(--ease-smooth);
 }
 .top-bar-btn:hover {
   background-color: var(--clr-grey-tint);
@@ -515,7 +567,6 @@ a:hover {
 .page-body {
   padding: 28px clamp(16px, 3vw, 36px);
   flex: 1;
-  animation: fadeSlideUp var(--dur-slow) var(--ease) both;
 }
 
 /* ─── 4. Cards ────────────────────────────────────────────────── */
@@ -525,7 +576,7 @@ a:hover {
   border: none !important;
   box-shadow: var(--shadow-sm);
   padding: 24px;
-  transition: box-shadow var(--dur-base) var(--ease), transform var(--dur-base) var(--ease);
+  transition: box-shadow var(--dur-base) var(--ease-smooth), transform var(--dur-base) var(--ease-smooth);
   position: relative;
   overflow: hidden;
 }
@@ -551,8 +602,7 @@ a:hover {
   display: flex;
   align-items: flex-start;
   gap: 16px;
-  transition: box-shadow var(--dur-base) var(--ease), transform var(--dur-base) var(--ease);
-  animation: fadeSlideUp var(--dur-slow) var(--ease) both;
+  transition: box-shadow var(--dur-base) var(--ease-smooth), transform var(--dur-base) var(--ease-smooth);
 }
 .stat-card:hover {
   box-shadow: var(--shadow-md);
@@ -611,7 +661,7 @@ a:hover {
   overflow-x: auto !important;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  transition: box-shadow var(--dur-base) var(--ease);
+  transition: box-shadow var(--dur-base) var(--ease-smooth);
   width: 100%;
   max-width: 100%;
   position: relative;
@@ -647,7 +697,7 @@ a:hover {
   background: var(--clr-border);
   border-radius: 4px;
   border: 1px solid var(--clr-grey-tint);
-  transition: background var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease-smooth);
 }
 .table-container::-webkit-scrollbar-thumb:hover,
 .table-wrap::-webkit-scrollbar-thumb:hover,
@@ -696,7 +746,7 @@ tbody tr:last-child td {
   border-bottom: none !important;
 }
 tbody tr {
-  transition: background-color var(--dur-fast) var(--ease);
+  transition: background-color var(--dur-fast) var(--ease-smooth);
 }
 table th, table td { border-left: 0 !important; border-right: 0 !important; }
 table tr { border-left: 0 !important; border-right: 0 !important; }
@@ -723,7 +773,7 @@ tbody tr:hover td {
   align-items: center;
   justify-content: center;
   font-size: 15px;
-  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease-smooth), color var(--dur-fast) var(--ease-smooth);
   text-decoration: none;
 }
 .btn-ghost:hover, .btn-icon:hover {
@@ -808,10 +858,10 @@ button, .btn {
   cursor: pointer;
   border: none;
   text-decoration: none;
-  transition: background var(--dur-fast) var(--ease),
-              box-shadow var(--dur-fast) var(--ease),
-              transform var(--dur-fast) var(--ease),
-              color var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease-smooth),
+              box-shadow var(--dur-fast) var(--ease-smooth),
+              transform var(--dur-fast) var(--ease-smooth),
+              color var(--dur-fast) var(--ease-smooth);
   white-space: nowrap;
 }
 button:active, .btn:active {
@@ -884,7 +934,7 @@ button:active, .btn:active {
 }
 
 .ui-field.ui-shake {
-  animation: uiShake 250ms var(--ease) 1;
+  animation: uiShake var(--dur-base) var(--ease-smooth) 1;
 }
 
 .ui-control {
@@ -910,7 +960,7 @@ button:active, .btn:active {
   padding: 8px 12px 0;
   outline: none !important;
   box-shadow: none !important;
-  transition: border-color 150ms var(--ease), background-color 150ms var(--ease);
+  transition: border-color var(--dur-fast) var(--ease-smooth), background-color var(--dur-fast) var(--ease-smooth);
   appearance: none;
   -webkit-appearance: none;
 }
@@ -967,7 +1017,7 @@ button:active, .btn:active {
 /* Autofill detection hook */
 .ui-field input:-webkit-autofill {
   animation-name: uiAutofillStart;
-  animation-duration: 0.01s;
+  animation-duration: var(--dur-instant);
   -webkit-box-shadow: 0 0 0 1000px var(--clr-surface) inset !important;
   -webkit-text-fill-color: var(--clr-text) !important;
 }
@@ -1008,9 +1058,9 @@ button:active, .btn:active {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 180ms cubic-bezier(0.4, 0, 0.2, 1),
-              color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--dur-base) var(--ease-smooth),
+              opacity var(--dur-base) var(--ease-smooth),
+              color var(--dur-base) var(--ease-smooth);
   z-index: 2;
 }
 
@@ -1070,7 +1120,7 @@ button:active, .btn:active {
   color: var(--clr-muted);
   pointer-events: none;
   z-index: 2;
-  transition: color 150ms var(--ease);
+  transition: color var(--dur-fast) var(--ease-smooth);
 }
 
 .ui-field.is-textarea .ui-leading-icon {
@@ -1106,7 +1156,7 @@ button:active, .btn:active {
   cursor: pointer;
   box-shadow: none !important;
   color: var(--clr-muted) !important;
-  transition: background-color 150ms var(--ease), color 150ms var(--ease);
+  transition: background-color var(--dur-fast) var(--ease-smooth), color var(--dur-fast) var(--ease-smooth);
 }
 
 .ui-trailing-btn:hover {
@@ -1119,7 +1169,7 @@ button:active, .btn:active {
 }
 
 .ui-select-chevron {
-  transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--dur-base) var(--ease-smooth);
 }
 
 .ui-field.is-select.is-open .ui-select-chevron {
@@ -1136,7 +1186,7 @@ button:active, .btn:active {
   border: 2px solid var(--clr-border);
   border-top-color: var(--clr-green);
   border-radius: 50%;
-  animation: uiSpin 650ms linear infinite;
+  animation: uiSpin var(--dur-spinner) linear infinite;
 }
 
 /* Error State */
@@ -1180,7 +1230,7 @@ button:active, .btn:active {
   color: var(--clr-red);
   font-size: 11px;
   font-weight: 500;
-  animation: fadeSlideUp 150ms var(--ease);
+  animation: fadeSlideUp var(--dur-fast) var(--ease-smooth);
 }
 
 .ui-char-count {
@@ -1270,7 +1320,7 @@ button:active, .btn:active {
   flex-direction: column;
   opacity: 0;
   transform: translateY(-4px);
-  transition: opacity 150ms var(--ease), transform 150ms var(--ease);
+  transition: opacity var(--dur-fast) var(--ease-smooth), transform var(--dur-fast) var(--ease-smooth);
 }
 
 .ui-field.is-select.is-open .ui-select-menu {
@@ -1328,7 +1378,7 @@ button:active, .btn:active {
   cursor: pointer;
   text-align: left;
   box-shadow: none !important;
-  transition: background-color 120ms var(--ease);
+  transition: background-color var(--dur-fast) var(--ease-smooth);
 }
 
 .ui-select-option:hover,
@@ -1359,7 +1409,7 @@ button:active, .btn:active {
   display: flex;
   align-items: center;
   cursor: pointer;
-  transition: border-color 150ms var(--ease), background-color 150ms var(--ease);
+  transition: border-color var(--dur-fast) var(--ease-smooth), background-color var(--dur-fast) var(--ease-smooth);
 }
 
 .ui-file-dropzone:hover {
@@ -1466,7 +1516,7 @@ button:active, .btn:active {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: border-color 150ms var(--ease), background-color 150ms var(--ease);
+  transition: border-color var(--dur-fast) var(--ease-smooth), background-color var(--dur-fast) var(--ease-smooth);
 }
 
 .ui-check-box {
@@ -1482,7 +1532,7 @@ button:active, .btn:active {
   font-size: 13px;
   line-height: 1;
   transform: scale(0);
-  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--dur-fast) var(--ease-smooth);
 }
 
 .ui-radio-dot {
@@ -1491,7 +1541,7 @@ button:active, .btn:active {
   border-radius: 50%;
   background-color: #FFFFFF;
   transform: scale(0);
-  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--dur-fast) var(--ease-smooth);
 }
 
 .ui-choice-native:checked + .ui-check-box,
@@ -1520,7 +1570,7 @@ button:active, .btn:active {
   background-color: var(--clr-border);
   position: relative;
   flex-shrink: 0;
-  transition: background-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color var(--dur-base) var(--ease-smooth);
 }
 
 .ui-toggle-knob {
@@ -1532,7 +1582,7 @@ button:active, .btn:active {
   border-radius: 50%;
   background-color: #FFFFFF;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-  transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--dur-base) var(--ease-smooth);
 }
 
 .ui-choice-native:checked + .ui-toggle-track {
@@ -1590,7 +1640,7 @@ button:active, .btn:active {
   background-color: var(--clr-grey-tint) !important;
   color: var(--clr-text);
   border: 1px solid var(--clr-border) !important;
-  animation: fadeSlideUp var(--dur-med) var(--ease) both;
+  animation: fadeSlideUp var(--dur-base) var(--ease-smooth) both;
 }
 
 .alert-success {
@@ -1673,8 +1723,8 @@ button:active, .btn:active {
   width: 14px;
   border-radius: 4px 4px 0 0;
   transform-origin: bottom;
-  animation: barGrow 800ms var(--ease) both;
-  transition: opacity var(--dur-fast) var(--ease);
+  animation: barGrow var(--dur-chart) var(--ease-spring) backwards;
+  transition: opacity var(--dur-fast) var(--ease-smooth);
 }
 .bar:hover { opacity: 0.85; }
 .bar.sales    { background-color: var(--clr-green); }
@@ -1694,7 +1744,7 @@ button:active, .btn:active {
   background-color: var(--clr-green);
 }
 .status-dot.pulse {
-  animation: pulseDot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulseDot var(--dur-pulse) var(--ease-smooth) infinite;
 }
 
 /* ─── 11. Animations ──────────────────────────────────────────── */
@@ -1731,9 +1781,10 @@ button:active, .btn:active {
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: var(--dur-instant) !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation-delay: 0 !important;
+    transition-duration: var(--dur-instant) !important;
   }
 }
 
@@ -1842,7 +1893,7 @@ button:active, .btn:active {
   color: var(--clr-muted);
   text-decoration: none;
   font-weight: 500;
-  transition: color var(--dur-fast) var(--ease);
+  transition: color var(--dur-fast) var(--ease-smooth);
 }
 
 .auth-recovery-link:hover {
@@ -1910,7 +1961,7 @@ button:active, .btn:active {
   color: var(--clr-text);
   font-size: 19px;
   cursor: pointer;
-  transition: all var(--dur-fast) var(--ease);
+  transition: all var(--dur-fast) var(--ease-smooth);
   box-shadow: var(--shadow-sm);
   text-decoration: none;
 }
@@ -2094,7 +2145,7 @@ body.auth-page {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  transition: background-color var(--dur-fast) var(--ease-smooth), transform var(--dur-fast) var(--ease-smooth), box-shadow var(--dur-fast) var(--ease-smooth);
 }
 .auth-page .ath-submit:hover { background: var(--clr-green-hover); box-shadow: var(--shadow-md); }
 .auth-page .ath-submit:active { transform: scale(.97); }
@@ -2116,7 +2167,7 @@ body.auth-page {
   color: var(--clr-text);
   box-shadow: none;
   font-size: 16px;
-  transition: background-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+  transition: background-color var(--dur-fast) var(--ease-smooth), transform var(--dur-fast) var(--ease-smooth);
 }
 .auth-page .ath-social-btn:hover { background: #E2E7EE; color: var(--clr-text); transform: translateY(-1px); }
 .auth-page .ath-social-btn.google:hover, .auth-page .ath-social-btn.apple:hover, .auth-page .ath-social-btn.facebook:hover { color: var(--clr-text); }
@@ -2164,3 +2215,127 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   .sidebar { position: fixed; left: 0; top: 0; height: 100dvh; transform: translateX(-100%); }
   .sidebar.mobile-open { transform: translateX(0); }
 }
+
+
+/* ─── Motion system ─────────────────────────────────────────── */
+@keyframes motionSpringIn {
+  from { opacity: 0; transform: translate3d(0, 10px, 0) scale(.9); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes motionPop {
+  from { opacity: 0; transform: translate3d(0, 12px, 0) scale(.9); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes motionSlideIn {
+  from { opacity: 0; transform: translate3d(48px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes motionDropIn {
+  from { opacity: 0; transform: translate3d(0, 4px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes motionShake {
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+@keyframes motionPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+  50% { box-shadow: 0 0 0 5px rgba(22,163,74,.12); }
+}
+.motion-enter, .page-body > .motion-enter, .page-body .motion-enter {
+  animation: motionSpringIn var(--dur-spring) var(--ease-spring) backwards;
+  animation-delay: calc(min(var(--motion-index, 0), 12) * var(--stagger));
+}
+.page-body > .stat-card { animation-delay: calc(min(var(--motion-index, 0), 12) * var(--stagger)); }
+.motion-dropdown { animation: motionDropIn var(--dur-fast) var(--ease-smooth) both; }
+.motion-drawer-panel { animation: motionSlideIn var(--dur-spring) var(--ease-spring) backwards; }
+.motion-modal-panel { animation: motionPop var(--dur-spring) var(--ease-spring) backwards; }
+.modal-overlay, [data-motion-overlay] {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, .28) !important;
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-smooth);
+}
+.modal-overlay.motion-open, [data-motion-overlay].motion-open { opacity: 1; }
+.modal-overlay.motion-closing, [data-motion-overlay].motion-closing { opacity: 0; }
+.modal-overlay .modal-box, #add-table-modal > .card {
+  max-height: 90vh;
+  max-height: min(90vh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+  overflow: auto;
+  border-radius: 16px;
+  outline: none;
+}
+.modal-overlay .modal-box { animation: motionPop var(--dur-spring) var(--ease-spring) backwards; }
+.modal-overlay.motion-closing .modal-box, #add-table-modal.motion-closing > .card { animation: none; }
+.btn, button, .icon-btn, .top-bar-btn { transition: transform var(--dur-fast) var(--ease-smooth), color var(--dur-fast) var(--ease-smooth), background-color var(--dur-fast) var(--ease-smooth), box-shadow var(--dur-fast) var(--ease-smooth); }
+.btn:hover, button:hover { transform: translateY(-1px); }
+.btn:active, button:active { transform: scale(.97); }
+.btn:not(.btn-secondary):hover { box-shadow: 0 4px 14px rgba(22,163,74,.16); }
+.nav-link { transition: transform var(--dur-fast) var(--ease-smooth), background-color var(--dur-base) var(--ease-smooth), color var(--dur-base) var(--ease-smooth); }
+.nav-link:hover { transform: translateX(3px); }
+.sidebar { transition: width var(--dur-base) var(--ease-smooth); }
+.card:hover, .panel:hover, .stat-card:hover { box-shadow: var(--shadow-lg); }
+tbody tr { transition: background-color var(--dur-fast) var(--ease-smooth), opacity var(--dur-base) var(--ease-smooth), transform var(--dur-base) var(--ease-smooth); }
+tbody tr:hover { background-color: var(--clr-grey-tint); }
+.ui-field.ui-shake { animation: motionShake var(--dur-base) var(--ease-smooth) 1; }
+.status-dot.pulse { animation: motionPulse var(--dur-pulse) var(--ease-smooth) infinite; }
+.bar { animation-duration: var(--dur-chart); animation-timing-function: var(--ease-spring); }
+.bar-group:nth-child(1) .bar { animation-delay: var(--delay-chart); }
+.bar-group:nth-child(2) .bar { animation-delay: calc(var(--delay-chart) + 1 * var(--stagger-chart)); }
+.bar-group:nth-child(3) .bar { animation-delay: calc(var(--delay-chart) + 2 * var(--stagger-chart)); }
+.bar-group:nth-child(4) .bar { animation-delay: calc(var(--delay-chart) + 3 * var(--stagger-chart)); }
+.bar-group:nth-child(5) .bar { animation-delay: calc(var(--delay-chart) + 4 * var(--stagger-chart)); }
+.bar-group:nth-child(6) .bar { animation-delay: calc(var(--delay-chart) + 5 * var(--stagger-chart)); }
+.bar-group:nth-child(7) .bar { animation-delay: calc(var(--delay-chart) + 6 * var(--stagger-chart)); }
+[data-count-up] { font-variant-numeric: tabular-nums; }
+[role="menu"], .dropdown-menu, .ui-select-menu { animation: motionDropIn var(--dur-fast) var(--ease-smooth) both; }
+[data-tooltip]::after { transition: opacity var(--dur-fast) var(--ease-smooth), transform var(--dur-fast) var(--ease-smooth); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; }
+  .motion-enter, .page-body > .motion-enter, .page-body .motion-enter, .modal-overlay .modal-box, #add-table-modal > .card, .motion-drawer-panel { animation: none !important; }
+  .modal-overlay, [data-motion-overlay] { -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px); }
+  .status-dot.pulse { animation: none !important; }
+}
+
+.page-body.motion-exit { animation: motionExit var(--dur-exit) var(--ease-smooth) both; pointer-events: none; }
+@keyframes motionExit { to { opacity: 0; } }
+
+body.motion-modal-open { overflow: hidden; }
+body.motion-modal-open #app { filter: blur(4px); }
+.motion-closing { opacity: 0; transform: translateY(-8px); transition: opacity var(--dur-base) var(--ease-smooth), transform var(--dur-base) var(--ease-smooth); }
+
+.motion-progress-fill { width: 100%; transform: scaleX(0); transform-origin: left center; transition: transform var(--dur-progress) var(--ease-spring); }
+.motion-progress-fill.is-ready { transform: scaleX(var(--motion-progress, 0)); }
+
+/* MFA one-time-code entry */
+.otp-fieldset { min-width: 0; margin: 0 0 14px; padding: 0; border: 0; }
+.otp-legend { display: block; margin: 0 0 8px; color: var(--clr-text); font-size: 12px; font-weight: 600; }
+.otp-digit-row { display: flex; justify-content: center; gap: clamp(6px, 2vw, 10px); }
+.otp-digit {
+  width: clamp(40px, 12vw, 48px);
+  height: 52px;
+  padding: 0;
+  border: 1px solid var(--clr-border);
+  border-radius: 10px;
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  text-align: center;
+  font-size: 21px !important;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: border-color var(--dur-fast) var(--ease-smooth), box-shadow var(--dur-fast) var(--ease-smooth);
+}
+.otp-digit:focus { border-color: var(--clr-green); outline: 0; box-shadow: 0 0 0 3px rgba(22,163,74,.12); }
+.otp-recovery { margin: 0 0 14px; }
+.otp-recovery-input { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--clr-border); border-radius: 10px; background: var(--clr-surface); color: var(--clr-text); }
+.otp-recovery-input:focus { border-color: var(--clr-green); outline: 0; box-shadow: 0 0 0 3px rgba(22,163,74,.12); }
+.otp-mode-toggle { display: block; margin: 0 auto 14px; padding: 4px 0; border: 0; background: transparent; color: var(--clr-green-hover); font-size: 12px; cursor: pointer; }
+.otp-mode-toggle:hover { color: var(--clr-green-active); text-decoration: underline; }
+.otp-error { margin: 0 0 12px; color: var(--clr-red); font-size: 12px; text-align: center; }

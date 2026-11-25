@@ -284,7 +284,7 @@
             <form method="post" action="{{ route('platform.tenants.suspend', $tenant) }}" style="display: inline;">
                 @csrf
                 <input type="hidden" name="reason" value="Administrative suspension requested by platform operator.">
-                <button type="submit" style="background: var(--clr-red);" onclick="return confirm('Are you sure you want to suspend this business? Staff access will be immediately blocked.');">
+                <button type="submit" style="background: var(--clr-red);" data-motion-confirm="Are you sure you want to suspend this business? Staff access will be immediately blocked.">
                     Suspend Tenant
                 </button>
             </form>

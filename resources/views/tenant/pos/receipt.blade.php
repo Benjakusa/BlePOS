@@ -21,7 +21,7 @@
 <body>
 <div class="receipt">
     <div class="no-print" style="margin-bottom: 16px; text-align: center;">
-        <button onclick="window.print()" style="padding: 8px 16px; background: var(--clr-green); color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Print Receipt</button>
+        <button type="button" onclick="window.print()" aria-label="Print receipt" style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; background: #16a34a; color: #fff; border: 0; border-radius: 6px; font-weight: 700; cursor: pointer;">Print Receipt</button>
         <a href="{{ route('tenant.pos.checkout') }}" style="display: inline-block; margin-left: 8px; padding: 8px 14px; background: #e2e8f0; color: #334155; text-decoration: none; border-radius: 4px;">Back to POS</a>
     </div>
 

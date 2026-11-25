@@ -1569,3 +1569,84 @@
 - Status label(s) after this activity: COMPLETE — Industry Templates CRUD, dependency resolution, audit logging, full test coverage.
 - Follow-ups / next action: Git commit. Run `php artisan migrate && php artisan db:seed` to populate dev DB, then visit `/platform-console/templates`.
 ---
+
+## L-0129 | 2026-11-25 13:26 UTC | 2026-11-25 16:26 EAT | agent: antigravity | tier/phase: Tier B / Architecture Conformance Discovery (Five Industry Modules)
+- **Status:** COMPLETE (Discovery & Baseline Verified)
+- **Baseline Verification:**
+  - `php artisan test --compact` → **243 tests, 2,491 assertions, 0 failures**
+  - `./vendor/bin/pint --test app database routes tests` → **PASSED**
+  - `npm run build` → **PASSED** (25 modules, 7 templates in DB)
+- **Architecture Findings:**
+  1. **Module System:** `app/Models/Module.php`, `app/Models/TenantModuleEntitlement.php`, `app/Models/IndustryTemplate.php`, `app/Services/ModuleService.php`, `database/seeders/ModuleCatalogueSeeder.php`. Modules are keyed by `slug` (`mod-*` convention), grouped by `category` (`Industry` for verticals), declare `dependencies` (JSON array of slugs), `is_core`, and `is_active`. `IndustryTemplate` holds `default_modules` (array of slugs), `tax_rates`, `default_roles`, `settings`, and `is_active`. `ModuleService::applyIndustryTemplate()` calls `resolveAllDependencies()` + `resolveDependencyOrder()` (topological sort) to enable entitlements in dependency order.
+  2. **Tenant & Branch Scoping:** `app/Models/Scopes/TenantScope.php`, `app/Models/Scopes/ShopScope.php`, `app/Models/Concerns/BelongsToTenant.php`, `app/Models/Concerns/BelongsToShop.php`, `app/Http/Middleware/EnforceTenantIsolation.php`, `app/Http/Middleware/EnforceShopIsolation.php`. All new industry tables will include `tenant_id` and `shop_id` and use `BelongsToTenant` + `BelongsToShop`.
+  3. **Payment Integration:** `app/Services/MpesaCredentialResolver.php` (branch → tenant → platform fallback) and `app/Services/MpesaEncryptionService.php` exist in the codebase alongside `app/Models/MpesaCredential.php`. Industry modules will **not** store M-Pesa credentials or run STK Push/callbacks; they will record Cash and M-Pesa payments locally (referencing `MpesaCredentialResolver` for context/audit only where applicable, or recording cash/M-Pesa references cleanly).
+  4. **Entitlements & Feature Flags:** `ModuleService::isModuleEnabled(Tenant $tenant, string $slug)` checks `tenant_module_entitlements` (`status = 'enabled'`). Tenant sidebar nav in `resources/views/tenant/layout.blade.php` and a route middleware (`EnsureModuleEnabled` / `module.enabled:<slug>`) will gate access and hide disabled modules.
+  5. **RBAC:** `app/Models/TenantRole.php`, `app/Models/TenantPermission.php`, `app/Http/Middleware/EnsureTenantPermission.php` (`tenant.permission:...`), `app/Services/ProvisioningEngine.php` (steps 15–16). `User::isTenantOwner()` bypasses all permission checks; non-owner roles (`shop-manager`, `cashier`, etc.) require explicit `TenantPermission` grants.
+  6. **Testing Conventions:** `tests/Feature/` with `RefreshDatabase`; isolation patterns in `tests/Feature/TenantIsolationTest.php`, `tests/Feature/ShopIsolationTest.php`; template/seeder pattern in `tests/Feature/PlatformIndustryTemplateManagementTest.php`.
+  7. **Seeder Conventions:** `database/seeders/ModuleCatalogueSeeder.php` uses `updateOrCreate(['slug' => ...])` and is already registered in `database/seeders/DatabaseSeeder.php`.
+  8. **Migration Naming:** Timestamp-prefixed (`2026_11_25_140000_*.php` onward), sorting after `2026_11_25_130400_add_shift_number_to_cashier_shifts.php`.
+  9. **UI Conventions:** `resources/views/tenant/layout.blade.php` sidebar nav, `<x-input>` component (`resources/views/components/input.blade.php`), and theme tokens from `resources/css/app.css`.
+  10. **Notification Service (Gap Identified):** `app/Notifications/` contains platform alerts (`WorkspaceAlert.php`, etc.) and Laravel database notifications, but **no outbound SMS/WhatsApp/email reminder service exists for tenant customers** (needed for gym expiry alerts, agrovet expiry alerts, fleet document alerts, garage approval reminders). Documented as a gap; expiry/alert checks will be gated behind a clean `Log`/database-notification stub (`App\Services\ModuleAlertService`) without inventing a parallel provider.
+- **Next action:** Extend `ModuleCatalogueSeeder` with the 5 industry modules (+ sub-capabilities) and 5 industry templates, add idempotency test, then implement modules in order: Gym → Printing → Agrovet → Garage → Fleet.
+---
+
+## L-0130 | 2026-11-25 14:15 UTC | 2026-11-25 17:15 EAT | agent: antigravity | tier/phase: Industry Modules / Gym & Fitness Studio
+- **Status:** VERIFIED
+- **Artifacts:**
+  - `database/migrations/2026_11_25_140000_create_gym_tables.php` (8 tables: `gym_plans`, `gym_members`, `gym_subscriptions`, `gym_payments`, `gym_trainers`, `gym_classes`, `gym_class_bookings`, `gym_checkins`)
+  - `app/Models/GymPlan.php`, `GymMember.php`, `GymSubscription.php`, `GymPayment.php`, `GymTrainer.php`, `GymClass.php`, `GymClassBooking.php`, `GymCheckin.php` (all scoped via `BelongsToTenant` and `BelongsToShop`)
+  - `app/Http/Controllers/Tenant/Gym/GymController.php` (members, plans, subscriptions, freeze, renew, check-in gating, classes, attendance credit deduction, trainers)
+  - `resources/views/tenant/gym/` (13 Blade templates)
+  - `tests/Feature/GymModuleTest.php` (7 tests, 13 assertions: expiry check-in block, freeze extension, class capacity waitlist overflow, session credit deduction & zero credit block, tenant and branch isolation)
+- **Validation:** `php artisan test tests/Feature/GymModuleTest.php` → 7 passed, 13 assertions, exit 0.
+
+---
+
+## L-0131 | 2026-11-25 14:18 UTC | 2026-11-25 17:18 EAT | agent: antigravity | tier/phase: Industry Modules / Printing & Branding
+- **Status:** VERIFIED
+- **Artifacts:**
+  - `database/migrations/2026_11_25_150000_create_printing_tables.php` (7 tables: `print_jobs`, `print_job_items`, `print_quotes`, `print_materials`, `print_material_consumption`, `print_payments`, `print_revisions`)
+  - `app/Models/PrintJob.php`, `PrintJobItem.php`, `PrintQuote.php`, `PrintMaterial.php`, `PrintMaterialConsumption.php`, `PrintPayment.php`, `PrintRevision.php` (all scoped via `BelongsToTenant` and `BelongsToShop`)
+  - `app/Http/Controllers/Tenant/Printing/PrintingController.php` (job workflow, quote versioning, deposit recording, stage gate to in_production, material consumption deduction)
+  - `resources/views/tenant/printing/` (5 Blade templates)
+  - `tests/Feature/PrintingModuleTest.php` (7 tests, 11 assertions: production blocked without quote/deposit, quote versioning, material stock deduction, deposit & balance reconciliation, tenant and branch isolation)
+- **Validation:** `php artisan test tests/Feature/PrintingModuleTest.php` → 7 passed, 11 assertions, exit 0.
+
+---
+
+## L-0132 | 2026-11-25 14:20 UTC | 2026-11-25 17:20 EAT | agent: antigravity | tier/phase: Industry Modules / Agrovet
+- **Status:** VERIFIED
+- **Artifacts:**
+  - `database/migrations/2026_11_25_160000_create_agrovet_tables.php` (7 tables: `agrovet_products`, `agrovet_suppliers`, `agrovet_customers`, `agrovet_stock_movements`, `agrovet_sales`, `agrovet_credit_ledger`, `agrovet_purchases`)
+  - `app/Models/AgrovetProduct.php`, `AgrovetSupplier.php`, `AgrovetCustomer.php`, `AgrovetStockMovement.php`, `AgrovetSale.php`, `AgrovetCreditLedger.php`, `AgrovetPurchase.php` (all scoped via `BelongsToTenant` and `BelongsToShop`)
+  - `app/Http/Controllers/Tenant/Agrovet/AgrovetController.php` (FEFO stock batching, credit limits, aging buckets, cash/M-Pesa payment recording, stock movement logging)
+  - `resources/views/tenant/agrovet/` (10 Blade templates)
+  - `tests/Feature/AgrovetModuleTest.php` (7 tests, 9 assertions: credit limit enforcement, credit repayment, purchase stock increase, FEFO earliest-expiry selection, expired batch detection, tenant and branch isolation)
+- **Validation:** `php artisan test tests/Feature/AgrovetModuleTest.php` → 7 passed, 9 assertions, exit 0.
+
+---
+
+## L-0133 | 2026-11-25 14:22 UTC | 2026-11-25 17:22 EAT | agent: antigravity | tier/phase: Industry Modules / Auto Garage & Repair Shop
+- **Status:** VERIFIED
+- **Artifacts:**
+  - `database/migrations/2026_11_25_170000_create_garage_tables.php` (9 tables: `garage_customers`, `garage_vehicles`, `garage_job_cards`, `garage_estimates`, `garage_job_items`, `garage_parts`, `garage_part_consumption`, `garage_payments`, `garage_mechanics`)
+  - `app/Models/GarageCustomer.php`, `GarageVehicle.php`, `GarageJobCard.php`, `GarageEstimate.php`, `GarageJobItem.php`, `GaragePart.php`, `GaragePartConsumption.php`, `GaragePayment.php`, `GarageMechanic.php` (all scoped via `BelongsToTenant` and `BelongsToShop`)
+  - `app/Http/Controllers/Tenant/Garage/GarageController.php` (job cards, estimate approval work gate, partial payment tracking, delivery balance gate with override, parts stock consumption, vehicle history)
+  - `resources/views/tenant/garage/` (12 Blade templates)
+  - `tests/Feature/GarageModuleTest.php` (8 tests, 12 assertions: work blocked before estimate approval & allowed after, parts deduction, partial payments accumulation, delivery blocked on balance, vehicle history by plate, tenant and branch isolation)
+- **Validation:** `php artisan test tests/Feature/GarageModuleTest.php` → 8 passed, 12 assertions, exit 0.
+
+---
+
+## L-0134 | 2026-11-25 14:25 UTC | 2026-11-25 17:25 EAT | agent: antigravity | tier/phase: Industry Modules / Car Hire & Boda Fleet
+- **Status:** VERIFIED
+- **Artifacts:**
+  - `database/migrations/2026_11_25_180000_create_fleet_tables.php` (7 tables: `fleet_vehicles`, `fleet_customers`, `fleet_drivers`, `fleet_bookings`, `fleet_payments`, `fleet_inspections`, `fleet_maintenance`)
+  - `app/Models/FleetVehicle.php`, `FleetCustomer.php`, `FleetDriver.php`, `FleetBooking.php`, `FleetPayment.php`, `FleetInspection.php`, `FleetMaintenance.php` (all scoped via `BelongsToTenant` and `BelongsToShop`)
+  - `app/Http/Controllers/Tenant/Fleet/FleetController.php` (double-booking prevention with buffer, maintenance block, late return surcharge calculation, deposit deduction & refund, vehicle inspections)
+  - `resources/views/tenant/fleet/` (10 Blade templates)
+  - `tests/Feature/FleetModuleTest.php` (8 tests, 11 assertions: overlapping booking blocked & allowed with buffer, maintenance block, deposit damage/fuel deduction, late surcharge calculation, M-Pesa deposit/balance payment, tenant and branch isolation)
+  - `tests/Feature/EnsureModuleEnabledTest.php` (3 tests, 3 assertions: access denied when disabled, allowed when entitled or industry matches)
+- **Full Suite Regression:** `php artisan test --compact` → **283 tests, 2,667 assertions, 0 failures, exit 0.**
+- **Code Quality:** `./vendor/bin/pint app database routes tests` → **PASSED**; `npm run build` → **PASSED**.
+---

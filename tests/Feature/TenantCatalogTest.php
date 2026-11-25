@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\InventoryStock;
+use App\Models\Product;
+use App\Models\Shop;
 use App\Models\Tenant;
 use App\Models\TenantPermission;
 use App\Models\TenantRole;
@@ -137,6 +140,16 @@ class TenantCatalogTest extends TestCase
             'tenant_id' => $tenant->id,
             'sku' => 'PEMBE-2KG',
             'barcode' => '616110123456',
+        ]);
+
+        // Tracked products must have available stock before the POS can find them.
+        $shop = Shop::factory()->create(['tenant_id' => $tenant->id]);
+        $user->shops()->attach($shop->id);
+        InventoryStock::create([
+            'tenant_id' => $tenant->id,
+            'shop_id' => $shop->id,
+            'product_id' => Product::query()->where('sku', 'PEMBE-2KG')->value('id'),
+            'quantity' => 10,
         ]);
 
         // Test barcode lookup endpoint for POS checkout

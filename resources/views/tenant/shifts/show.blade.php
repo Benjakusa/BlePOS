@@ -107,7 +107,7 @@
     <div class="panel">
         @if($shift->isOpen())
             <h2 style="font-size: 18px; margin-top: 0; margin-bottom: 14px; color: #DC2626;">Close & Reconcile Shift</h2>
-            <form action="{{ route('tenant.shifts.close', $shift) }}" method="POST" class="form" onsubmit="return confirm('Are you sure you want to close this shift? This action cannot be undone.')" style="display: flex; flex-direction: column; gap: 14px;">
+            <form action="{{ route('tenant.shifts.close', $shift) }}" method="POST" class="form" data-motion-confirm="Are you sure you want to close this shift? This action cannot be undone." style="display: flex; flex-direction: column; gap: 14px;">
                 @csrf
                 <x-input type="number" step="0.01" name="actual_cash" label="Physical Counted Cash (KES)" required placeholder="Count physical money in till drawer" helper="Count all notes and coins present in the register." />
 

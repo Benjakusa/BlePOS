@@ -80,10 +80,18 @@ class ProductController extends Controller
             'selling_price' => ['required', 'numeric', 'min:0'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'track_stock' => ['boolean'],
+            'is_reusable' => ['boolean'],
+            'availability_period_hours' => ['nullable', 'required_if:is_reusable,1', 'integer', 'between:1,720'],
             'reorder_level' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
             'image' => ['nullable', 'image', 'max:2048'],
         ]);
+
+        $trackStock = $request->boolean('track_stock');
+        $isReusable = $request->boolean('is_reusable');
+        if ($isReusable && ! $trackStock) {
+            return back()->withErrors(['track_stock' => 'Reusable products must track stock to become available again.'])->withInput();
+        }
 
         if ($request->hasFile('image')) {
             $validated['image_path'] = $request->file('image')->store('products', 'public');
@@ -93,7 +101,9 @@ class ProductController extends Controller
         $validated['tenant_id'] = $tenant->id;
         $validated['unit_of_measure'] = $validated['unit_of_measure'] ?? 'piece';
         $validated['reorder_level'] = $validated['reorder_level'] ?? 5;
-        $validated['track_stock'] = $request->boolean('track_stock', true);
+        $validated['track_stock'] = $trackStock;
+        $validated['is_reusable'] = $isReusable;
+        $validated['availability_period_hours'] = $validated['is_reusable'] ? (int) $validated['availability_period_hours'] : null;
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['tax_rate'] = $validated['tax_rate'] ?? '0.00';
         if ($tenant->industry === 'pharmacy') {
@@ -160,10 +170,18 @@ class ProductController extends Controller
             'selling_price' => ['required', 'numeric', 'min:0'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'track_stock' => ['boolean'],
+            'is_reusable' => ['boolean'],
+            'availability_period_hours' => ['nullable', 'required_if:is_reusable,1', 'integer', 'between:1,720'],
             'reorder_level' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
             'image' => ['nullable', 'image', 'max:2048'],
         ]);
+
+        $trackStock = $request->boolean('track_stock');
+        $isReusable = $request->boolean('is_reusable');
+        if ($isReusable && ! $trackStock) {
+            return back()->withErrors(['track_stock' => 'Reusable products must track stock to become available again.'])->withInput();
+        }
 
         if ($request->hasFile('image')) {
             if ($product->image_path) {
@@ -173,7 +191,9 @@ class ProductController extends Controller
         }
         unset($validated['image']);
 
-        $validated['track_stock'] = $request->boolean('track_stock', true);
+        $validated['track_stock'] = $trackStock;
+        $validated['is_reusable'] = $isReusable;
+        $validated['availability_period_hours'] = $validated['is_reusable'] ? (int) $validated['availability_period_hours'] : null;
         $validated['is_active'] = $request->boolean('is_active', true);
         if (TenantContext::getTenant()?->industry === 'pharmacy') {
             $validated['metadata'] = [
@@ -202,7 +222,14 @@ class ProductController extends Controller
         $category = $request->string('category_id')->trim()->value();
 
         $productQuery = Product::query()
-            ->where('is_active', true);
+            ->where('is_active', true)
+            ->where(function ($available): void {
+                $available->where('track_stock', false)
+                    ->orWhere(function ($tracked): void {
+                        $tracked->where('track_stock', true)
+                            ->whereHas('stocks', fn ($stock) => $stock->whereColumn('quantity', '>', 'reserved_quantity'));
+                    });
+            });
 
         if ($category !== '') {
             $productQuery->where('category_id', $category);
@@ -233,6 +260,7 @@ class ProductController extends Controller
                     'barcode' => $product->barcode,
                     'selling_price' => $product->selling_price,
                     'tax_rate' => $product->tax_rate,
+                    'tax_type' => $product->tax_type,
                     'unit_of_measure' => $product->unit_of_measure,
                     'track_stock' => $product->track_stock,
                     'requires_prescription' => (bool) ($product->metadata['requires_prescription'] ?? false),
@@ -254,6 +282,7 @@ class ProductController extends Controller
                 'barcode' => $p->barcode,
                 'selling_price' => $p->selling_price,
                 'tax_rate' => $p->tax_rate,
+                'tax_type' => $p->tax_type,
                 'unit_of_measure' => $p->unit_of_measure,
                 'track_stock' => $p->track_stock,
                 'requires_prescription' => (bool) ($p->metadata['requires_prescription'] ?? false),

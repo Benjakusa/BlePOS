@@ -11,7 +11,7 @@
     <div style="display: flex; gap: 8px;">
         <a href="{{ route('platform.infrastructure.index') }}" class="btn secondary">Back to Infrastructure</a>
         @if($failedJobs->isNotEmpty())
-            <form method="POST" action="{{ route('platform.infrastructure.queues.retry', 'all') }}" style="display: inline;" onsubmit="return confirm('Retry all failed background jobs?');">
+            <form method="POST" action="{{ route('platform.infrastructure.queues.retry', 'all') }}" style="display: inline;" data-motion-confirm="Retry all failed background jobs?">
                 @csrf
                 <button type="submit" class="btn">Retry All Failed Jobs</button>
             </form>

@@ -174,7 +174,7 @@
     .totals-grand { font-size: 18px; font-weight: 700; color: var(--clr-green, #16a34a); border-top: 2px dashed var(--clr-border, #cbd5e1); padding-top: 10px; margin-top: 8px; }
     .qty-btn { width: 28px; height: 28px; border: 1px solid var(--clr-border, #cbd5e1); background: var(--clr-grey-tint, #eaedf2); border-radius: var(--radius-sm, 6px); cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
     .qty-btn:hover { background: #cbd5e1; }
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.4); backdrop-filter: blur(2px); z-index: 999; align-items: center; justify-content: center; }
+    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 999; align-items: center; justify-content: center; }
     .modal-box { background: var(--clr-surface, #fff); border-radius: var(--radius-card, 12px); padding: 24px; width: 100%; max-width: 480px; box-shadow: var(--shadow-lg); }
 
     @media (max-width: 900px) {
@@ -344,8 +344,8 @@
 </div>
 
 {{-- Payment Modal --}}
-<div id="payment-modal" class="modal-overlay">
-    <div class="modal-box">
+<div id="payment-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-label="Complete payment" tabindex="-1">
         <h2 style="font-size: 18px; margin-bottom: 14px; color: var(--clr-text);">Complete Sale Payment</h2>
 
         <div style="background: var(--clr-grey-tint); padding: 12px; border-radius: var(--radius-md); margin-bottom: 16px; text-align: center;">
@@ -508,7 +508,8 @@
                 name: product.name,
                 sku: product.sku,
                 price: parseFloat(product.selling_price),
-                tax_rate: parseFloat(product.tax_rate || 0),
+                tax_rate: String(product.tax_rate || '0'),
+                tax_type: product.tax_type || 'none',
                 prescription_id: prescriptionId ? parseInt(prescriptionId, 10) : null,
                 pharmacist_user_id: pharmacistUserId ? parseInt(pharmacistUserId, 10) : null,
                 qty: 1
@@ -531,16 +532,48 @@
         renderCart();
     };
 
+    function decimalToScaled(value, scale) {
+        const text = String(value ?? '0').trim();
+        const match = text.match(/^(-?)(\d+)(?:\.(\d+))?$/);
+        if (!match) return 0n;
+        const factor = 10n ** BigInt(scale);
+        const fraction = (match[3] || '').padEnd(scale, '0').slice(0, scale);
+        const scaled = BigInt(match[2]) * factor + BigInt(fraction || '0');
+        return match[1] ? -scaled : scaled;
+    }
+
     function calculateTotals() {
-        let subtotal = 0;
-        let tax = 0;
+        let taxCents = 0n;
+        let grandCents = 0n;
         cart.forEach(item => {
-            const lineSub = item.price * item.qty;
-            const lineTax = (lineSub * item.tax_rate) / (100 + item.tax_rate);
-            subtotal += (lineSub - lineTax);
-            tax += lineTax;
+            const priceAtScale4 = decimalToScaled(item.price, 4);
+            const quantityAtScale4 = decimalToScaled(item.qty, 4);
+            const discountCents = decimalToScaled(item.discount || '0', 2);
+            // Match SaleService: multiply at scale 4, then truncate the line subtotal to cents.
+            const lineSubCents = (priceAtScale4 * quantityAtScale4 / 1000000n) - discountCents;
+            const rateAtScale4 = decimalToScaled(item.tax_rate, 2);
+            let lineTaxCents = 0n;
+            let lineTotalCents = lineSubCents;
+
+            if (rateAtScale4 > 0n && item.tax_type === 'exclusive') {
+                lineTaxCents = lineSubCents * rateAtScale4 / 10000n;
+                lineTotalCents += lineTaxCents;
+            } else if (rateAtScale4 > 0n && item.tax_type === 'inclusive') {
+                const divisorAtScale4 = 10000n + rateAtScale4;
+                const netCents = lineSubCents * 10000n / divisorAtScale4;
+                lineTaxCents = lineSubCents - netCents;
+            }
+
+            taxCents += lineTaxCents;
+            grandCents += lineTotalCents;
         });
-        return { subtotal, tax, grand: subtotal + tax };
+
+        const subtotalCents = grandCents - taxCents;
+        return {
+            subtotal: Number(subtotalCents) / 100,
+            tax: Number(taxCents) / 100,
+            grand: Number(grandCents) / 100
+        };
     }
 
     function renderCart() {
@@ -569,8 +602,8 @@
                     <span style="display: inline-block; width: 28px; text-align: center; font-weight: 600;">${item.qty}</span>
                     <button type="button" class="qty-btn" onclick="updateQty(${item.id}, 1)">+</button>
                 </td>
-                <td style="text-align: right;">${item.price.toFixed(2)}</td>
-                <td style="text-align: right;">${item.tax_rate.toFixed(1)}%</td>
+                <td style="text-align: right;">${Number(item.price).toFixed(2)}</td>
+                <td style="text-align: right;">${Number(item.tax_rate).toFixed(1)}%</td>
                 <td style="text-align: right; font-weight: 600;" class="text-green">${(item.price * item.qty).toFixed(2)}</td>
                 <td style="text-align: center;">
                     <button type="button" class="btn-ghost danger" onclick="removeItem(${item.id})" aria-label="Remove item">
@@ -633,10 +666,9 @@
     });
 
     clearBtn.addEventListener('click', function () {
-        if (confirm('Clear all items in the cart?')) {
-            cart = [];
-            renderCart();
-        }
+        window.BleMotion.confirm('Clear all items in the cart?').then(function (confirmed) {
+            if (confirmed) { cart = []; renderCart(); }
+        });
     });
 
     payBtn.addEventListener('click', function () {
@@ -645,13 +677,13 @@
         tenderAmount.value = totals.grand.toFixed(2);
         modalChange.textContent = 'KES 0.00';
         stkStatus.style.display = 'none';
-        modal.style.display = 'flex';
+        window.BleMotion.openModal(modal);
         tenderAmount.focus();
         tenderAmount.select();
     });
 
     cancelPayBtn.addEventListener('click', function () {
-        modal.style.display = 'none';
+        window.BleMotion.closeModal(modal);
     });
 
     tenderAmount.addEventListener('input', function () {

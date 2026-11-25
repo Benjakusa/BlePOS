@@ -37,7 +37,7 @@
                     </div>
                     <div style="display: flex; gap: 8px; margin-top: 6px;">
                         <a href="{{ route('platform.mpesa.edit', $cred) }}" class="btn btn-secondary" style="font-size: 12px; text-decoration: none;">Edit</a>
-                        <form action="{{ route('platform.mpesa.destroy', $cred) }}" method="POST" onsubmit="return confirm('Delete platform credential?');" style="margin: 0;">
+                        <form action="{{ route('platform.mpesa.destroy', $cred) }}" method="POST" data-motion-confirm="Delete platform credential?" style="margin: 0;">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-secondary" style="font-size: 12px; color: #dc2626;">Delete</button>

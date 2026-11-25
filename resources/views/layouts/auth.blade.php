@@ -65,11 +65,9 @@
     'use strict';
     document.querySelectorAll('.ath-alert').forEach(function (el) {
         setTimeout(function () {
-            el.style.transition = 'opacity 400ms ease, transform 400ms ease';
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(-8px)';
-            setTimeout(function () { el.remove(); }, 420);
-        }, 6000);
+            el.classList.add('motion-closing');
+            setTimeout(function () { el.remove(); }, window.BleMotion.duration('--dur-base'));
+        }, window.BleMotion.duration('--delay-toast-dismiss'));
     });
 })();
 </script>

@@ -95,7 +95,7 @@
                     <td>
                         <div style="font-weight: 600;">{{ $key->reencryption_progress_percent }}%</div>
                         <div style="width: 60px; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-top: 2px;">
-                            <div style="width: {{ $key->reencryption_progress_percent }}%; height: 100%; background: var(--clr-green);"></div>
+                            <div class="motion-progress-fill" data-progress="{{ $key->reencryption_progress_percent }}" style="height: 100%; background: var(--clr-green);"></div>
                         </div>
                     </td>
                     <td>

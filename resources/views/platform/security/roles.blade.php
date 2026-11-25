@@ -98,9 +98,13 @@
 
                 checkboxes.forEach((input) => input.addEventListener('change', refreshDiff));
                 form.addEventListener('submit', (event) => {
+                    if (form.dataset.permissionsConfirmed === '1') { delete form.dataset.permissionsConfirmed; return; }
                     const initial = checkboxes.some((input) => input.dataset.initial === '1');
-                    if (initial && diff.textContent !== 'No permission changes.' && !window.confirm(diff.textContent + '\n\nSave this permission change?')) {
+                    if (initial && diff.textContent !== 'No permission changes.') {
                         event.preventDefault();
+                        window.BleMotion.confirm(diff.textContent + '\n\nSave this permission change?').then((confirmed) => {
+                            if (confirmed) { form.dataset.permissionsConfirmed = '1'; form.requestSubmit(); }
+                        });
                     }
                 });
                 refreshDiff();

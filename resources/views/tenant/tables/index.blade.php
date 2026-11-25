@@ -12,7 +12,7 @@
         <a href="{{ route('tenant.pos.checkout') }}" class="btn btn-secondary" style="text-decoration:none;">
             <i class="bi bi-display"></i> Open POS Terminal
         </a>
-        <button type="button" class="btn" onclick="document.getElementById('add-table-modal').style.display='flex'">
+        <button type="button" class="btn" onclick="window.BleMotion.openModal(document.getElementById('add-table-modal'))">
             <i class="bi bi-plus-lg"></i> Add Dining Table
         </button>
     </div>
@@ -152,8 +152,8 @@
 </div>
 
 {{-- Add Table Modal --}}
-<div id="add-table-modal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,.4); backdrop-filter: blur(2px); z-index: 999; align-items: center; justify-content: center;">
-    <div class="card" style="background: #fff; width: 100%; max-width: 480px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+<div id="add-table-modal" class="modal-overlay" style="display: none;" aria-hidden="true">
+    <div class="card motion-modal-panel" role="dialog" aria-modal="true" aria-label="Add dining table" tabindex="-1" style="width: 100%; max-width: 480px; padding: 24px;">
         <h2 style="font-size: 18px; font-weight: 600; margin: 0 0 16px 0; color: #0f172a;">Add Dining Table</h2>
         <form method="post" action="{{ route('tenant.tables.store') }}">
             @csrf
@@ -190,7 +190,7 @@
             </div>
 
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('add-table-modal').style.display='none'">Cancel</button>
+                <button type="button" class="btn btn-secondary" onclick="window.BleMotion.closeModal(document.getElementById('add-table-modal'))">Cancel</button>
                 <button type="submit" class="btn">Create Table</button>
             </div>
         </form>

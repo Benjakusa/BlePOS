@@ -27,6 +27,8 @@ class SaleItem extends Model
             'tax_rate' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'total_price' => 'decimal:2',
+            'availability_release_at' => 'datetime',
+            'availability_released_at' => 'datetime',
         ];
     }
 

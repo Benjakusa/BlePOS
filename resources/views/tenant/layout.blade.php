@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') · {{ $tenant->name ?? 'BlePOS' }}</title>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}">
+        (function(){try{var t=localStorage.getItem('blepos_theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.setAttribute('data-theme','dark');}else{document.documentElement.setAttribute('data-theme','light');}}catch(e){}})();
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 </head>
@@ -230,6 +233,13 @@
                 <i class="bi bi-people"></i>
                 <span class="nav-label">Staff & Team</span>
             </a>
+            <a href="{{ route('tenant.activity.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.activity.*') ? 'active' : '' }}"
+               data-tooltip="Employee Activity"
+               aria-label="Employee Activity">
+                <i class="bi bi-clipboard-data"></i>
+                <span class="nav-label">Employee Activity</span>
+            </a>
             <a href="{{ route('tenant.mpesa.index') }}"
                class="nav-link {{ request()->routeIs('tenant.mpesa.*') ? 'active' : '' }}"
                data-tooltip="M-Pesa Vault"
@@ -243,6 +253,62 @@
                aria-label="Subscription & Billing">
                 <i class="bi bi-credit-card-2-front"></i>
                 <span class="nav-label">Subscription &amp; Billing</span>
+            </a>
+            @endif
+
+            {{-- Industry Vertical Modules --}}
+            @php
+                $currentTenant = $tenant ?? \App\Services\TenantContext::getTenant();
+                $moduleService = app(\App\Services\ModuleService::class);
+            @endphp
+
+            @if($currentTenant && ($moduleService->isModuleEnabled($currentTenant, 'gym') || ($currentTenant->industry ?? '') === 'gym-fitness'))
+            <span class="nav-section">Gym &amp; Fitness</span>
+            <a href="{{ route('tenant.gym.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.gym.*') ? 'active' : '' }}"
+               data-tooltip="Gym Management" aria-label="Gym Management">
+                <i class="bi bi-heart-pulse"></i>
+                <span class="nav-label">Gym Management</span>
+            </a>
+            @endif
+
+            @if($currentTenant && ($moduleService->isModuleEnabled($currentTenant, 'printing') || ($currentTenant->industry ?? '') === 'printing-branding'))
+            <span class="nav-section">Printing &amp; Branding</span>
+            <a href="{{ route('tenant.printing.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.printing.*') ? 'active' : '' }}"
+               data-tooltip="Printing Management" aria-label="Printing Management">
+                <i class="bi bi-printer"></i>
+                <span class="nav-label">Print &amp; Branding</span>
+            </a>
+            @endif
+
+            @if($currentTenant && ($moduleService->isModuleEnabled($currentTenant, 'agrovet') || ($currentTenant->industry ?? '') === 'agrovet'))
+            <span class="nav-section">Agrovet</span>
+            <a href="{{ route('tenant.agrovet.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.agrovet.*') ? 'active' : '' }}"
+               data-tooltip="Agrovet Management" aria-label="Agrovet Management">
+                <i class="bi bi-flower1"></i>
+                <span class="nav-label">Agrovet Operations</span>
+            </a>
+            @endif
+
+            @if($currentTenant && ($moduleService->isModuleEnabled($currentTenant, 'garage') || ($currentTenant->industry ?? '') === 'auto-garage'))
+            <span class="nav-section">Auto Garage</span>
+            <a href="{{ route('tenant.garage.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.garage.*') ? 'active' : '' }}"
+               data-tooltip="Auto Garage" aria-label="Auto Garage">
+                <i class="bi bi-tools"></i>
+                <span class="nav-label">Auto Garage</span>
+            </a>
+            @endif
+
+            @if($currentTenant && ($moduleService->isModuleEnabled($currentTenant, 'fleet') || ($currentTenant->industry ?? '') === 'car-hire-fleet'))
+            <span class="nav-section">Fleet &amp; Car Hire</span>
+            <a href="{{ route('tenant.fleet.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.fleet.*') ? 'active' : '' }}"
+               data-tooltip="Fleet & Car Hire" aria-label="Fleet & Car Hire">
+                <i class="bi bi-car-front"></i>
+                <span class="nav-label">Fleet &amp; Car Hire</span>
             </a>
             @endif
 
@@ -285,6 +351,10 @@
                     <i class="bi bi-cart3"></i>
                     <span class="nav-label">New Sale</span>
                 </a>
+
+                <button type="button" id="theme-toggle" class="top-bar-btn" aria-label="Toggle light/dark mode" data-tooltip="Switch to dark mode">
+                    <i class="bi bi-sun" id="theme-toggle-icon" style="font-size:17px;"></i>
+                </button>
 
                 <a href="{{ route('tenant.notifications.index') }}" class="top-bar-btn" aria-label="Notifications" data-tooltip="Notifications" style="position:relative">
                     <i class="bi bi-bell" style="font-size:17px;"></i>
@@ -408,21 +478,9 @@
     });
     document.querySelectorAll('.alert').forEach(function (el) {
         setTimeout(function () {
-            el.style.transition = 'opacity 400ms ease, transform 400ms ease';
-            el.style.opacity = '0'; el.style.transform = 'translateY(-8px)';
-            setTimeout(function () { el.remove(); }, 420);
-        }, 6000);
-    });
-    document.querySelectorAll('[data-count-up]').forEach(function (el) {
-        const target = parseFloat(el.getAttribute('data-count-up'));
-        const dur = 1200; const start = performance.now();
-        const isInt = Number.isInteger(target);
-        (function step(now) {
-            const p = Math.min((now - start) / dur, 1);
-            const eased = 1 - Math.pow(1 - p, 3);
-            el.textContent = isInt ? Math.round(target * eased).toLocaleString() : (target * eased).toFixed(2);
-            if (p < 1) requestAnimationFrame(step);
-        })(start);
+            el.classList.add('motion-closing');
+            setTimeout(function () { el.remove(); }, window.BleMotion.duration('--dur-base'));
+        }, window.BleMotion.duration('--delay-toast-dismiss'));
     });
 })();
 </script>

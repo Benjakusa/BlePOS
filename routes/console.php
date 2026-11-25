@@ -11,3 +11,5 @@ Artisan::command('inspire', function () {
 Schedule::command('platform:expire-approvals')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('platform:backup')->dailyAt('01:00')->withoutOverlapping();
 Schedule::command('platform:backup-prune')->dailyAt('02:00')->withoutOverlapping();
+
+Schedule::command('inventory:release-reusable-products')->everyMinute()->withoutOverlapping();

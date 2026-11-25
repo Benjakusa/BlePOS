@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Foundation\Vite;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -19,7 +20,29 @@ class PlatformSecurityHeaders
         $request->attributes->set('csp_nonce', $nonce);
         $response = $next($request);
 
-        $response->headers->set('Content-Security-Policy', "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'nonce-{$nonce}'");
+        $styleSrc = "'self' 'unsafe-inline'";
+        $scriptSrc = "'self' 'nonce-{$nonce}'";
+        $fontSrc = "'self' data:";
+        $connectSrc = "'self'";
+
+        if (app()->environment('local') && app(Vite::class)->isRunningHot()) {
+            $hotOrigin = rtrim(trim((string) @file_get_contents(app(Vite::class)->hotFile())), '/');
+            $parts = parse_url($hotOrigin);
+            $host = $parts['host'] ?? '127.0.0.1';
+            $port = isset($parts['port']) ? ':'.$parts['port'] : '';
+            $devOrigins = "http://{$host}{$port} http://localhost{$port} http://127.0.0.1{$port}";
+            $wsOrigins = "ws://{$host}{$port} ws://localhost{$port} ws://127.0.0.1{$port}";
+
+            $styleSrc .= " {$devOrigins}";
+            $scriptSrc .= " {$devOrigins}";
+            $fontSrc .= " {$devOrigins}";
+            $connectSrc .= " {$devOrigins} {$wsOrigins}";
+        }
+
+        $response->headers->set(
+            'Content-Security-Policy',
+            "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; img-src 'self' data:; font-src {$fontSrc}; connect-src {$connectSrc}; style-src {$styleSrc}; script-src {$scriptSrc}"
+        );
         $response->headers->set('Referrer-Policy', 'no-referrer');
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'DENY');

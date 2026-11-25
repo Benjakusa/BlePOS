@@ -262,6 +262,37 @@ class ProvisioningEngine
                     'reports.sales.view' => 'reports',
                     'reports.profit.view' => 'reports',
                     'shops.all.manage' => 'shops',
+                    // Gym & Fitness
+                    'gym.member.manage' => 'gym',
+                    'gym.subscription.manage' => 'gym',
+                    'gym.class.manage' => 'gym',
+                    'gym.checkin.manage' => 'gym',
+                    'gym.trainer.manage' => 'gym',
+                    // Printing & Branding
+                    'print.job.create' => 'printing',
+                    'print.job.approve' => 'printing',
+                    'print.quote.manage' => 'printing',
+                    'print.material.manage' => 'printing',
+                    'print.payment.record' => 'printing',
+                    // Agrovet
+                    'agrovet.product.manage' => 'agrovet',
+                    'agrovet.credit.grant' => 'agrovet',
+                    'agrovet.credit.approve' => 'agrovet',
+                    'agrovet.purchase.manage' => 'agrovet',
+                    'agrovet.report.view' => 'agrovet',
+                    // Auto Garage
+                    'garage.job.manage' => 'garage',
+                    'garage.estimate.approve' => 'garage',
+                    'garage.part.manage' => 'garage',
+                    'garage.payment.record' => 'garage',
+                    'garage.payment.override' => 'garage',
+                    'garage.mechanic.manage' => 'garage',
+                    // Fleet / Car Hire
+                    'fleet.vehicle.manage' => 'fleet',
+                    'fleet.booking.manage' => 'fleet',
+                    'fleet.inspection.manage' => 'fleet',
+                    'fleet.payment.manage' => 'fleet',
+                    'fleet.maintenance.manage' => 'fleet',
                 ];
                 foreach ($standardPerms as $perm => $group) {
                     $p = TenantPermission::query()->firstOrCreate(

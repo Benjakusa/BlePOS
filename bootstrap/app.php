@@ -4,6 +4,7 @@ use App\Http\Middleware\EnforcePlatformHttps;
 use App\Http\Middleware\EnforcePlatformIpAllowlist;
 use App\Http\Middleware\EnforceShopIsolation;
 use App\Http\Middleware\EnforceTenantIsolation;
+use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsurePlatformMfa;
 use App\Http\Middleware\EnsurePlatformPermission;
 use App\Http\Middleware\EnsurePlatformStepUp;
@@ -11,6 +12,7 @@ use App\Http\Middleware\EnsureTenantIndustry;
 use App\Http\Middleware\EnsureTenantMfa;
 use App\Http\Middleware\EnsureTenantPermission;
 use App\Http\Middleware\PlatformSecurityHeaders;
+use App\Http\Middleware\RecordTenantActivity;
 use App\Http\Middleware\ResolveTenantContext;
 use App\Http\Middleware\ResolveTenantForRouteBinding;
 use App\Http\Middleware\StartBleposSession;
@@ -61,10 +63,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'platform.ip-allowlist' => EnforcePlatformIpAllowlist::class,
             'tenant.resolve' => ResolveTenantContext::class,
             'tenant.isolate' => EnforceTenantIsolation::class,
+            'tenant.activity' => RecordTenantActivity::class,
             'shop.isolate' => EnforceShopIsolation::class,
             'tenant.permission' => EnsureTenantPermission::class,
             'tenant.industry' => EnsureTenantIndustry::class,
             'tenant.mfa' => EnsureTenantMfa::class,
+            'module.enabled' => EnsureModuleEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

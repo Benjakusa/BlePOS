@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Platform Console') · BlePOS</title>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}">
+        (function(){try{var t=localStorage.getItem('blepos_theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.setAttribute('data-theme','dark');}else{document.documentElement.setAttribute('data-theme','light');}}catch(e){}})();
+    </script>
     {{-- Global design system (includes bundled Bootstrap Icons) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
@@ -235,6 +238,10 @@
             <span class="top-bar-title">@yield('title', 'Platform Console')</span>
 
             <div class="top-bar-actions">
+                <button type="button" id="theme-toggle" class="top-bar-btn" aria-label="Toggle light/dark mode" data-tooltip="Switch to dark mode">
+                    <i class="bi bi-sun" id="theme-toggle-icon" style="font-size:17px;"></i>
+                </button>
+
                 <a href="{{ route('platform.notifications.index') }}" class="top-bar-btn" aria-label="Notifications" data-tooltip="Notifications" style="position:relative">
                     <i class="bi bi-bell" style="font-size:17px;"></i>
                     @if(auth('platform')->user()->unreadNotifications()->count())<span class="notif-dot" aria-label="Unread notifications"></span>@endif
@@ -361,27 +368,12 @@
     // ── Auto-dismiss flash alerts after 6 s ───────────────────
     document.querySelectorAll('.alert').forEach(function (el) {
         setTimeout(function () {
-            el.style.transition = 'opacity 400ms ease, transform 400ms ease';
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(-8px)';
-            setTimeout(function () { el.remove(); }, 420);
-        }, 6000);
+            el.classList.add('motion-closing');
+            setTimeout(function () { el.remove(); }, window.BleMotion.duration('--dur-base'));
+        }, window.BleMotion.duration('--delay-toast-dismiss'));
     });
 
     // ── Count-up for stat values ───────────────────────────────
-    document.querySelectorAll('[data-count-up]').forEach(function (el) {
-        const target = parseFloat(el.getAttribute('data-count-up'));
-        const dur    = 1200;
-        const start  = performance.now();
-        const isInt  = Number.isInteger(target);
-        (function step(now) {
-            const p = Math.min((now - start) / dur, 1);
-            const eased = 1 - Math.pow(1 - p, 3);
-            const val = target * eased;
-            el.textContent = isInt ? Math.round(val).toLocaleString() : val.toFixed(2);
-            if (p < 1) requestAnimationFrame(step);
-        })(start);
-    });
 })();
 </script>
 </body>

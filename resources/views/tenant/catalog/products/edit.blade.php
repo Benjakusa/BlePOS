@@ -54,6 +54,11 @@
         @endif
         <x-input type="file" name="image" label="Product Image (Optional)" accept="image/*" helper="Upload a new image to replace the current one (PNG, JPG, WEBP up to 2MB)." />
 
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: center;">
+            <x-input type="toggle" name="is_reusable" value="1" :checked="$product->is_reusable" label="Reusable / time-limited item" helper="Restore stock when the item's period ends." />
+            <x-input type="number" step="1" min="1" max="720" name="availability_period_hours" label="Availability period (hours)" :value="old('availability_period_hours', $product->availability_period_hours ?? 24)" helper="Hours from sale until it becomes available again." />
+        </div>
+
         <div style="display: flex; gap: 20px;">
             <x-input type="toggle" name="track_stock" value="1" :checked="$product->track_stock" label="Track Inventory Stock" />
             <x-input type="toggle" name="is_active" value="1" :checked="$product->is_active" label="Active" />

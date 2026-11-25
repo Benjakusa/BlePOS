@@ -63,7 +63,7 @@
                         <td style="text-align: right; padding: 8px;">
                             @if($restore->status === 'requested')
                                 @if($restore->requested_by !== auth('platform')->id())
-                                    <form method="POST" action="{{ route('platform.infrastructure.restores.approve', $restore) }}" style="display: inline;" onsubmit="return confirm('Verify an isolated restore for tenant {{ $restore->tenant->name }}?');">
+                                    <form method="POST" action="{{ route('platform.infrastructure.restores.approve', $restore) }}" style="display: inline;" data-motion-confirm="Verify an isolated restore for tenant {{ $restore->tenant->name }}?">
                                         @csrf
                                         <button type="submit" class="btn" style="padding: 4px 8px; font-size: 12px;">Approve & Verify Sandbox</button>
                                     </form>

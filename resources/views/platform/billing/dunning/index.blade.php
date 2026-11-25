@@ -11,7 +11,7 @@
     <div style="display: flex; gap: 8px;">
         <a href="{{ route('platform.invoices.index') }}" class="btn secondary">Back to Invoices</a>
         @if(auth('platform')->user()->hasPermission('platform.billing.subscriptions.manage'))
-            <form method="POST" action="{{ route('platform.dunning.trigger') }}" onsubmit="return confirm('Run automated dunning evaluation across all overdue invoices?');" style="display: inline;">
+            <form method="POST" action="{{ route('platform.dunning.trigger') }}" data-motion-confirm="Run automated dunning evaluation across all overdue invoices?" style="display: inline;">
                 @csrf
                 <button type="submit" class="btn">Run Dunning Cycle</button>
             </form>

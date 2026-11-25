@@ -30,7 +30,7 @@
             </form>
 
             @if($tenants->isEmpty())
-                <form method="POST" action="{{ route('platform.templates.destroy', $template) }}" onsubmit="return confirm('Are you sure you want to permanently delete this industry template?');" style="display: inline;">
+                <form method="POST" action="{{ route('platform.templates.destroy', $template) }}" data-motion-confirm="Are you sure you want to permanently delete this industry template?" style="display: inline;">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-danger">Delete</button>
