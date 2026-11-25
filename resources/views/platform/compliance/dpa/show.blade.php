@@ -54,7 +54,7 @@
                 <tr>
                     <td class="muted">Statutory Deadline:</td>
                     <td>
-                        <span style="color: {{ $dpa->isOverdue() ? '#b91c1c' : '#15803d' }}; font-weight: bold;">
+                        <span style="color: {{ $dpa->isOverdue() ? '#b91c1c' : 'var(--clr-green-hover)' }}; font-weight: bold;">
                             {{ $dpa->due_date->format('M d, Y') }} ({{ $dpa->due_date->diffForHumans() }})
                         </span>
                     </td>
@@ -62,12 +62,12 @@
             </table>
 
             @if($dpa->resolution_summary)
-                <h3 style="font-size: 15px; margin-top: 20px; color: #166534;">Resolution Summary</h3>
+                <h3 style="font-size: 15px; margin-top: 20px; color: var(--clr-green);">Resolution Summary</h3>
                 <div style="background: #EAEEF3; border: 1px solid #CBD5E1; border-radius: 6px; padding: 12px; white-space: pre-wrap;">{{ $dpa->resolution_summary }}</div>
             @endif
 
             @if($dpa->rejection_reason)
-                <h3 style="font-size: 15px; margin-top: 20px; color: #991b1b;">Rejection Justification</h3>
+                <h3 style="font-size: 15px; margin-top: 20px; color: var(--clr-red);">Rejection Justification</h3>
                 <div style="background: #EAEEF3; border: 1px solid #DC2626; border-radius: 6px; padding: 12px; white-space: pre-wrap;">{{ $dpa->rejection_reason }}</div>
             @endif
         </div>

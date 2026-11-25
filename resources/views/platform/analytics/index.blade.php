@@ -44,25 +44,25 @@
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
     <div class="panel" style="padding: 18px;">
         <span class="muted" style="font-size: 12px; text-transform: uppercase; font-weight: 600;">Monthly Recurring Revenue</span>
-        <div style="font-size: 26px; font-weight: bold; margin-top: 4px; color: #146b4d;">KES {{ number_format((float) $revenue['mrr'], 2) }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: var(--clr-green);">KES {{ number_format((float) $revenue['mrr'], 2) }}</div>
         <div class="muted" style="font-size: 12px; margin-top: 4px;">{{ $revenue['active_subscriptions_count'] }} active subscriptions</div>
     </div>
 
     <div class="panel" style="padding: 18px;">
         <span class="muted" style="font-size: 12px; text-transform: uppercase; font-weight: 600;">Total Invoiced</span>
-        <div style="font-size: 26px; font-weight: bold; margin-top: 4px;">KES {{ number_format((float) $revenue['total_invoiced'], 2) }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">KES {{ number_format((float) $revenue['total_invoiced'], 2) }}</div>
         <div class="muted" style="font-size: 12px; margin-top: 4px;">Incl. KES {{ number_format((float) $revenue['total_vat'], 2) }} VAT (16%)</div>
     </div>
 
     <div class="panel" style="padding: 18px;">
         <span class="muted" style="font-size: 12px; text-transform: uppercase; font-weight: 600;">Total Collected</span>
-        <div style="font-size: 26px; font-weight: bold; margin-top: 4px; color: #15803d;">KES {{ number_format((float) $revenue['total_collected'], 2) }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: var(--clr-green-hover);">KES {{ number_format((float) $revenue['total_collected'], 2) }}</div>
         <div class="muted" style="font-size: 12px; margin-top: 4px;">Collection Efficiency: {{ $revenue['collection_rate'] }}%</div>
     </div>
 
     <div class="panel" style="padding: 18px;">
         <span class="muted" style="font-size: 12px; text-transform: uppercase; font-weight: 600;">Outstanding Receivables</span>
-        <div style="font-size: 26px; font-weight: bold; margin-top: 4px; color: {{ (float) $revenue['total_due'] > 0 ? '#b91c1c' : '#146b4d' }};">
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: {{ (float) $revenue['total_due'] > 0 ? '#b91c1c' : 'var(--clr-green)' }};">
             KES {{ number_format((float) $revenue['total_due'], 2) }}
         </div>
         <div class="muted" style="font-size: 12px; margin-top: 4px;">Unsettled invoice balances</div>
@@ -73,19 +73,19 @@
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;">
     <div class="panel" style="padding: 16px;">
         <span class="muted" style="font-size: 12px; text-transform: uppercase;">Total Tenants</span>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px;">{{ $growth['total_tenants'] }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">{{ $growth['total_tenants'] }}</div>
         <div class="muted" style="font-size: 11px; margin-top: 2px;">+{{ $growth['new_tenants'] }} in selected period</div>
     </div>
 
     <div class="panel" style="padding: 16px;">
         <span class="muted" style="font-size: 12px; text-transform: uppercase;">Active Tenants</span>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px; color: #15803d;">{{ $growth['active_tenants'] }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: var(--clr-green-hover);">{{ $growth['active_tenants'] }}</div>
         <div class="muted" style="font-size: 11px; margin-top: 2px;">Retention Rate: {{ $growth['retention_rate'] }}%</div>
     </div>
 
     <div class="panel" style="padding: 16px;">
         <span class="muted" style="font-size: 12px; text-transform: uppercase;">Suspended</span>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px; color: {{ $growth['suspended_tenants'] > 0 ? '#b91c1c' : 'inherit' }};">
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: {{ $growth['suspended_tenants'] > 0 ? '#b91c1c' : 'inherit' }};">
             {{ $growth['suspended_tenants'] }}
         </div>
         <div class="muted" style="font-size: 11px; margin-top: 2px;">Overdue or manual</div>
@@ -93,13 +93,13 @@
 
     <div class="panel" style="padding: 16px;">
         <span class="muted" style="font-size: 12px; text-transform: uppercase;">Monitored Shops</span>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px;">{{ $growth['total_shops'] }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">{{ $growth['total_shops'] }}</div>
         <div class="muted" style="font-size: 11px; margin-top: 2px;">Across all branches</div>
     </div>
 
     <div class="panel" style="padding: 16px;">
         <span class="muted" style="font-size: 12px; text-transform: uppercase;">POS Tills / Registers</span>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px;">{{ $growth['total_registers'] }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">{{ $growth['total_registers'] }}</div>
         <div class="muted" style="font-size: 11px; margin-top: 2px;">Active checkout terminals</div>
     </div>
 </div>
@@ -110,7 +110,7 @@
         <h2 style="font-size: 17px; margin-top: 0; margin-bottom: 14px;">Plan Tier Distribution & Estimated MRR</h2>
         <table cellpadding="8" cellspacing="0" border="1" style="width: 100%; border-collapse: collapse; font-size: 13px;">
             <thead>
-                <tr style="background: #f8faf9;">
+                <tr style="background: var(--clr-grey-tint);">
                     <th>Plan Tier</th>
                     <th>Monthly Price</th>
                     <th>Subscribers</th>
@@ -139,8 +139,8 @@
         <h2 style="font-size: 17px; margin-top: 0; margin-bottom: 14px;">Industry Blueprint Breakdown</h2>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
             @foreach($industries as $ind => $cnt)
-                <div style="background: #f8faf9; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; text-align: center;">
-                    <div style="font-size: 20px; font-weight: bold; color: #146b4d;">{{ $cnt }}</div>
+                <div style="background: var(--clr-grey-tint); border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; text-align: center;">
+                    <div style="font-size: 20px; font-weight: bold; color: var(--clr-green);">{{ $cnt }}</div>
                     <div class="muted" style="font-size: 12px; text-transform: capitalize; margin-top: 2px;">{{ str_replace('-', ' ', $ind) }}</div>
                 </div>
             @endforeach
@@ -158,7 +158,7 @@
             </div>
             <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 4px;">
                 <span>eTIMS Regulatory Status:</span>
-                <span class="badge" style="background: {{ $operations['compliance']['etims_status'] === 'CERTIFIED' ? '#EAEEF3' : '#EAEEF3' }}; color: {{ $operations['compliance']['etims_status'] === 'CERTIFIED' ? '#166534' : '#991b1b' }}; padding: 1px 6px; border-radius: 3px;">
+                <span class="badge" style="background: {{ $operations['compliance']['etims_status'] === 'CERTIFIED' ? '#EAEEF3' : '#EAEEF3' }}; color: {{ $operations['compliance']['etims_status'] === 'CERTIFIED' ? 'var(--clr-green)' : 'var(--clr-red)' }}; padding: 1px 6px; border-radius: 3px;">
                     {{ $operations['compliance']['etims_status'] }}
                 </span>
             </div>
@@ -172,7 +172,7 @@
     <div class="muted" style="font-size: 13px; margin-bottom: 14px;">Adoption penetration across the versioned 25-module catalogue.</div>
     <table cellpadding="8" cellspacing="0" border="1" style="width: 100%; border-collapse: collapse; font-size: 13px;">
         <thead>
-            <tr style="background: #f8faf9;">
+            <tr style="background: var(--clr-grey-tint);">
                 <th>Module Name</th>
                 <th>Slug</th>
                 <th>Category</th>
@@ -189,7 +189,7 @@
                     <td><span style="text-transform: capitalize;">{{ $mod['category'] }}</span></td>
                     <td>
                         @if($mod['is_core'])
-                            <span class="badge" style="background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px;">Core</span>
+                            <span class="badge" style="background: var(--clr-grey-tint); color: #3730a3; padding: 2px 6px; border-radius: 4px;">Core</span>
                         @else
                             <span class="muted">Optional</span>
                         @endif
@@ -198,7 +198,7 @@
                     <td>
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <div style="width: 80px; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
-                                <div style="width: {{ min(100, $mod['adoption_rate']) }}%; height: 100%; background: #146b4d;"></div>
+                                <div style="width: {{ min(100, $mod['adoption_rate']) }}%; height: 100%; background: var(--clr-green);"></div>
                             </div>
                             <span>{{ $mod['adoption_rate'] }}%</span>
                         </div>

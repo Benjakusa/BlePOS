@@ -329,6 +329,12 @@
             setSidebarCollapsed(true);
         }
         function toggleSidebar() {
+            if (window.matchMedia('(max-width: 767px)').matches) {
+                const open = sidebar.classList.toggle('mobile-open');
+                if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if (hamburger) hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+                return;
+            }
             setSidebarCollapsed(!sidebar.classList.contains('collapsed'));
         }
         if (toggle) toggle.addEventListener('click', toggleSidebar);

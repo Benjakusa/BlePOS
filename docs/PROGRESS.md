@@ -1,27 +1,26 @@
 # BlePOS Progress Ledger
 
 ## Session header
-- Last updated: 2026-11-24 12:38 UTC / 15:38 EAT
-- Last agent / session ID: antigravity-phase5-accounting-2026-11-24
-- Current tier / phase: Phase 5 Financial Ledgers & Double-Entry Accounting (Verified; 192 tests passing)
+- Last updated: 2026-11-25 08:31 UTC / 11:31 EAT
+- Last agent / session ID: antigravity-tenant-rbac-staff-restaurant-2026-11-25
+- Current tier / phase: Tenant RBAC, Staff Management, Route Authorization & Restaurant Seeding (Verified; 213 tests passing)
 - Build status: Passed
-- Last full test run: `php artisan test --compact` — 192 tests, 2048 assertions (2026-11-24; see `PROGRESS_LOG.md` L-0128).
-- Resume verification: Financial ledgers and double-entry accounting tests passed (9 tests, 64 assertions); full suite passed (192 tests, 2048 assertions); `vendor/bin/pint --format agent` passed (2026-11-24; see `PROGRESS_LOG.md` L-0128).
-- Git working branch / checkpoint: All phases (A1 through A14) of Annex A and Phase 5 Financial Ledgers & Double-Entry Accounting are fully implemented, hardened, and verified with 192 automated tests.
+- Last full test run: `php artisan test --compact` — 213 tests, 2260 assertions (2026-11-25).
+- Resume verification: TenantStaffAndRoleIsolationTest passed (5 tests, 38 assertions); full suite passed (213 tests, 2260 assertions); `vendor/bin/pint --test` passed; `npm run build` passed.
+- Git working branch / checkpoint: Comprehensive tenant RBAC implemented. Tenant owner has unrestricted access across all modules, dedicated staff management created (`tenant.users.*`), granular middleware route enforcement (`tenant.permission`), dynamic permission-aware sidebar filtering, and fully seeded Restaurant tenant (`Savanna Bistro & Grill`) with distinct owner, cashier, inventory officer, and accountant roles.
 
 ## RESUME POINT
-- Next action (exact): Phase 5 complete. Next: Proceed to Phase 6 Industry Modules (Pharmacy batch & Rx controls, Restaurant table management & KDS, Wholesale tiered pricing & credit limits).
-- Preconditions / what must be true first: Phase 5 Financial Ledgers verified with automated tests passing (192 tests, 2048 assertions; L-0128).
-- Files in flight: None. All models, migrations, services, middleware, controllers, views, commands, docs, and tests are implemented and passing.
-- First commands to run on resume: `php artisan test --compact`, `vendor/bin/pint --format agent`.
-- Warnings: eTIMS and M-Pesa remain in honest regulatory sandbox placeholder states pending official clearance and production credentials.
+- Next action (exact): Live demonstration and testing of Restaurant tenant accounts with granular role permissions and staff management.
+- Preconditions / what must be true first: Full test suite passing (213 tests, 2260 assertions); database seeded with Restaurant trial tenant and staff accounts.
+- Files in flight: None. All models, migrations, seeders, controllers, views, middleware, docs, and tests are clean and passing.
+- First commands to run on resume: `php artisan test --compact`, `vendor/bin/pint --test`.
 
 ## Latest session verification
 | Suite | Command | Date | Passed | Failed | Skipped | Notes |
 |---|---|---|---:|---:|---:|---|
-| Financial ledgers & double-entry accounting | `php artisan test --compact tests/Feature/TenantAccountingAndGeneralLedgerTest.php` | 2026-11-24 | 9 | 0 | 0 | 64 assertions, exit 0; see `PROGRESS_LOG.md` L-0128. |
-| Full PHPUnit suite | `php artisan test --compact` | 2026-11-24 | 192 | 0 | 0 | 2048 assertions, exit 0; see `PROGRESS_LOG.md` L-0128. |
-| PHP style | `vendor/bin/pint --format agent` | 2026-11-24 | Passed | — | — | See `PROGRESS_LOG.md` L-0128. |
+| Tenant Staff & Role Isolation | `php artisan test tests/Feature/TenantStaffAndRoleIsolationTest.php` | 2026-11-25 | 5 | 0 | 0 | 38 assertions, exit 0 |
+| Full PHPUnit suite | `php artisan test --compact` | 2026-11-25 | 213 | 0 | 0 | 2260 assertions, exit 0 |
+| PHP style | `vendor/bin/pint --test` | 2026-11-25 | Passed | — | — | Zero code style issues |
 | Hardening & release readiness | `php artisan test --compact tests/Feature/PlatformHardeningAndReleaseReadinessTest.php` | 2026-11-24 | 6 | 0 | 0 | 172 assertions, exit 0; see `PROGRESS_LOG.md` L-0127. |
 | Full PHPUnit suite | `php artisan test --compact` | 2026-11-24 | 183 | 0 | 0 | 1970 assertions, exit 0; see `PROGRESS_LOG.md` L-0127. |
 | PHP style | `vendor/bin/pint --format agent` | 2026-11-24 | Passed | — | — | See `PROGRESS_LOG.md` L-0127. |

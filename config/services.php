@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'mpesa' => [
+        'encryption_key' => env('MPESA_ENCRYPTION_KEY'),
+        'sandbox_base_url' => env('MPESA_SANDBOX_BASE_URL', 'https://sandbox.safaricom.co.ke'),
+        'production_base_url' => env('MPESA_PRODUCTION_BASE_URL', 'https://api.safaricom.co.ke'),
+        'sandbox_mode' => env('MPESA_SANDBOX_MODE', true),
+        'callback_secret' => env('MPESA_CALLBACK_SECRET', ''),
+    ],
+
 ];

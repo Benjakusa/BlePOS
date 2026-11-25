@@ -19,7 +19,7 @@
 @endif
 
 @if ($errors->any())
-    <div class="notice" style="border-color: #DC2626; background: #EAEEF3; color: #991b1b;" role="alert">
+    <div class="notice" style="border-color: #DC2626; background: #EAEEF3; color: var(--clr-red);" role="alert">
         <strong>Please check the errors:</strong>
         <ul style="margin: 8px 0 0; padding-left: 20px;">
             @foreach ($errors->all() as $error)
@@ -29,7 +29,7 @@
     </div>
 @endif
 
-<div class="notice" style="background: #eff6ff; border-color: #bfdbfe; color: #1e40af; margin-bottom: 24px;">
+<div class="notice" style="background: var(--clr-blue-tint); border-color: #bfdbfe; color: #1e40af; margin-bottom: 24px;">
     <strong>Mandatory Disaster Recovery Invariants (Annex A, Part 31):</strong>
     A live tenant database is never overwritten through a casual admin action. Every restore must first test in an isolated sandbox, undergo secondary administrator approval (Two-Person Rule), and produce an immutable audit log trail.
 </div>

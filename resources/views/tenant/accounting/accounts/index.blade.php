@@ -91,7 +91,7 @@
                     @empty
                         <tr>
                             <td colspan="7" class="muted" style="text-align: center; padding: 32px;">
-                                <i class="bi bi-journal-bookmark" style="font-size: 32px; display: block; margin-bottom: 8px;"></i>
+                                <i class="bi bi-journal-bookmark" style="font-size: 20px; display: block; margin-bottom: 8px;"></i>
                                 No accounts found.
                             </td>
                         </tr>

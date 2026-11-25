@@ -47,6 +47,8 @@ class TenantPosAndShiftTest extends TestCase
             'pos.sale.create',
             'pos.sales.view',
             'pos.sale.void',
+            'shifts.view',
+            'shifts.manage',
             'shops.all.manage',
         ];
 
@@ -76,6 +78,12 @@ class TenantPosAndShiftTest extends TestCase
         ]);
 
         $cashier = $this->createCashierUser($tenant, $shop);
+
+        // 0. Render create shift view
+        $createViewResponse = $this->actingAs($cashier)->get(route('tenant.shifts.create'));
+        $createViewResponse->assertStatus(200);
+        $createViewResponse->assertSee('Open Work Shift');
+        $createViewResponse->assertSee('Main Till');
 
         // 1. Open shift
         $openResponse = $this->actingAs($cashier)->post(route('tenant.shifts.store'), [

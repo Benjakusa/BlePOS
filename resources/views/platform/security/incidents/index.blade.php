@@ -54,7 +54,7 @@
 <section class="panel" style="max-width: none; overflow-x: auto;">
     <table cellpadding="10" cellspacing="0" border="1" style="width: 100%; border-collapse: collapse;">
         <thead>
-            <tr style="background: #f8faf9;">
+            <tr style="background: var(--clr-grey-tint);">
                 <th>Incident #</th>
                 <th>Title</th>
                 <th>Category</th>

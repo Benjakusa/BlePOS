@@ -80,7 +80,7 @@ class TenantRoleDashboardTest extends TestCase
     public function test_unauthenticated_user_cannot_access_tenant_dashboard(): void
     {
         $response = $this->get(route('tenant.dashboard'));
-        $response->assertRedirect(route('platform.login'));
+        $response->assertRedirect(route('tenant.login'));
     }
 
     public function test_tenant_owner_sees_executive_dashboard_and_multi_shop_performance(): void

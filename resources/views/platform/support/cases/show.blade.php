@@ -19,7 +19,7 @@
 @endif
 
 @if ($errors->any())
-    <div class="notice" style="border-color: #DC2626; background: #EAEEF3; color: #991b1b;" role="alert">
+    <div class="notice" style="border-color: #DC2626; background: #EAEEF3; color: var(--clr-red);" role="alert">
         <strong>Please check the errors:</strong>
         <ul style="margin: 8px 0 0; padding-left: 20px;">
             @foreach ($errors->all() as $error)
@@ -37,7 +37,7 @@
 
             @if($case->resolution_notes)
                 <div style="margin-top: 16px; padding: 12px; background: #EAEEF3; border: 1px solid #CBD5E1; border-radius: 6px;">
-                    <strong style="color: #166534;">Resolution Notes:</strong>
+                    <strong style="color: var(--clr-green);">Resolution Notes:</strong>
                     <div style="margin-top: 4px; color: #14532d;">{{ $case->resolution_notes }}</div>
                 </div>
             @endif
@@ -48,7 +48,7 @@
 
             <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
                 @forelse($case->notes as $note)
-                    <div style="padding: 12px; border-radius: 6px; border: 1px solid {{ $note->is_internal ? '#e2e8f0' : '#bfdbfe' }}; background: {{ $note->is_internal ? '#f8fafc' : '#eff6ff' }};">
+                    <div style="padding: 12px; border-radius: 6px; border: 1px solid {{ $note->is_internal ? '#e2e8f0' : '#bfdbfe' }}; background: {{ $note->is_internal ? 'var(--clr-grey-tint)' : 'var(--clr-blue-tint)' }};">
                         <div style="display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 6px;">
                             <span>
                                 <strong>{{ $note->author_name }}</strong>

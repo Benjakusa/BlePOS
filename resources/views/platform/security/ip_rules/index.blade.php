@@ -22,7 +22,7 @@
         <h2 style="font-size: 18px; margin-top: 0;">Active & Configured IP Rules</h2>
         <table cellpadding="8" cellspacing="0" border="1" style="width: 100%; border-collapse: collapse; font-size: 13px;">
             <thead>
-                <tr style="background: #f8faf9;">
+                <tr style="background: var(--clr-grey-tint);">
                     <th>IP / CIDR</th>
                     <th>Type</th>
                     <th>Scope</th>

@@ -161,39 +161,72 @@ class ProductController extends Controller
     }
 
     /**
-     * API endpoint: look up a product by barcode for the POS checkout screen.
+     * API endpoint: look up products by barcode, SKU, or name for the POS checkout screen.
      */
     public function lookup(Request $request): JsonResponse
     {
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403);
 
-        $barcode = $request->string('barcode')->trim()->value();
-        abort_if($barcode === '', 422);
+        $query = $request->string('q')->trim()->value()
+            ?: $request->string('barcode')->trim()->value();
 
-        $product = Product::query()
-            ->where('is_active', true)
-            ->where(function ($q) use ($barcode): void {
-                $q->where('barcode', $barcode)->orWhere('sku', $barcode);
-            })
-            ->first();
+        $category = $request->string('category_id')->trim()->value();
 
-        if (! $product) {
-            return response()->json(['found' => false], 200);
+        $productQuery = Product::query()
+            ->where('is_active', true);
+
+        if ($category !== '') {
+            $productQuery->where('category_id', $category);
         }
 
+        if ($query !== '') {
+            $productQuery->where(function ($q) use ($query): void {
+                $q->where('barcode', $query)
+                    ->orWhere('sku', $query)
+                    ->orWhere('name', 'like', "%{$query}%");
+            });
+        }
+
+        // If specific barcode exact match requested (scanner mode)
+        if ($request->has('barcode') && ! $request->has('q')) {
+            $product = $productQuery->first();
+
+            if (! $product) {
+                return response()->json(['found' => false], 200);
+            }
+
+            return response()->json([
+                'found' => true,
+                'product' => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'barcode' => $product->barcode,
+                    'selling_price' => $product->selling_price,
+                    'tax_rate' => $product->tax_rate,
+                    'unit_of_measure' => $product->unit_of_measure,
+                    'track_stock' => $product->track_stock,
+                ],
+            ]);
+        }
+
+        // Search list / catalog picker mode (returns up to 40 matches)
+        $products = $productQuery->with('category')->orderBy('name')->limit(40)->get();
+
         return response()->json([
-            'found' => true,
-            'product' => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'sku' => $product->sku,
-                'barcode' => $product->barcode,
-                'selling_price' => $product->selling_price,
-                'tax_rate' => $product->tax_rate,
-                'unit_of_measure' => $product->unit_of_measure,
-                'track_stock' => $product->track_stock,
-            ],
+            'found' => $products->isNotEmpty(),
+            'products' => $products->map(fn (Product $p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'sku' => $p->sku,
+                'barcode' => $p->barcode,
+                'selling_price' => $p->selling_price,
+                'tax_rate' => $p->tax_rate,
+                'unit_of_measure' => $p->unit_of_measure,
+                'track_stock' => $p->track_stock,
+                'category_name' => $p->category?->name ?? 'General',
+            ]),
         ]);
     }
 }

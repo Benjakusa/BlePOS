@@ -7,6 +7,7 @@ use App\Http\Middleware\EnforceTenantIsolation;
 use App\Http\Middleware\EnsurePlatformMfa;
 use App\Http\Middleware\EnsurePlatformPermission;
 use App\Http\Middleware\EnsurePlatformStepUp;
+use App\Http\Middleware\EnsureTenantPermission;
 use App\Http\Middleware\PlatformSecurityHeaders;
 use App\Http\Middleware\ResolveTenantContext;
 use App\Http\Middleware\StartBleposSession;
@@ -34,7 +35,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 | Request::HEADER_X_FORWARDED_PROTO
                 | Request::HEADER_X_FORWARDED_PREFIX,
         );
-        $middleware->redirectGuestsTo(fn () => route('platform.login'));
+        $middleware->redirectGuestsTo(function (Request $request) {
+            if ($request->is('tenant/*') || $request->is('tenant')) {
+                return route('tenant.login');
+            }
+
+            return route('platform.login');
+        });
         $middleware->alias([
             'platform.mfa' => EnsurePlatformMfa::class,
             'platform.session' => TrackPlatformSession::class,
@@ -46,6 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.resolve' => ResolveTenantContext::class,
             'tenant.isolate' => EnforceTenantIsolation::class,
             'shop.isolate' => EnforceShopIsolation::class,
+            'tenant.permission' => EnsureTenantPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -114,7 +114,7 @@
                     @empty
                         <tr>
                             <td colspan="7" style="text-align: center; padding: 32px;" class="muted">
-                                <i class="bi bi-receipt" style="font-size: 32px; display: block; margin-bottom: 8px;"></i>
+                                <i class="bi bi-receipt" style="font-size: 20px; display: block; margin-bottom: 8px;"></i>
                                 No sales recorded yet.
                             </td>
                         </tr>

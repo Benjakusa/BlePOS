@@ -69,7 +69,7 @@ class ProvisioningEngine
             $tenant = Tenant::query()->create([
                 'name' => $payload['legal_name'],
                 'trading_name' => $payload['trading_name'] ?? $payload['legal_name'],
-                'code' => strtoupper($payload['code'] ?? Str::random(6)),
+                'code' => ! empty($payload['code']) ? (string) $payload['code'] : Tenant::generateUniqueCode(),
                 'slug' => Str::slug($payload['slug'] ?? $payload['legal_name']),
                 'kra_pin' => $payload['kra_pin'] ?? null,
                 'business_type' => $payload['business_type'] ?? 'retail',

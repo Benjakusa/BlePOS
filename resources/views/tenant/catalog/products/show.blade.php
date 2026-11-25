@@ -22,7 +22,7 @@
     </div>
     <div class="stat-card">
         <div class="label">Selling Price</div>
-        <div class="value" style="color: #166534;">KES {{ number_format((float) $product->selling_price, 2) }}</div>
+        <div class="value" style="color: var(--clr-green);">KES {{ number_format((float) $product->selling_price, 2) }}</div>
     </div>
     <div class="stat-card">
         <div class="label">Gross Margin</div>

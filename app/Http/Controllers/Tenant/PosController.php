@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Models\CashierShift;
+use App\Models\Category;
+use App\Models\DiningTable;
 use App\Models\Register;
 use App\Models\Sale;
 use App\Models\Shop;
@@ -39,11 +41,23 @@ class PosController extends Controller
         }
 
         $registers = Register::query()->get();
+        $tables = DiningTable::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        $categories = Category::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
         return view('tenant.pos.checkout', [
             'tenant' => $tenant,
             'openShift' => $openShift,
             'registers' => $registers,
+            'tables' => $tables,
+            'categories' => $categories,
         ]);
     }
 
@@ -59,6 +73,7 @@ class PosController extends Controller
         $validated = $request->validate([
             'shift_id' => ['required', 'integer', 'exists:cashier_shifts,id'],
             'register_id' => ['nullable', 'integer', 'exists:registers,id'],
+            'dining_table_id' => ['nullable', 'integer', 'exists:dining_tables,id'],
             'shop_id' => ['required', 'integer', 'exists:shops,id'],
             'notes' => ['nullable', 'string', 'max:500'],
             'items' => ['required', 'array', 'min:1'],
@@ -93,7 +108,14 @@ class PosController extends Controller
             payments: $validated['payments'],
             shift: $shift,
             notes: $validated['notes'] ?? null,
+            diningTableId: $validated['dining_table_id'] ?? null,
         );
+
+        // If table was selected, update table status
+        if (! empty($validated['dining_table_id'])) {
+            $table = DiningTable::find($validated['dining_table_id']);
+            $table?->markAvailable(); // Once paid, table can be freed or marked available
+        }
 
         return response()->json([
             'success' => true,

@@ -18,7 +18,7 @@
     <div class="notice" role="alert">{{ session('notice') }}</div>
 @endif
 
-<div style="background: {{ $metrics['etims_status'] === 'CERTIFIED' ? '#EAEEF3' : '#fffbeb' }}; border: 1px solid {{ $metrics['etims_status'] === 'CERTIFIED' ? '#CBD5E1' : '#fde68a' }}; border-radius: 8px; padding: 18px 22px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+<div style="background: {{ $metrics['etims_status'] === 'CERTIFIED' ? '#EAEEF3' : 'var(--clr-grey-tint)' }}; border: 1px solid {{ $metrics['etims_status'] === 'CERTIFIED' ? '#CBD5E1' : 'var(--clr-grey-tint)' }}; border-radius: 8px; padding: 18px 22px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
     <div>
         <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-weight: 700; font-size: 16px;">KRA eTIMS Platform Certification Status:</span>
@@ -33,7 +33,7 @@
         </div>
     </div>
     <div style="text-align: right;">
-        <span style="font-size: 24px; font-weight: bold;">{{ $metrics['cert_passed'] }} / {{ $metrics['cert_total'] }}</span>
+        <span style="font-size: 20px; font-weight: bold;">{{ $metrics['cert_passed'] }} / {{ $metrics['cert_total'] }}</span>
         <div class="muted" style="font-size: 12px;">Criteria Verified</div>
     </div>
 </div>
@@ -41,22 +41,22 @@
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
     <div class="panel" style="padding: 16px;">
         <span class="muted" style="font-size: 13px; text-transform: uppercase;">Active Tenants</span>
-        <div style="font-size: 26px; font-weight: bold; margin-top: 4px;">{{ $metrics['total_tenants'] }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">{{ $metrics['total_tenants'] }}</div>
         <div class="muted" style="font-size: 12px; margin-top: 4px;">Registered organizations</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <span class="muted" style="font-size: 13px; text-transform: uppercase;">Monitored Shops</span>
-        <div style="font-size: 26px; font-weight: bold; margin-top: 4px;">{{ $metrics['total_shops'] }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">{{ $metrics['total_shops'] }}</div>
         <div class="muted" style="font-size: 12px; margin-top: 4px;">Branches and registers</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <span class="muted" style="font-size: 13px; text-transform: uppercase;">Platform Invoices</span>
-        <div style="font-size: 26px; font-weight: bold; margin-top: 4px;">{{ $metrics['total_invoices'] }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">{{ $metrics['total_invoices'] }}</div>
         <div class="muted" style="font-size: 12px; margin-top: 4px;">Sequential fiscal records</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <span class="muted" style="font-size: 13px; text-transform: uppercase;">Pending DPA Requests</span>
-        <div style="font-size: 26px; font-weight: bold; margin-top: 4px; color: {{ $metrics['dpa_overdue'] > 0 ? '#b91c1c' : '#146b4d' }};">
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: {{ $metrics['dpa_overdue'] > 0 ? '#b91c1c' : 'var(--clr-green)' }};">
             {{ $metrics['dpa_pending'] }}
         </div>
         <div class="muted" style="font-size: 12px; margin-top: 4px;">{{ $metrics['dpa_overdue'] }} statutory overdue</div>
@@ -69,7 +69,7 @@
 
     <table cellpadding="10" cellspacing="0" border="1" style="width: 100%; border-collapse: collapse; font-size: 13px;">
         <thead>
-            <tr style="background: #f8faf9;">
+            <tr style="background: var(--clr-grey-tint);">
                 <th>Component / Evaluation Item</th>
                 <th>Stage</th>
                 <th>Status</th>
@@ -120,7 +120,7 @@
         </div>
         <table cellpadding="8" cellspacing="0" border="1" style="width: 100%; border-collapse: collapse; font-size: 13px;">
             <thead>
-                <tr style="background: #f8faf9;">
+                <tr style="background: var(--clr-grey-tint);">
                     <th>Request #</th>
                     <th>Subject</th>
                     <th>Type</th>
@@ -165,7 +165,7 @@
         </div>
         <table cellpadding="8" cellspacing="0" border="1" style="width: 100%; border-collapse: collapse; font-size: 13px;">
             <thead>
-                <tr style="background: #f8faf9;">
+                <tr style="background: var(--clr-grey-tint);">
                     <th>Policy Document</th>
                     <th>Version</th>
                     <th>Effective Date</th>

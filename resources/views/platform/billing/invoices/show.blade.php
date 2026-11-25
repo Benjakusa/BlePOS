@@ -25,7 +25,7 @@
 @endif
 
 @if ($errors->any())
-    <div class="notice" style="border-color: #DC2626; background: #EAEEF3; color: #991b1b;" role="alert">
+    <div class="notice" style="border-color: #DC2626; background: #EAEEF3; color: var(--clr-red);" role="alert">
         <strong>Please check the errors:</strong>
         <ul style="margin: 8px 0 0; padding-left: 20px;">
             @foreach ($errors->all() as $error)
@@ -72,8 +72,8 @@
                         <td style="text-align: right; padding: 10px 8px; font-weight: bold;">{{ $invoice->currency }} {{ number_format((float) $invoice->total_amount, 2) }}</td>
                     </tr>
                     <tr>
-                        <td colspan="3" style="text-align: right; padding: 8px; color: #146b4d;">Amount Paid:</td>
-                        <td style="text-align: right; padding: 8px; font-weight: 600; color: #146b4d;">{{ $invoice->currency }} {{ number_format((float) $invoice->amount_paid, 2) }}</td>
+                        <td colspan="3" style="text-align: right; padding: 8px; color: var(--clr-green);">Amount Paid:</td>
+                        <td style="text-align: right; padding: 8px; font-weight: 600; color: var(--clr-green);">{{ $invoice->currency }} {{ number_format((float) $invoice->amount_paid, 2) }}</td>
                     </tr>
                     <tr style="font-size: 16px; border-top: 1px dashed #cbd5e1;">
                         <td colspan="3" style="text-align: right; padding: 10px 8px; font-weight: bold; color: #b45309;">Balance Due:</td>
@@ -151,12 +151,12 @@
             @endif
         </div>
 
-        <div class="panel" style="margin-bottom: 20px; background: #fffbeb; border-color: #fde68a;">
-            <h3 style="color: #92400e;">eTIMS Fiscalisation</h3>
+        <div class="panel" style="margin-bottom: 20px; background: var(--clr-grey-tint); border-color: var(--clr-grey-tint);">
+            <h3 style="color: var(--clr-muted);">eTIMS Fiscalisation</h3>
             <p style="font-size: 13px; color: #78350f;">
                 Kenyan statutory compliance requirement (Annex A, 8.7).
             </p>
-            <p><strong>Status:</strong> <span class="badge" style="background: #fef3c7; color: #92400e;">BLOCKED-ON-CERTIFICATION</span></p>
+            <p><strong>Status:</strong> <span class="badge" style="background: var(--clr-grey-tint); color: var(--clr-muted);">BLOCKED-ON-CERTIFICATION</span></p>
             <p style="font-size: 12px; color: #78350f; margin-bottom: 0;">
                 Platform invoice fiscalisation under BlePOS platform PIN is held until regulatory sandbox certification completes.
             </p>

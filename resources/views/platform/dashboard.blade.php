@@ -253,7 +253,7 @@
                     <div>Type: <strong>{{ ucfirst($latestBackup->backup_type ?? 'central') }}</strong> ({{ $latestBackup->status }})</div>
                     <div class="muted" style="margin-top: 2px;">{{ $latestBackup->created_at?->diffForHumans() }}</div>
                     @if(!empty($latestBackup->checksum))
-                        <div style="margin-top: 4px; font-family: monospace; font-size: 11px;">
+                        <div style="margin-top: 4px; font-family: Helvetica, Arial, sans-serif; font-size: 11px;">
                             SHA256: {{ substr($latestBackup->checksum, 0, 16) }}...
                         </div>
                     @endif
@@ -381,7 +381,7 @@
             <div class="stat-card" style="padding: 14px;">
                 <div class="stat-body">
                     <div class="stat-label">Active Incidents</div>
-                    <div class="stat-value {{ $security['metrics']['active_incidents'] > 0 ? 'text-red' : 'text-green' }}" style="font-size: 22px;">
+                    <div class="stat-value {{ $security['metrics']['active_incidents'] > 0 ? 'text-red' : 'text-green' }}" style="font-size: 20px;">
                         {{ $security['metrics']['active_incidents'] }}
                     </div>
                 </div>
@@ -389,7 +389,7 @@
             <div class="stat-card" style="padding: 14px;">
                 <div class="stat-body">
                     <div class="stat-label">Critical Events (24h)</div>
-                    <div class="stat-value {{ $security['metrics']['critical_events_24h'] > 0 ? 'text-red' : 'text-green' }}" style="font-size: 22px;">
+                    <div class="stat-value {{ $security['metrics']['critical_events_24h'] > 0 ? 'text-red' : 'text-green' }}" style="font-size: 20px;">
                         {{ $security['metrics']['critical_events_24h'] }}
                     </div>
                 </div>
@@ -397,13 +397,13 @@
             <div class="stat-card" style="padding: 14px;">
                 <div class="stat-body">
                     <div class="stat-label">Blocked Denylist IPs</div>
-                    <div class="stat-value" style="font-size: 22px;">{{ $security['metrics']['blocked_ips'] }}</div>
+                    <div class="stat-value" style="font-size: 20px;">{{ $security['metrics']['blocked_ips'] }}</div>
                 </div>
             </div>
             <div class="stat-card" style="padding: 14px;">
                 <div class="stat-body">
                     <div class="stat-label">Active Sessions</div>
-                    <div class="stat-value" style="font-size: 22px;">{{ $security['metrics']['active_sessions'] }}</div>
+                    <div class="stat-value" style="font-size: 20px;">{{ $security['metrics']['active_sessions'] }}</div>
                 </div>
             </div>
         </div>
@@ -412,7 +412,7 @@
             <span class="muted" style="font-weight: 600;">Envelope Encryption Keys:</span>
             <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 6px;">
                 @foreach($security['keys'] as $key)
-                    <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 11px; padding: 6px 10px; background: var(--clr-grey-tint); border-radius: var(--radius-sm);">
+                    <div style="display: flex; justify-content: space-between; font-family: Helvetica, Arial, sans-serif; font-size: 11px; padding: 6px 10px; background: var(--clr-grey-tint); border-radius: var(--radius-sm);">
                         <span>Key {{ $key->key_id }} (v{{ $key->version }})</span>
                         <span class="{{ $key->status === 'active' ? 'text-green' : 'muted' }}" style="font-weight: 600;">{{ strtoupper($key->status) }}</span>
                     </div>
@@ -431,13 +431,13 @@
             <div class="stat-card" style="padding: 14px;">
                 <div class="stat-body">
                     <div class="stat-label">eTIMS Checklist</div>
-                    <div class="stat-value text-green" style="font-size: 22px;">{{ $compliance['metrics']['cert_passed'] }} / {{ $compliance['metrics']['cert_total'] }}</div>
+                    <div class="stat-value text-green" style="font-size: 20px;">{{ $compliance['metrics']['cert_passed'] }} / {{ $compliance['metrics']['cert_total'] }}</div>
                 </div>
             </div>
             <div class="stat-card" style="padding: 14px;">
                 <div class="stat-body">
                     <div class="stat-label">Pending DPA Requests</div>
-                    <div class="stat-value {{ $compliance['metrics']['dpa_pending'] > 0 ? 'text-warning' : 'text-green' }}" style="font-size: 22px;">
+                    <div class="stat-value {{ $compliance['metrics']['dpa_pending'] > 0 ? 'text-warning' : 'text-green' }}" style="font-size: 20px;">
                         {{ $compliance['metrics']['dpa_pending'] }}
                     </div>
                 </div>
@@ -445,7 +445,7 @@
             <div class="stat-card" style="padding: 14px;">
                 <div class="stat-body">
                     <div class="stat-label">Overdue DPA Requests</div>
-                    <div class="stat-value {{ $compliance['metrics']['dpa_overdue'] > 0 ? 'text-red' : 'text-green' }}" style="font-size: 22px;">
+                    <div class="stat-value {{ $compliance['metrics']['dpa_overdue'] > 0 ? 'text-red' : 'text-green' }}" style="font-size: 20px;">
                         {{ $compliance['metrics']['dpa_overdue'] }}
                     </div>
                 </div>
@@ -453,7 +453,7 @@
             <div class="stat-card" style="padding: 14px;">
                 <div class="stat-body">
                     <div class="stat-label">Published Legal Docs</div>
-                    <div class="stat-value" style="font-size: 22px;">{{ $compliance['legal_documents']->count() }}</div>
+                    <div class="stat-value" style="font-size: 20px;">{{ $compliance['legal_documents']->count() }}</div>
                 </div>
             </div>
         </div>

@@ -36,7 +36,7 @@
                     <td><strong>{{ $expense->description }}</strong></td>
                     <td class="muted">{{ $expense->shop->name ?? '—' }}</td>
                     <td><code>{{ strtoupper($expense->payment_method) }}</code></td>
-                    <td style="text-align: right; font-weight: 650; font-family: monospace;">
+                    <td style="text-align: right; font-weight: 650; font-family: Helvetica, Arial, sans-serif;">
                         {{ number_format((float) $expense->amount, 2) }}
                     </td>
                     <td>

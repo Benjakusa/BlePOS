@@ -94,7 +94,7 @@
                     @empty
                         <tr>
                             <td colspan="7" style="padding: 32px; text-align: center;" class="muted">
-                                <i class="bi bi-inbox" style="font-size: 28px; display: block; margin-bottom: 8px;"></i>
+                                <i class="bi bi-inbox" style="font-size: 20px; display: block; margin-bottom: 8px;"></i>
                                 No tenants found matching criteria.
                             </td>
                         </tr>

@@ -39,7 +39,7 @@
                         <div class="muted" style="font-size: 13px; margin-top: 2px;">{{ Str::limit($announcement->content, 90) }}</div>
                     </td>
                     <td style="text-align: center; padding: 10px 8px;">
-                        <span class="badge" style="background: {{ $announcement->priority === 'critical' ? '#EAEEF3' : ($announcement->priority === 'warning' ? '#fef3c7' : '#e0f2fe') }}; color: {{ $announcement->priority === 'critical' ? '#991b1b' : ($announcement->priority === 'warning' ? '#92400e' : '#0369a1') }};">
+                        <span class="badge" style="background: {{ $announcement->priority === 'critical' ? '#EAEEF3' : ($announcement->priority === 'warning' ? 'var(--clr-grey-tint)' : 'var(--clr-blue-tint)') }}; color: {{ $announcement->priority === 'critical' ? 'var(--clr-red)' : ($announcement->priority === 'warning' ? 'var(--clr-muted)' : '#0369a1') }};">
                             {{ strtoupper($announcement->priority) }}
                         </span>
                     </td>

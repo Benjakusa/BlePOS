@@ -18,7 +18,7 @@
     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
         @if(auth('platform')->user()->hasPermission('platform.modules.manage'))
             <a href="{{ route('platform.templates.edit', $template) }}" class="btn btn-secondary">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                <i class="bi bi-pencil" aria-hidden="true"></i>
                 <span>Edit Template</span>
             </a>
 
@@ -181,7 +181,7 @@
                         <!-- Preview Area -->
                         <div id="preview-box" style="display: none; background: var(--color-neutral-50); border: 1px solid var(--color-neutral-200); border-radius: 8px; padding: 12px; font-size: 12.5px;">
                             <div style="font-weight: 600; margin-bottom: 6px; color: var(--color-ink-950);">Installation Preview:</div>
-                            <div id="preview-will-enable" style="color: #15803d; margin-bottom: 4px;"></div>
+                            <div id="preview-will-enable" style="color: var(--clr-green-hover); margin-bottom: 4px;"></div>
                             <div id="preview-already-enabled" style="color: var(--color-neutral-600);"></div>
                         </div>
 

@@ -23,23 +23,23 @@
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
     <div class="panel" style="padding: 16px;">
         <div class="muted" style="font-size: 13px;">Total Invoiced</div>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px;">KES {{ number_format((float) $summary['total_invoiced'], 2) }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">KES {{ number_format((float) $summary['total_invoiced'], 2) }}</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <div class="muted" style="font-size: 13px;">Total Collected</div>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px; color: #146b4d;">KES {{ number_format((float) $summary['total_collected'], 2) }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: var(--clr-green);">KES {{ number_format((float) $summary['total_collected'], 2) }}</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <div class="muted" style="font-size: 13px;">Total Outstanding</div>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px; color: #b45309;">KES {{ number_format((float) $summary['total_outstanding'], 2) }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: #b45309;">KES {{ number_format((float) $summary['total_outstanding'], 2) }}</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <div class="muted" style="font-size: 13px;">Collection Rate</div>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px;">{{ $summary['collection_rate'] }}%</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">{{ $summary['collection_rate'] }}%</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <div class="muted" style="font-size: 13px;">Overdue Invoices</div>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px; color: #dc2626;">{{ $summary['overdue_count'] }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: #dc2626;">{{ $summary['overdue_count'] }}</div>
     </div>
 </div>
 
@@ -67,7 +67,7 @@
                     </td>
                     <td>{{ $invoice->due_date?->format('Y-m-d') }}</td>
                     <td style="text-align: right;">{{ $invoice->currency }} {{ number_format((float) $invoice->total_amount, 2) }}</td>
-                    <td style="text-align: right; color: #146b4d;">{{ $invoice->currency }} {{ number_format((float) $invoice->amount_paid, 2) }}</td>
+                    <td style="text-align: right; color: var(--clr-green);">{{ $invoice->currency }} {{ number_format((float) $invoice->amount_paid, 2) }}</td>
                     <td style="text-align: right; font-weight: 600;">{{ $invoice->currency }} {{ number_format((float) $invoice->amount_due, 2) }}</td>
                     <td style="text-align: center;">
                         <span class="badge">{{ strtoupper($invoice->status) }}</span>

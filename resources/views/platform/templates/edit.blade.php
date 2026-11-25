@@ -167,7 +167,7 @@
 
     <div style="display: flex; gap: 12px; align-items: center;">
         <button type="submit" class="btn" style="padding: 10px 20px; font-size: 15px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <i class="bi bi-check-lg" aria-hidden="true"></i>
             <span>Update Industry Template</span>
         </button>
         <a href="{{ route('platform.templates.show', $template) }}" class="btn btn-secondary">Cancel</a>

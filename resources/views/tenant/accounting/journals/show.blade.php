@@ -57,20 +57,20 @@
                     <td><strong>{{ $line->account->name }}</strong></td>
                     <td class="muted">{{ ucfirst($line->account->type) }}</td>
                     <td>{{ $line->memo ?? '—' }}</td>
-                    <td style="text-align: right; font-family: monospace; font-weight: 600;">
+                    <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; font-weight: 600;">
                         {{ bccomp((string) $line->debit, '0.00', 2) > 0 ? number_format((float) $line->debit, 2) : '—' }}
                     </td>
-                    <td style="text-align: right; font-family: monospace; font-weight: 600;">
+                    <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; font-weight: 600;">
                         {{ bccomp((string) $line->credit, '0.00', 2) > 0 ? number_format((float) $line->credit, 2) : '—' }}
                     </td>
                 </tr>
             @endforeach
         </tbody>
         <tfoot>
-            <tr style="background: #f8fafc; font-weight: 750; border-top: 2px solid #cbd5e1;">
+            <tr style="background: var(--clr-grey-tint); font-weight: 750; border-top: 2px solid #cbd5e1;">
                 <td colspan="4" style="text-align: right; padding: 12px 14px;">Total Balanced:</td>
-                <td style="text-align: right; font-family: monospace; font-size: 15px;">{{ number_format((float) $entry->total_debit, 2) }}</td>
-                <td style="text-align: right; font-family: monospace; font-size: 15px;">{{ number_format((float) $entry->total_credit, 2) }}</td>
+                <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; font-size: 15px;">{{ number_format((float) $entry->total_debit, 2) }}</td>
+                <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; font-size: 15px;">{{ number_format((float) $entry->total_credit, 2) }}</td>
             </tr>
         </tfoot>
     </table>

@@ -10,20 +10,20 @@
             <p class="muted">Tenant: <strong><a href="{{ route('platform.tenants.show', $run->tenant) }}">{{ $run->tenant->name }}</a></strong> (<code>{{ $run->tenant->code }}</code>) · Started: {{ $run->created_at->format('M d, Y H:i:s') }}</p>
         </div>
         <div>
-            <span style="padding: 6px 12px; border-radius: 4px; font-weight: 600; {{ $run->status === 'completed' ? 'background: #e7f4eb; color: #146b4d;' : 'background: #fde8e8; color: #a32121;' }}">
+            <span style="padding: 6px 12px; border-radius: 4px; font-weight: 600; {{ $run->status === 'completed' ? 'background: var(--clr-grey-tint); color: var(--clr-green);' : 'background: var(--clr-grey-tint); color: var(--clr-red);' }}">
                 {{ ucfirst($run->status) }}
             </span>
         </div>
     </div>
 
     @if($run->isFailed())
-        <div style="background: #fde8e8; border: 1px solid #f8b4b4; color: #9b1c1c; padding: 14px; border-radius: 6px; margin-top: 14px;">
+        <div style="background: var(--clr-grey-tint); border: 1px solid var(--clr-grey-tint); color: var(--clr-red); padding: 14px; border-radius: 6px; margin-top: 14px;">
             <strong>Failure Details:</strong> {{ $run->error_message }}
             @if(auth('platform')->user()->hasPermission('platform.provisioning.retry'))
                 <form method="post" action="{{ route('platform.provisioning.retry', $run) }}" style="margin-top: 10px;">
                     @csrf
                     <input type="hidden" name="reason" value="Retry requested by platform operator.">
-                    <button type="submit" style="background: #a32121;">Retry Failed Step</button>
+                    <button type="submit" style="background: var(--clr-red);">Retry Failed Step</button>
                 </form>
             @endif
         </div>
@@ -48,12 +48,12 @@
                     <td style="padding: 10px 12px; font-weight: 600;">#{{ $step->step_number }}</td>
                     <td style="padding: 10px 12px;">{{ $step->name }}</td>
                     <td style="padding: 10px 12px;">
-                        <span style="font-weight: 600; {{ $step->status === 'completed' ? 'color: #146b4d;' : ($step->status === 'failed' ? 'color: #a32121;' : 'color: #63736b;') }}">
+                        <span style="font-weight: 600; {{ $step->status === 'completed' ? 'color: var(--clr-green);' : ($step->status === 'failed' ? 'color: var(--clr-red);' : 'color: #63736b;') }}">
                             {{ ucfirst($step->status) }}
                         </span>
                     </td>
                     <td style="padding: 10px 12px;">{{ $step->duration_ms ? $step->duration_ms . ' ms' : '-' }}</td>
-                    <td style="padding: 10px 12px; color: #a32121; font-size: 13px;">{{ $step->error_message ?? '-' }}</td>
+                    <td style="padding: 10px 12px; color: var(--clr-red); font-size: 13px;">{{ $step->error_message ?? '-' }}</td>
                 </tr>
             @endforeach
         </tbody>

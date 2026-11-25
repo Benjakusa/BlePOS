@@ -29,7 +29,7 @@
                     </td>
                     <td style="padding: 12px;">Step {{ $run->current_step }} of {{ $run->total_steps }}</td>
                     <td style="padding: 12px;">
-                        <span style="font-weight: 600; {{ $run->status === 'completed' ? 'color: #146b4d;' : ($run->status === 'failed' ? 'color: #a32121;' : 'color: #b78103;') }}">
+                        <span style="font-weight: 600; {{ $run->status === 'completed' ? 'color: var(--clr-green);' : ($run->status === 'failed' ? 'color: var(--clr-red);' : 'color: var(--clr-muted);') }}">
                             {{ ucfirst($run->status) }}
                         </span>
                     </td>

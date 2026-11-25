@@ -48,10 +48,10 @@
                     <td><code>{{ $row['code'] }}</code></td>
                     <td><strong>{{ $row['name'] }}</strong></td>
                     <td class="muted">{{ ucfirst($row['type']) }}</td>
-                    <td style="text-align: right; font-family: monospace; font-weight: 600;">
+                    <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; font-weight: 600;">
                         {{ bccomp((string) $row['debit'], '0.00', 2) > 0 ? number_format((float) $row['debit'], 2) : '—' }}
                     </td>
-                    <td style="text-align: right; font-family: monospace; font-weight: 600;">
+                    <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; font-weight: 600;">
                         {{ bccomp((string) $row['credit'], '0.00', 2) > 0 ? number_format((float) $row['credit'], 2) : '—' }}
                     </td>
                 </tr>
@@ -62,10 +62,10 @@
             @endforelse
         </tbody>
         <tfoot>
-            <tr style="background: #f8fafc; font-weight: 750; border-top: 2px solid #cbd5e1; font-size: 15px;">
+            <tr style="background: var(--clr-grey-tint); font-weight: 750; border-top: 2px solid #cbd5e1; font-size: 15px;">
                 <td colspan="3" style="text-align: right; padding: 12px 14px;">Total Balanced:</td>
-                <td style="text-align: right; font-family: monospace;">{{ number_format((float) $report['total_debit'], 2) }}</td>
-                <td style="text-align: right; font-family: monospace;">{{ number_format((float) $report['total_credit'], 2) }}</td>
+                <td style="text-align: right; font-family: Helvetica, Arial, sans-serif;">{{ number_format((float) $report['total_debit'], 2) }}</td>
+                <td style="text-align: right; font-family: Helvetica, Arial, sans-serif;">{{ number_format((float) $report['total_credit'], 2) }}</td>
             </tr>
         </tfoot>
     </table>

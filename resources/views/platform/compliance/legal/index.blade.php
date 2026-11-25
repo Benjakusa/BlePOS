@@ -21,7 +21,7 @@
 <section class="panel" style="max-width: none; overflow-x: auto;">
     <table cellpadding="10" cellspacing="0" border="1" style="width: 100%; border-collapse: collapse;">
         <thead>
-            <tr style="background: #f8faf9;">
+            <tr style="background: var(--clr-grey-tint);">
                 <th>Slug</th>
                 <th>Title</th>
                 <th>Version</th>
@@ -41,7 +41,7 @@
                         </a>
                     </td>
                     <td>
-                        <span class="badge" style="background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px;">
+                        <span class="badge" style="background: var(--clr-grey-tint); color: #3730a3; padding: 2px 6px; border-radius: 4px;">
                             v{{ $doc->version }}
                         </span>
                     </td>

@@ -21,23 +21,23 @@
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;">
     <div class="panel" style="padding: 16px;">
         <div class="muted" style="font-size: 13px;">Open Tickets</div>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px;">{{ $summary['open_cases'] }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">{{ $summary['open_cases'] }}</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <div class="muted" style="font-size: 13px;">Urgent Priority</div>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px; color: #dc2626;">{{ $summary['urgent_cases'] }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: #dc2626;">{{ $summary['urgent_cases'] }}</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <div class="muted" style="font-size: 13px;">Unassigned Tickets</div>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px; color: #b45309;">{{ $summary['unassigned_cases'] }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: #b45309;">{{ $summary['unassigned_cases'] }}</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <div class="muted" style="font-size: 13px;">SLA Overdue</div>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px; color: #dc2626;">{{ $summary['overdue_cases'] }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: #dc2626;">{{ $summary['overdue_cases'] }}</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <div class="muted" style="font-size: 13px;">Resolved Tickets</div>
-        <div style="font-size: 22px; font-weight: bold; margin-top: 4px; color: #146b4d;">{{ $summary['resolved_cases'] }}</div>
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: var(--clr-green);">{{ $summary['resolved_cases'] }}</div>
     </div>
 </div>
 
@@ -66,7 +66,7 @@
                     <td style="padding: 10px 8px;">{{ $case->subject }}</td>
                     <td style="text-align: center; padding: 10px 8px;"><span class="badge">{{ strtoupper($case->category) }}</span></td>
                     <td style="text-align: center; padding: 10px 8px;">
-                        <span class="badge" style="background: {{ $case->priority === 'urgent' ? '#EAEEF3' : ($case->priority === 'high' ? '#ffedd5' : '#f1f5f9') }}; color: {{ $case->priority === 'urgent' ? '#991b1b' : ($case->priority === 'high' ? '#9a3412' : '#334155') }};">
+                        <span class="badge" style="background: {{ $case->priority === 'urgent' ? '#EAEEF3' : ($case->priority === 'high' ? 'var(--clr-grey-tint)' : '#f1f5f9') }}; color: {{ $case->priority === 'urgent' ? 'var(--clr-red)' : ($case->priority === 'high' ? 'var(--clr-muted)' : '#334155') }};">
                             {{ strtoupper($case->priority) }}
                         </span>
                     </td>

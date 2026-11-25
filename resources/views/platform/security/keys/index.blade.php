@@ -35,7 +35,7 @@
 
     <table cellpadding="10" cellspacing="0" border="1" style="width: 100%; border-collapse: collapse; font-size: 13px;">
         <thead>
-            <tr style="background: #f8faf9;">
+            <tr style="background: var(--clr-grey-tint);">
                 <th>Key ID</th>
                 <th>Name / Purpose</th>
                 <th>Type</th>
@@ -66,7 +66,7 @@
                     <td><code>{{ $key->key_type }}</code></td>
                     <td>{{ $key->algorithm }}</td>
                     <td>
-                        <span class="badge" style="background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px;">
+                        <span class="badge" style="background: var(--clr-grey-tint); color: #3730a3; padding: 2px 6px; border-radius: 4px;">
                             v{{ $key->version }}
                         </span>
                     </td>
@@ -85,7 +85,7 @@
                     <td>Every {{ $key->rotation_schedule_days }} days</td>
                     <td>
                         @if($key->next_rotation_due_at)
-                            <span style="color: {{ $key->next_rotation_due_at->isPast() ? '#b91c1c' : '#15803d' }};">
+                            <span style="color: {{ $key->next_rotation_due_at->isPast() ? '#b91c1c' : 'var(--clr-green-hover)' }};">
                                 {{ $key->next_rotation_due_at->toFormattedDateString() }}
                             </span>
                         @else
@@ -95,7 +95,7 @@
                     <td>
                         <div style="font-weight: 600;">{{ $key->reencryption_progress_percent }}%</div>
                         <div style="width: 60px; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-top: 2px;">
-                            <div style="width: {{ $key->reencryption_progress_percent }}%; height: 100%; background: #166534;"></div>
+                            <div style="width: {{ $key->reencryption_progress_percent }}%; height: 100%; background: var(--clr-green);"></div>
                         </div>
                     </td>
                     <td>

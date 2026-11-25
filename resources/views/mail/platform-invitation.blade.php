@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <style>
-        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; background-color: #F6F8FB; color: #0F172A; padding: 24px; margin: 0; }
+        body { font-family: Helvetica, Arial, sans-serif; background-color: #F6F8FB; color: #0F172A; padding: 24px; margin: 0; }
         .box { max-width: 520px; margin: 0 auto; background: #FFFFFF; border-radius: 14px; padding: 32px; box-shadow: 0 2px 8px rgba(15,23,42,0.06); }
         .btn { display: inline-block; background-color: #16A34A; color: #FFFFFF !important; text-decoration: none; padding: 12px 24px; border-radius: 10px; font-weight: 600; margin: 20px 0; }
         .muted { color: #64748B; font-size: 13px; }

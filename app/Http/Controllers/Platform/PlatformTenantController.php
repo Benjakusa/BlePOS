@@ -74,7 +74,7 @@ class PlatformTenantController extends Controller
         $validated = $request->validate([
             'legal_name' => ['required', 'string', 'max:255'],
             'trading_name' => ['nullable', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:32', 'unique:tenants,code'],
+            'code' => ['nullable', 'string', 'max:32', 'unique:tenants,code'],
             'slug' => ['required', 'string', 'max:64', 'unique:tenants,slug'],
             'kra_pin' => ['nullable', 'string', 'max:32', 'unique:tenants,kra_pin'],
             'industry' => ['required', 'string', 'max:64'],
@@ -86,6 +86,10 @@ class PlatformTenantController extends Controller
             'initial_shop_name' => ['required', 'string', 'max:255'],
             'initial_shop_code' => ['required', 'string', 'max:32'],
         ]);
+
+        if (empty($validated['code'])) {
+            $validated['code'] = Tenant::generateUniqueCode();
+        }
 
         $run = $engine->initiate($validated);
         $engine->execute($run);

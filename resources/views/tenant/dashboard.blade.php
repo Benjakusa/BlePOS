@@ -228,7 +228,7 @@
         </div>
 
         <div class="card" style="text-align: center; padding: 48px 24px;">
-            <div class="stat-icon blue" style="margin: 0 auto 16px; width: 56px; height: 56px; font-size: 26px;">
+            <div class="stat-icon blue" style="margin: 0 auto 16px; width: 56px; height: 56px; font-size: 20px;">
                 <i class="bi bi-display"></i>
             </div>
             <h2 style="margin-top: 0; font-size: 20px;">Register Terminal Ready</h2>

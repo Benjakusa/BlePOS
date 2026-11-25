@@ -33,7 +33,7 @@
 
         <x-input name="changelog" label="Changelog / Revision Summary" placeholder="e.g. Updated Section 4 regarding Kenyan eTIMS fiscalization requirements" />
 
-        <x-input type="textarea" name="content" label="Document Content (Markdown / Plain Text)" rows="12" required style="font-family: monospace;" />
+        <x-input type="textarea" name="content" label="Document Content (Markdown / Plain Text)" rows="12" required style="font-family: Helvetica, Arial, sans-serif;" />
 
         <div style="margin-top: 10px;">
             <button type="submit">Publish Version</button>

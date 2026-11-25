@@ -34,7 +34,7 @@
             </div>
             <div>
                 <span class="muted" style="font-size: 13px; text-transform: uppercase;">Current Balance:</span>
-                <span style="font-weight: 750; font-size: 18px; font-family: monospace; margin-left: 8px; color: #15803d;">
+                <span style="font-weight: 750; font-size: 18px; font-family: Helvetica, Arial, sans-serif; margin-left: 8px; color: var(--clr-green-hover);">
                     KES {{ number_format((float) $selectedAccount->current_balance, 2) }}
                 </span>
             </div>
@@ -68,10 +68,10 @@
                             </span>
                         </td>
                         <td>{{ $line->memo ?? $line->journalEntry->description }}</td>
-                        <td style="text-align: right; font-family: monospace; font-weight: 600;">
+                        <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; font-weight: 600;">
                             {{ bccomp((string) $line->debit, '0.00', 2) > 0 ? number_format((float) $line->debit, 2) : '—' }}
                         </td>
-                        <td style="text-align: right; font-family: monospace; font-weight: 600;">
+                        <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; font-weight: 600;">
                             {{ bccomp((string) $line->credit, '0.00', 2) > 0 ? number_format((float) $line->credit, 2) : '—' }}
                         </td>
                     </tr>

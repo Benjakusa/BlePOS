@@ -49,7 +49,9 @@
             </a>
 
             {{-- POS --}}
+            @if(auth()->user()->hasPermission('pos.sale.create') || auth()->user()->hasPermission('pos.sales.view') || auth()->user()->hasPermission('shifts.view'))
             <span class="nav-section">Point of Sale</span>
+            @if(auth()->user()->hasPermission('pos.sale.create'))
             <a href="{{ route('tenant.pos.checkout') }}"
                class="nav-link {{ request()->routeIs('tenant.pos.checkout') ? 'active' : '' }}"
                data-tooltip="POS Terminal"
@@ -57,6 +59,17 @@
                 <i class="bi bi-display"></i>
                 <span class="nav-label">POS Terminal</span>
             </a>
+            @endif
+            @if(auth()->user()->hasPermission('pos.sale.create'))
+            <a href="{{ route('tenant.tables.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.tables.*') ? 'active' : '' }}"
+               data-tooltip="Floor Plan & Tables"
+               aria-label="Floor Plan & Tables">
+                <i class="bi bi-grid-3x3"></i>
+                <span class="nav-label">Floor Plan & Tables</span>
+            </a>
+            @endif
+            @if(auth()->user()->hasPermission('shifts.view'))
             <a href="{{ route('tenant.shifts.index') }}"
                class="nav-link {{ request()->routeIs('tenant.shifts.*') ? 'active' : '' }}"
                data-tooltip="Cashier Shifts"
@@ -64,6 +77,8 @@
                 <i class="bi bi-clock-history"></i>
                 <span class="nav-label">Cashier Shifts</span>
             </a>
+            @endif
+            @if(auth()->user()->hasPermission('pos.sales.view'))
             <a href="{{ route('tenant.pos.sales') }}"
                class="nav-link {{ request()->routeIs('tenant.pos.sales') ? 'active' : '' }}"
                data-tooltip="Sales History"
@@ -71,9 +86,13 @@
                 <i class="bi bi-receipt"></i>
                 <span class="nav-label">Sales History</span>
             </a>
+            @endif
+            @endif
 
             {{-- Catalog --}}
+            @if(auth()->user()->hasPermission('catalog.products.manage') || auth()->user()->hasPermission('catalog.categories.manage'))
             <span class="nav-section">Catalog</span>
+            @if(auth()->user()->hasPermission('catalog.products.manage'))
             <a href="{{ route('tenant.products.index') }}"
                class="nav-link {{ request()->routeIs('tenant.products.*') ? 'active' : '' }}"
                data-tooltip="Products"
@@ -81,6 +100,8 @@
                 <i class="bi bi-box-seam"></i>
                 <span class="nav-label">Products</span>
             </a>
+            @endif
+            @if(auth()->user()->hasPermission('catalog.categories.manage'))
             <a href="{{ route('tenant.categories.index') }}"
                class="nav-link {{ request()->routeIs('tenant.categories.*') ? 'active' : '' }}"
                data-tooltip="Categories"
@@ -88,8 +109,11 @@
                 <i class="bi bi-tags"></i>
                 <span class="nav-label">Categories</span>
             </a>
+            @endif
+            @endif
 
             {{-- Inventory --}}
+            @if(auth()->user()->hasPermission('inventory.view'))
             <span class="nav-section">Inventory</span>
             <a href="{{ route('tenant.inventory.index') }}"
                class="nav-link {{ request()->routeIs('tenant.inventory.index') ? 'active' : '' }}"
@@ -98,6 +122,7 @@
                 <i class="bi bi-layers"></i>
                 <span class="nav-label">Stock Levels</span>
             </a>
+            @if(auth()->user()->hasPermission('inventory.adjust'))
             <a href="{{ route('tenant.inventory.adjust') }}"
                class="nav-link {{ request()->routeIs('tenant.inventory.adjust') ? 'active' : '' }}"
                data-tooltip="Adjust Stock"
@@ -105,6 +130,8 @@
                 <i class="bi bi-pencil-square"></i>
                 <span class="nav-label">Adjust Stock</span>
             </a>
+            @endif
+            @if(auth()->user()->hasPermission('inventory.receive'))
             <a href="{{ route('tenant.inventory.receive') }}"
                class="nav-link {{ request()->routeIs('tenant.inventory.receive') ? 'active' : '' }}"
                data-tooltip="Receive Stock"
@@ -112,6 +139,7 @@
                 <i class="bi bi-box-arrow-in-down"></i>
                 <span class="nav-label">Receive Stock</span>
             </a>
+            @endif
             <a href="{{ route('tenant.inventory.movements') }}"
                class="nav-link {{ request()->routeIs('tenant.inventory.movements') ? 'active' : '' }}"
                data-tooltip="Audit Movements"
@@ -119,8 +147,10 @@
                 <i class="bi bi-arrow-left-right"></i>
                 <span class="nav-label">Audit Movements</span>
             </a>
+            @endif
 
             {{-- Finance --}}
+            @if(auth()->user()->hasPermission('accounting.view'))
             <span class="nav-section">Finance & Ledgers</span>
             <a href="{{ route('tenant.accounting.accounts.index') }}"
                class="nav-link {{ request()->routeIs('tenant.accounting.accounts.*') ? 'active' : '' }}"
@@ -171,6 +201,26 @@
                 <i class="bi bi-list-columns"></i>
                 <span class="nav-label">General Ledger</span>
             </a>
+            @endif
+
+            {{-- Team & Staff Management --}}
+            @if(auth()->user()->hasPermission('users.manage'))
+            <span class="nav-section">Administration</span>
+            <a href="{{ route('tenant.users.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.users.*') ? 'active' : '' }}"
+               data-tooltip="Staff Members"
+               aria-label="Staff Members">
+                <i class="bi bi-people"></i>
+                <span class="nav-label">Staff & Team</span>
+            </a>
+            <a href="{{ route('tenant.mpesa.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.mpesa.*') ? 'active' : '' }}"
+               data-tooltip="M-Pesa Vault"
+               aria-label="M-Pesa Vault">
+                <i class="bi bi-phone"></i>
+                <span class="nav-label">M-Pesa Settings</span>
+            </a>
+            @endif
 
         </nav>
 
@@ -303,6 +353,12 @@
             setSidebarCollapsed(true);
         }
         function toggleSidebar() {
+            if (window.matchMedia('(max-width: 767px)').matches) {
+                const open = sidebar.classList.toggle('mobile-open');
+                if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if (hamburger) hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+                return;
+            }
             setSidebarCollapsed(!sidebar.classList.contains('collapsed'));
         }
         if (toggle) toggle.addEventListener('click', toggleSidebar);

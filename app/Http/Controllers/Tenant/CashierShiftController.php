@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CashierShift;
 use App\Models\Register;
 use App\Models\Shop;
+use App\Services\ShopContext;
 use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -62,10 +63,15 @@ class CashierShiftController extends Controller
         }
 
         $shops = Shop::query()->with('registers')->orderBy('name')->get();
+        $activeShop = ShopContext::getShop()
+            ?? $request->user()?->shops()->wherePivot('is_primary', true)->first()
+            ?? $request->user()?->shops()->first()
+            ?? $shops->first();
 
         return view('tenant.shifts.create', [
             'tenant' => $tenant,
             'shops' => $shops,
+            'activeShop' => $activeShop,
         ]);
     }
 

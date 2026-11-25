@@ -80,7 +80,7 @@
                         @endif
                     </td>
                     <td style="text-align: right;">{{ number_format((float) $m->balance_before, 2) }}</td>
-                    <td style="text-align: right; font-weight: 700; color: {{ (float) $m->quantity >= 0 ? '#166534' : '#dc2626' }};">
+                    <td style="text-align: right; font-weight: 700; color: {{ (float) $m->quantity >= 0 ? 'var(--clr-green)' : '#dc2626' }};">
                         {{ (float) $m->quantity >= 0 ? '+' : '' }}{{ number_format((float) $m->quantity, 2) }}
                     </td>
                     <td style="text-align: right; font-weight: 650;">{{ number_format((float) $m->balance_after, 2) }}</td>

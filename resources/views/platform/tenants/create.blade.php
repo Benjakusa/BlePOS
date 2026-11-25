@@ -22,8 +22,8 @@
             <x-input
                 type="text"
                 name="code"
-                label="Tenant Code (Unique)"
-                :required="true"
+                label="Tenant Code (Leave empty to autogenerate 6-digit code)"
+                :required="false"
             />
             <x-input
                 type="text"

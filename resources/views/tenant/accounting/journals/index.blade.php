@@ -39,7 +39,7 @@
                         </span>
                     </td>
                     <td class="muted">{{ $entry->shop->name ?? 'All Branches' }}</td>
-                    <td style="text-align: right; font-weight: 650; font-family: monospace;">
+                    <td style="text-align: right; font-weight: 650; font-family: Helvetica, Arial, sans-serif;">
                         {{ number_format((float) $entry->total_debit, 2) }}
                     </td>
                     <td>

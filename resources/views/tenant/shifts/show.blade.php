@@ -28,7 +28,7 @@
     </div>
     <div class="stat-card">
         <div class="label">Cash Sales</div>
-        <div class="value" style="color: #166534;">KES {{ number_format((float) $shift->cash_sales, 2) }}</div>
+        <div class="value" style="color: var(--clr-green);">KES {{ number_format((float) $shift->cash_sales, 2) }}</div>
     </div>
     <div class="stat-card">
         <div class="label">M-Pesa Sales</div>
@@ -51,7 +51,7 @@
             </tr>
             <tr>
                 <td>+ Cash In (Floats/Paid In):</td>
-                <td style="text-align: right; color: #166534;">+KES {{ number_format((float) $shift->cash_in, 2) }}</td>
+                <td style="text-align: right; color: var(--clr-green);">+KES {{ number_format((float) $shift->cash_in, 2) }}</td>
             </tr>
             <tr>
                 <td>- Cash Out (Paid Out/Drops):</td>
@@ -59,7 +59,7 @@
             </tr>
             <tr>
                 <td>+ Cash Sales:</td>
-                <td style="text-align: right; color: #166534;">+KES {{ number_format((float) $shift->cash_sales, 2) }}</td>
+                <td style="text-align: right; color: var(--clr-green);">+KES {{ number_format((float) $shift->cash_sales, 2) }}</td>
             </tr>
             <tr style="border-top: 2px solid #cbd5e1; font-weight: bold; font-size: 15px;">
                 <td>Expected Cash in Drawer:</td>
@@ -72,7 +72,7 @@
                 </tr>
                 <tr style="font-weight: bold; font-size: 15px;">
                     <td>Variance (Over / Short):</td>
-                    <td style="text-align: right; color: {{ (float) $shift->variance >= 0 ? '#166534' : '#dc2626' }};">
+                    <td style="text-align: right; color: {{ (float) $shift->variance >= 0 ? 'var(--clr-green)' : '#dc2626' }};">
                         KES {{ number_format((float) $shift->variance, 2) }}
                     </td>
                 </tr>
@@ -123,12 +123,12 @@
                 <div><span class="muted">Status:</span> <span class="badge badge-secondary">Closed</span></div>
                 <div><span class="muted">Closed At:</span> {{ $shift->closed_at?->format('Y-m-d H:i') }}</div>
                 <div><span class="muted">Variance:</span> 
-                    <strong style="color: {{ (float) $shift->variance >= 0 ? '#166534' : '#dc2626' }};">
+                    <strong style="color: {{ (float) $shift->variance >= 0 ? 'var(--clr-green)' : '#dc2626' }};">
                         KES {{ number_format((float) $shift->variance, 2) }}
                     </strong>
                 </div>
                 @if($shift->closing_notes)
-                    <div style="margin-top: 8px; background: #f8fafc; padding: 10px; border-radius: 4px; font-family: monospace;">
+                    <div style="margin-top: 8px; background: var(--clr-grey-tint); padding: 10px; border-radius: 4px; font-family: Helvetica, Arial, sans-serif;">
                         {{ $shift->closing_notes }}
                     </div>
                 @endif

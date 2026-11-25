@@ -33,7 +33,8 @@ class SaleService
         array $items,
         array $payments,
         ?CashierShift $shift = null,
-        ?string $notes = null
+        ?string $notes = null,
+        ?int $diningTableId = null
     ): Sale {
         return DB::transaction(function () use (
             $shop,
@@ -42,7 +43,8 @@ class SaleService
             $items,
             $payments,
             $shift,
-            $notes
+            $notes,
+            $diningTableId
         ): Sale {
             abort_if(empty($items), 422, 'Sale must contain at least one item.');
             abort_if(empty($payments), 422, 'Sale must contain at least one payment.');
@@ -59,6 +61,7 @@ class SaleService
                 'shop_id' => $shop->id,
                 'register_id' => $register->id,
                 'cashier_shift_id' => $shift?->id,
+                'dining_table_id' => $diningTableId,
                 'user_id' => $user->id,
                 'sale_number' => $saleNumber,
                 'status' => 'completed',

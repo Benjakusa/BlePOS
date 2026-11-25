@@ -43,7 +43,7 @@
                         <td style="padding: 8px;">{{ $backup->tenant?->name ?? 'Platform Central' }}</td>
                         <td style="text-align: right; padding: 8px;">{{ number_format($backup->size_bytes / 1048576, 2) }} MB</td>
                         <td style="text-align: center; padding: 8px;">
-                            <span class="badge" style="background: #e0f2fe; color: #0369a1;">AES-256</span>
+                            <span class="badge" style="background: var(--clr-blue-tint); color: #0369a1;">AES-256</span>
                         </td>
                         <td style="text-align: center; padding: 8px;">
                             <span class="badge" style="background: #EAEEF3; color: #16A34A;">{{ strtoupper($backup->status) }}</span>

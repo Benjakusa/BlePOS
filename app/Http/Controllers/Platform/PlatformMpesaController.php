@@ -1,0 +1,202 @@
+<?php
+
+namespace App\Http\Controllers\Platform;
+
+use App\Http\Controllers\Controller;
+use App\Models\MpesaCredential;
+use App\Models\MpesaCredentialAudit;
+use App\Models\Tenant;
+use App\Services\MpesaEncryptionService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
+
+class PlatformMpesaController extends Controller
+{
+    public function __construct(private MpesaEncryptionService $encryption) {}
+
+    public function index(): View
+    {
+        // Platform-level credentials (owner_type = 'platform')
+        $platformCredentials = MpesaCredential::withoutGlobalScopes()
+            ->where('owner_type', 'platform')
+            ->orderBy('environment')
+            ->orderByDesc('is_default')
+            ->get();
+
+        // Per-tenant summary counts
+        $tenantSummary = MpesaCredential::withoutGlobalScopes()
+            ->whereIn('owner_type', ['tenant', 'branch'])
+            ->whereNotNull('tenant_id')
+            ->selectRaw('tenant_id, COUNT(*) as total, SUM(is_active) as active_count')
+            ->groupBy('tenant_id')
+            ->with('tenant:id,name')
+            ->get();
+
+        return view('platform.mpesa.index', compact('platformCredentials', 'tenantSummary'));
+    }
+
+    public function create(): View
+    {
+        return view('platform.mpesa.create');
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'environment' => ['required', Rule::in(['sandbox', 'production'])],
+            'shortcode' => ['required', 'string', 'max:20'],
+            'passkey' => ['required', 'string', 'max:1000'],
+            'consumer_key' => ['required', 'string', 'max:500'],
+            'consumer_secret' => ['required', 'string', 'max:500'],
+            'initiator_name' => ['nullable', 'string', 'max:200'],
+            'security_credential' => ['nullable', 'string'],
+            'callback_url' => ['required', 'url', 'max:500'],
+            'is_active' => ['boolean'],
+            'is_default' => ['boolean'],
+        ]);
+
+        $credential = MpesaCredential::create([
+            'owner_type' => 'platform',
+            'owner_id' => null,
+            'tenant_id' => null,
+            'branch_id' => null,
+            'environment' => $validated['environment'],
+            'shortcode' => $validated['shortcode'],
+            'passkey' => $this->encryption->encrypt($validated['passkey']),
+            'consumer_key' => $this->encryption->encrypt($validated['consumer_key']),
+            'consumer_secret' => $this->encryption->encrypt($validated['consumer_secret']),
+            'initiator_name' => ! empty($validated['initiator_name']) ? $this->encryption->encrypt($validated['initiator_name']) : null,
+            'security_credential' => ! empty($validated['security_credential']) ? $this->encryption->encrypt($validated['security_credential']) : null,
+            'callback_url' => $validated['callback_url'],
+            'is_active' => $request->boolean('is_active', true),
+            'is_default' => $request->boolean('is_default', false),
+            'created_by' => auth('platform')->id(),
+            'updated_by' => auth('platform')->id(),
+        ]);
+
+        if ($credential->is_default) {
+            MpesaCredential::withoutGlobalScopes()
+                ->where('owner_type', 'platform')
+                ->where('environment', $validated['environment'])
+                ->where('id', '!=', $credential->id)
+                ->update(['is_default' => false]);
+        }
+
+        MpesaCredentialAudit::create([
+            'mpesa_credential_id' => $credential->id,
+            'actor_type' => 'platform_user',
+            'actor_id' => auth('platform')->id(),
+            'action' => 'created',
+            'owner_type' => 'platform',
+            'owner_id' => null,
+            'tenant_id' => null,
+            'shortcode' => $credential->shortcode,
+            'environment' => $credential->environment,
+            'changes' => ['fields' => ['shortcode', 'consumer_key', 'environment', 'owner_type', 'is_active', 'is_default']],
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('platform.mpesa.index')->with('success', 'Platform M-Pesa credential created.');
+    }
+
+    public function edit(MpesaCredential $credential): View
+    {
+        return view('platform.mpesa.edit', compact('credential'));
+    }
+
+    public function update(Request $request, MpesaCredential $credential): RedirectResponse
+    {
+        $validated = $request->validate([
+            'environment' => ['required', Rule::in(['sandbox', 'production'])],
+            'shortcode' => ['required', 'string', 'max:20'],
+            'passkey' => ['nullable', 'string', 'max:1000'],
+            'consumer_key' => ['nullable', 'string', 'max:500'],
+            'consumer_secret' => ['nullable', 'string', 'max:500'],
+            'initiator_name' => ['nullable', 'string', 'max:200'],
+            'security_credential' => ['nullable', 'string'],
+            'callback_url' => ['required', 'url', 'max:500'],
+            'is_active' => ['boolean'],
+            'is_default' => ['boolean'],
+        ]);
+
+        $updateData = [
+            'environment' => $validated['environment'],
+            'shortcode' => $validated['shortcode'],
+            'callback_url' => $validated['callback_url'],
+            'is_active' => $request->boolean('is_active', true),
+            'is_default' => $request->boolean('is_default', false),
+            'updated_by' => auth('platform')->id(),
+        ];
+        $changedFields = ['shortcode', 'environment', 'callback_url', 'is_active', 'is_default'];
+
+        if (! empty($validated['passkey'])) {
+            $updateData['passkey'] = $this->encryption->encrypt($validated['passkey']);
+            $changedFields[] = 'passkey';
+        }
+        if (! empty($validated['consumer_key'])) {
+            $updateData['consumer_key'] = $this->encryption->encrypt($validated['consumer_key']);
+            $changedFields[] = 'consumer_key';
+        }
+        if (! empty($validated['consumer_secret'])) {
+            $updateData['consumer_secret'] = $this->encryption->encrypt($validated['consumer_secret']);
+            $changedFields[] = 'consumer_secret';
+        }
+        if (! empty($validated['initiator_name'])) {
+            $updateData['initiator_name'] = $this->encryption->encrypt($validated['initiator_name']);
+            $changedFields[] = 'initiator_name';
+        }
+        if (! empty($validated['security_credential'])) {
+            $updateData['security_credential'] = $this->encryption->encrypt($validated['security_credential']);
+            $changedFields[] = 'security_credential';
+        }
+
+        $credential->update($updateData);
+
+        if ($credential->is_default) {
+            MpesaCredential::withoutGlobalScopes()
+                ->where('owner_type', $credential->owner_type)
+                ->where('environment', $validated['environment'])
+                ->where('id', '!=', $credential->id)
+                ->update(['is_default' => false]);
+        }
+
+        MpesaCredentialAudit::create([
+            'mpesa_credential_id' => $credential->id,
+            'actor_type' => 'platform_user',
+            'actor_id' => auth('platform')->id(),
+            'action' => 'updated',
+            'owner_type' => $credential->owner_type,
+            'owner_id' => $credential->owner_id,
+            'tenant_id' => $credential->tenant_id,
+            'shortcode' => $credential->shortcode,
+            'environment' => $credential->environment,
+            'changes' => ['fields' => $changedFields],
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('platform.mpesa.index')->with('success', 'Platform M-Pesa credential updated.');
+    }
+
+    public function destroy(Request $request, MpesaCredential $credential): RedirectResponse
+    {
+        MpesaCredentialAudit::create([
+            'mpesa_credential_id' => $credential->id,
+            'actor_type' => 'platform_user',
+            'actor_id' => auth('platform')->id(),
+            'action' => 'deleted',
+            'owner_type' => $credential->owner_type,
+            'owner_id' => $credential->owner_id,
+            'tenant_id' => $credential->tenant_id,
+            'shortcode' => $credential->shortcode,
+            'environment' => $credential->environment,
+            'changes' => null,
+            'ip_address' => $request->ip(),
+        ]);
+
+        $credential->delete();
+
+        return redirect()->route('platform.mpesa.index')->with('success', 'Credential removed.');
+    }
+}

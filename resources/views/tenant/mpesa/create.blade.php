@@ -1,0 +1,66 @@
+@extends('tenant.layout')
+
+@section('title', 'Add M-Pesa Credential')
+
+@section('content')
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+        <h1 style="font-size: 22px; font-weight: 600; margin: 0; color: #0f172a;">Add M-Pesa Credential</h1>
+        <p style="font-size: 13px; color: #64748b; margin: 4px 0 0 0;">All secrets are encrypted with AES-256-GCM before storage.</p>
+    </div>
+    <a href="{{ route('tenant.mpesa.index') }}" class="btn btn-secondary" style="text-decoration: none;">Back to Vault</a>
+</div>
+
+<div class="panel" style="max-width: 680px;">
+    <form action="{{ route('tenant.mpesa.store') }}" method="POST" style="display: flex; flex-direction: column; gap: 14px;">
+        @csrf
+
+        <x-input type="select" name="owner_type" id="owner_type" label="Credential Level" required>
+            <option value="tenant" @selected(old('owner_type', 'tenant') === 'tenant')>Tenant-wide Default</option>
+            <option value="branch" @selected(old('owner_type') === 'branch')>Branch-specific</option>
+        </x-input>
+
+        <div id="branch-select-wrap">
+            <x-input type="select" name="branch_id" label="Branch / Shop">
+                <option value="">Select branch...</option>
+                @foreach($shops as $shop)
+                    <option value="{{ $shop->id }}" @selected(old('branch_id') == $shop->id)>{{ $shop->name }}</option>
+                @endforeach
+            </x-input>
+        </div>
+
+        <x-input type="select" name="environment" label="Environment" required>
+            <option value="sandbox" @selected(old('environment', 'sandbox') === 'sandbox')>Sandbox</option>
+            <option value="production" @selected(old('environment') === 'production')>Production</option>
+        </x-input>
+
+        <x-input name="shortcode" label="Shortcode (Paybill / Till)" value="{{ old('shortcode') }}" required />
+        <x-input type="password" name="passkey" label="Lipa na M-Pesa Passkey" required helper="Write-only. Never displayed in plaintext after saving." />
+        <x-input type="password" name="consumer_key" label="Daraja Consumer Key" required />
+        <x-input type="password" name="consumer_secret" label="Daraja Consumer Secret" required />
+        <x-input name="initiator_name" label="Initiator Name (B2C, optional)" value="{{ old('initiator_name') }}" />
+        <x-input type="textarea" name="security_credential" label="Security Credential (B2C, optional)" rows="2" />
+        <x-input name="callback_url" label="Callback URL" value="{{ old('callback_url', url('/api/mpesa/callback')) }}" required />
+
+        <x-input type="toggle" name="is_active" label="Active" value="1" :checked="true" />
+        <x-input type="toggle" name="is_default" label="Set as Default for this Environment" value="1" :checked="old('is_default', false)" />
+
+        <div style="display: flex; gap: 10px; margin-top: 8px;">
+            <button type="submit" class="btn">Save Encrypted Credential</button>
+            <a href="{{ route('tenant.mpesa.index') }}" class="btn btn-secondary" style="text-decoration: none;">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+(function() {
+    const level = document.getElementById('owner_type');
+    const branchWrap = document.getElementById('branch-select-wrap');
+    function syncBranch() {
+        branchWrap.style.display = level.value === 'branch' ? 'block' : 'none';
+    }
+    level.addEventListener('change', syncBranch);
+    syncBranch();
+})();
+</script>
+@endsection

@@ -85,7 +85,7 @@
                     <td>{{ $shift->register->name }}</td>
                     <td>{{ $shift->user->name ?? 'Staff' }}</td>
                     <td style="text-align: right;">KES {{ number_format((float) $shift->opening_float, 2) }}</td>
-                    <td style="text-align: right; font-weight: 650; color: #166534;">KES {{ number_format((float) $totalSales, 2) }}</td>
+                    <td style="text-align: right; font-weight: 650; color: var(--clr-green);">KES {{ number_format((float) $totalSales, 2) }}</td>
                     <td>
                         @if($shift->status === 'open')
                             <span class="badge badge-success">Open</span>

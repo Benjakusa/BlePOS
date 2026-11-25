@@ -10,7 +10,7 @@
             <p class="muted">Industry: {{ ucfirst(str_replace('_', ' ', $tenant->industry)) }} · Registered: {{ $tenant->created_at->format('M d, Y H:i') }}</p>
         </div>
         <div>
-            <span style="padding: 6px 12px; border-radius: 4px; font-weight: 600; {{ $tenant->status === 'active' ? 'background: #e7f4eb; color: #146b4d;' : ($tenant->status === 'suspended' ? 'background: #fde8e8; color: #a32121;' : 'background: #fff8e1; color: #b78103;') }}">
+            <span style="padding: 6px 12px; border-radius: 4px; font-weight: 600; background: var(--clr-grey-tint); {{ $tenant->status === 'active' ? 'color: var(--clr-green);' : ($tenant->status === 'suspended' ? 'color: var(--clr-red);' : 'color: var(--clr-muted);') }}">
                 Status: {{ ucfirst($tenant->status) }}
             </span>
         </div>
@@ -83,7 +83,7 @@
                     <td style="padding: 10px 12px;"><code>{{ $run->run_identifier }}</code></td>
                     <td style="padding: 10px 12px;">Step {{ $run->current_step }} of {{ $run->total_steps }}</td>
                     <td style="padding: 10px 12px;">
-                        <span style="font-weight: 600; {{ $run->status === 'completed' ? 'color: #146b4d;' : 'color: #a32121;' }}">
+                        <span style="font-weight: 600; {{ $run->status === 'completed' ? 'color: var(--clr-green);' : 'color: var(--clr-red);' }}">
                             {{ ucfirst($run->status) }}
                         </span>
                     </td>
@@ -226,7 +226,7 @@
 
         <div id="tenant-bp-preview" style="display: none; background: var(--color-neutral-50); border: 1px solid var(--color-neutral-200); border-radius: 6px; padding: 10px 14px; margin-top: 12px; font-size: 12.5px;">
             <div style="font-weight: 600; margin-bottom: 4px; color: var(--color-ink-950);">Installation Preview:</div>
-            <div id="tenant-bp-will-enable" style="color: #15803d; margin-bottom: 2px;"></div>
+            <div id="tenant-bp-will-enable" style="color: var(--clr-green-hover); margin-bottom: 2px;"></div>
             <div id="tenant-bp-already-enabled" style="color: var(--color-neutral-600);"></div>
         </div>
 
@@ -284,7 +284,7 @@
             <form method="post" action="{{ route('platform.tenants.suspend', $tenant) }}" style="display: inline;">
                 @csrf
                 <input type="hidden" name="reason" value="Administrative suspension requested by platform operator.">
-                <button type="submit" style="background: #a32121;" onclick="return confirm('Are you sure you want to suspend this business? Staff access will be immediately blocked.');">
+                <button type="submit" style="background: var(--clr-red);" onclick="return confirm('Are you sure you want to suspend this business? Staff access will be immediately blocked.');">
                     Suspend Tenant
                 </button>
             </form>
@@ -292,7 +292,7 @@
             <form method="post" action="{{ route('platform.tenants.reactivate', $tenant) }}" style="display: inline;">
                 @csrf
                 <input type="hidden" name="reason" value="Reactivation approved following account review.">
-                <button type="submit" style="background: #146b4d;">
+                <button type="submit" style="background: var(--clr-green);">
                     Reactivate Tenant
                 </button>
             </form>

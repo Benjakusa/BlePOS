@@ -23,28 +23,28 @@
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
     <div class="panel" style="padding: 16px;">
         <span class="muted" style="font-size: 13px; text-transform: uppercase;">Active Incidents</span>
-        <div style="font-size: 26px; font-weight: bold; margin-top: 4px; color: {{ $metrics['active_incidents'] > 0 ? '#b91c1c' : '#15803d' }};">
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: {{ $metrics['active_incidents'] > 0 ? '#b91c1c' : 'var(--clr-green-hover)' }};">
             {{ $metrics['active_incidents'] }}
         </div>
         <div class="muted" style="font-size: 12px; margin-top: 4px;">Open, investigating or escalated</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <span class="muted" style="font-size: 13px; text-transform: uppercase;">Critical Events (24h)</span>
-        <div style="font-size: 26px; font-weight: bold; margin-top: 4px; color: {{ $metrics['critical_events_24h'] > 0 ? '#b45309' : '#15803d' }};">
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px; color: {{ $metrics['critical_events_24h'] > 0 ? '#b45309' : 'var(--clr-green-hover)' }};">
             {{ $metrics['critical_events_24h'] }}
         </div>
         <div class="muted" style="font-size: 12px; margin-top: 4px;">Warnings and critical threats</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <span class="muted" style="font-size: 13px; text-transform: uppercase;">Blocked IPs / Subnets</span>
-        <div style="font-size: 26px; font-weight: bold; margin-top: 4px;">
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">
             {{ $metrics['blocked_ips'] }}
         </div>
         <div class="muted" style="font-size: 12px; margin-top: 4px;">Active denylist rules</div>
     </div>
     <div class="panel" style="padding: 16px;">
         <span class="muted" style="font-size: 13px; text-transform: uppercase;">Active Platform Sessions</span>
-        <div style="font-size: 26px; font-weight: bold; margin-top: 4px;">
+        <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">
             {{ $metrics['active_sessions'] }}
         </div>
         <div class="muted" style="font-size: 12px; margin-top: 4px;">Active in past 30 minutes</div>
@@ -59,7 +59,7 @@
         </div>
         <table cellpadding="8" cellspacing="0" border="1" style="width: 100%; border-collapse: collapse; font-size: 13px;">
             <thead>
-                <tr style="background: #f8faf9;">
+                <tr style="background: var(--clr-grey-tint);">
                     <th>ID</th>
                     <th>Title</th>
                     <th>Severity</th>
@@ -77,7 +77,7 @@
                         </td>
                         <td>{{ Str::limit($inc->title, 35) }}</td>
                         <td>
-                            <span class="badge" style="background: {{ $inc->severity === 'critical' ? '#EAEEF3' : ($inc->severity === 'high' ? '#ffedd5' : '#fef9c3') }}; color: {{ $inc->severity === 'critical' ? '#991b1b' : ($inc->severity === 'high' ? '#9a3412' : '#854d0e') }}; padding: 2px 6px; border-radius: 4px;">
+                            <span class="badge" style="background: {{ $inc->severity === 'critical' ? '#EAEEF3' : ($inc->severity === 'high' ? 'var(--clr-grey-tint)' : 'var(--clr-grey-tint)') }}; color: {{ $inc->severity === 'critical' ? 'var(--clr-red)' : ($inc->severity === 'high' ? 'var(--clr-muted)' : '#854d0e') }}; padding: 2px 6px; border-radius: 4px;">
                                 {{ strtoupper($inc->severity) }}
                             </span>
                         </td>
@@ -100,7 +100,7 @@
         </div>
         <table cellpadding="8" cellspacing="0" border="1" style="width: 100%; border-collapse: collapse; font-size: 13px;">
             <thead>
-                <tr style="background: #f8faf9;">
+                <tr style="background: var(--clr-grey-tint);">
                     <th>Occurred</th>
                     <th>Severity</th>
                     <th>Event Type</th>
@@ -112,7 +112,7 @@
                     <tr>
                         <td>{{ $event->occurred_at->format('M d H:i') }}</td>
                         <td>
-                            <span class="badge" style="background: {{ $event->severity === 'critical' ? '#EAEEF3' : ($event->severity === 'warning' ? '#fef3c7' : '#EAEEF3') }}; color: {{ $event->severity === 'critical' ? '#991b1b' : ($event->severity === 'warning' ? '#92400e' : '#166534') }}; padding: 2px 6px; border-radius: 4px;">
+                            <span class="badge" style="background: {{ $event->severity === 'critical' ? '#EAEEF3' : ($event->severity === 'warning' ? 'var(--clr-grey-tint)' : '#EAEEF3') }}; color: {{ $event->severity === 'critical' ? 'var(--clr-red)' : ($event->severity === 'warning' ? 'var(--clr-muted)' : 'var(--clr-green)') }}; padding: 2px 6px; border-radius: 4px;">
                                 {{ strtoupper($event->severity) }}
                             </span>
                         </td>
@@ -136,7 +136,7 @@
     </div>
     <table cellpadding="8" cellspacing="0" border="1" style="width: 100%; border-collapse: collapse; font-size: 13px;">
         <thead>
-            <tr style="background: #f8faf9;">
+            <tr style="background: var(--clr-grey-tint);">
                 <th>Key ID</th>
                 <th>Name</th>
                 <th>Algorithm</th>
@@ -154,7 +154,7 @@
                     <td>{{ $k->algorithm }}</td>
                     <td>v{{ $k->version }}</td>
                     <td>
-                        <span class="badge" style="background: #EAEEF3; color: #166534; padding: 2px 6px; border-radius: 4px;">
+                        <span class="badge" style="background: #EAEEF3; color: var(--clr-green); padding: 2px 6px; border-radius: 4px;">
                             {{ strtoupper($k->status) }}
                         </span>
                     </td>

@@ -32,7 +32,7 @@
 
     {{-- Forgot password --}}
     <div class="ath-recover-row">
-        <a href="{{ route('platform.password.request') }}">Recovery Password</a>
+        <a href="{{ route('platform.password.request') }}">Forgot Password?</a>
     </div>
 
     {{-- Sign In --}}
@@ -41,18 +41,4 @@
     </button>
 </form>
 
-{{-- Social divider --}}
-<div class="ath-divider"><span>Or continue with</span></div>
-
-<div class="ath-social-row">
-    <a href="#" class="ath-social-btn google" aria-label="Sign in with Google" title="Sign in with Google" onclick="event.preventDefault();">
-        <i class="bi bi-google"></i>
-    </a>
-    <a href="#" class="ath-social-btn apple" aria-label="Sign in with Apple" title="Sign in with Apple" onclick="event.preventDefault();">
-        <i class="bi bi-apple"></i>
-    </a>
-    <a href="#" class="ath-social-btn facebook" aria-label="Sign in with Facebook" title="Sign in with Facebook" onclick="event.preventDefault();">
-        <i class="bi bi-facebook"></i>
-    </a>
-</div>
 @endsection

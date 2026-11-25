@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\MpesaCredentialResolver;
+use App\Services\MpesaEncryptionService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -15,7 +17,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(MpesaEncryptionService::class);
+        $this->app->singleton(MpesaCredentialResolver::class);
     }
 
     /**

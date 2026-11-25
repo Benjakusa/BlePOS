@@ -114,7 +114,7 @@
                         <tr>
                             <td colspan="7" style="padding: 40px 20px; text-align: center;">
                                 <div style="max-width: 420px; margin: 0 auto;">
-                                    <i class="bi bi-layout-text-window-reverse" style="font-size: 32px; color: var(--clr-muted); display: block; margin-bottom: 12px;"></i>
+                                    <i class="bi bi-layout-text-window-reverse" style="font-size: 20px; color: var(--clr-muted); display: block; margin-bottom: 12px;"></i>
                                     <h3 class="section-title" style="margin-bottom: 6px;">No industry templates defined</h3>
                                     <p class="muted" style="margin-bottom: 16px; font-size: 13px;">
                                         @if($searchQuery)

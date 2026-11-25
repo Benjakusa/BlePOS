@@ -46,7 +46,7 @@
                     <tr>
                         <td style="width: 100px;"><code>{{ $acc['code'] }}</code></td>
                         <td>{{ $acc['name'] }}</td>
-                        <td style="text-align: right; font-family: monospace; font-weight: 600;">
+                        <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; font-weight: 600;">
                             KES {{ number_format((float) $acc['amount'], 2) }}
                         </td>
                     </tr>
@@ -55,9 +55,9 @@
                 @endforelse
             </tbody>
             <tfoot>
-                <tr style="background: #f8fafc; font-weight: 800; border-top: 2px solid #0f172a; font-size: 15px;">
+                <tr style="background: var(--clr-grey-tint); font-weight: 800; border-top: 2px solid #0f172a; font-size: 15px;">
                     <td colspan="2">Total Assets</td>
-                    <td style="text-align: right; font-family: monospace; color: #15803d;">
+                    <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; color: var(--clr-green-hover);">
                         KES {{ number_format((float) $report['total_assets'], 2) }}
                     </td>
                 </tr>
@@ -78,16 +78,16 @@
                     <tr>
                         <td style="width: 100px;"><code>{{ $acc['code'] }}</code></td>
                         <td>{{ $acc['name'] }}</td>
-                        <td style="text-align: right; font-family: monospace; font-weight: 600;">
+                        <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; font-weight: 600;">
                             KES {{ number_format((float) $acc['amount'], 2) }}
                         </td>
                     </tr>
                 @empty
                     <tr><td colspan="3" class="muted">No liabilities recorded.</td></tr>
                 @endforelse
-                <tr style="background: #f8fafc; font-weight: 700;">
+                <tr style="background: var(--clr-grey-tint); font-weight: 700;">
                     <td colspan="2">Total Liabilities</td>
-                    <td style="text-align: right; font-family: monospace;">
+                    <td style="text-align: right; font-family: Helvetica, Arial, sans-serif;">
                         KES {{ number_format((float) $report['total_liabilities'], 2) }}
                     </td>
                 </tr>
@@ -101,7 +101,7 @@
                     <tr>
                         <td style="width: 100px;"><code>{{ $acc['code'] }}</code></td>
                         <td>{{ $acc['name'] }}</td>
-                        <td style="text-align: right; font-family: monospace; font-weight: 600;">
+                        <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; font-weight: 600;">
                             KES {{ number_format((float) $acc['amount'], 2) }}
                         </td>
                     </tr>
@@ -110,21 +110,21 @@
                 <tr>
                     <td style="width: 100px;"><code>3999</code></td>
                     <td>Retained Earnings (Cumulative Net Income)</td>
-                    <td style="text-align: right; font-family: monospace; font-weight: 600;">
+                    <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; font-weight: 600;">
                         KES {{ number_format((float) $report['retained_earnings'], 2) }}
                     </td>
                 </tr>
-                <tr style="background: #f8fafc; font-weight: 700;">
+                <tr style="background: var(--clr-grey-tint); font-weight: 700;">
                     <td colspan="2">Total Equity</td>
-                    <td style="text-align: right; font-family: monospace;">
+                    <td style="text-align: right; font-family: Helvetica, Arial, sans-serif;">
                         KES {{ number_format((float) $report['total_equity'], 2) }}
                     </td>
                 </tr>
             </tbody>
             <tfoot>
-                <tr style="background: #f8fafc; font-weight: 800; border-top: 2px solid #0f172a; font-size: 15px;">
+                <tr style="background: var(--clr-grey-tint); font-weight: 800; border-top: 2px solid #0f172a; font-size: 15px;">
                     <td colspan="2">Total Liabilities & Equity</td>
-                    <td style="text-align: right; font-family: monospace; color: #15803d;">
+                    <td style="text-align: right; font-family: Helvetica, Arial, sans-serif; color: var(--clr-green-hover);">
                         KES {{ number_format((float) $report['total_liabilities_and_equity'], 2) }}
                     </td>
                 </tr>

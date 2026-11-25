@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Receipt #{{ $sale->sale_number }} · {{ $tenant->name }}</title>
     <style>
-        body { font-family: 'Courier New', Courier, monospace; font-size: 13px; color: #000; margin: 0; padding: 12px; background: #fff; }
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 13px; color: #000; margin: 0; padding: 12px; background: #fff; }
         .receipt { max-width: 320px; margin: 0 auto; }
         .center { text-align: center; }
         .bold { font-weight: bold; }
@@ -21,7 +21,7 @@
 <body>
 <div class="receipt">
     <div class="no-print" style="margin-bottom: 16px; text-align: center;">
-        <button onclick="window.print()" style="padding: 8px 16px; background: #166534; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Print Receipt</button>
+        <button onclick="window.print()" style="padding: 8px 16px; background: var(--clr-green); color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Print Receipt</button>
         <a href="{{ route('tenant.pos.checkout') }}" style="display: inline-block; margin-left: 8px; padding: 8px 14px; background: #e2e8f0; color: #334155; text-decoration: none; border-radius: 4px;">Back to POS</a>
     </div>
 

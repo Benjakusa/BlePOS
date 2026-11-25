@@ -123,7 +123,7 @@
                     @empty
                         <tr>
                             <td colspan="9" style="text-align: center; padding: 32px;" class="muted">
-                                <i class="bi bi-box-seam" style="font-size: 32px; display: block; margin-bottom: 8px;"></i>
+                                <i class="bi bi-box-seam" style="font-size: 20px; display: block; margin-bottom: 8px;"></i>
                                 No products found. Click "New Product" to add your first item.
                             </td>
                         </tr>

@@ -50,8 +50,25 @@ class User extends Authenticatable
         return $this->roles->contains('slug', $slug);
     }
 
+    public function isTenantOwner(): bool
+    {
+        if ($this->hasRole('owner')) {
+            return true;
+        }
+
+        if ($this->tenant && strtolower($this->email) === strtolower($this->tenant->owner_email)) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function hasPermission(string $permission): bool
     {
+        if ($this->isTenantOwner()) {
+            return true;
+        }
+
         return $this->roles->flatMap->permissions->contains('name', $permission);
     }
 

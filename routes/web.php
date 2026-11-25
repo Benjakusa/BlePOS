@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\MpesaCallbackController;
 use App\Http\Controllers\Platform\AuthController;
 use App\Http\Controllers\Platform\DashboardController;
 use App\Http\Controllers\Platform\MfaController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Platform\PlatformInfrastructureController;
 use App\Http\Controllers\Platform\PlatformInvoiceController;
 use App\Http\Controllers\Platform\PlatformLegalDocumentController;
 use App\Http\Controllers\Platform\PlatformModuleController;
+use App\Http\Controllers\Platform\PlatformMpesaController;
 use App\Http\Controllers\Platform\PlatformPasswordResetController;
 use App\Http\Controllers\Platform\PlatformPlanController;
 use App\Http\Controllers\Platform\PlatformProvisioningController;
@@ -36,15 +38,24 @@ use App\Http\Controllers\Tenant\Accounting\AccountingReportController;
 use App\Http\Controllers\Tenant\Accounting\ChartOfAccountsController;
 use App\Http\Controllers\Tenant\Accounting\ExpenseController;
 use App\Http\Controllers\Tenant\Accounting\JournalEntryController;
+use App\Http\Controllers\Tenant\Auth\TenantAuthController;
 use App\Http\Controllers\Tenant\CashierShiftController;
 use App\Http\Controllers\Tenant\CategoryController;
 use App\Http\Controllers\Tenant\InventoryController;
+use App\Http\Controllers\Tenant\MpesaCredentialController;
 use App\Http\Controllers\Tenant\PosController;
 use App\Http\Controllers\Tenant\ProductController;
+use App\Http\Controllers\Tenant\TableController;
 use App\Http\Controllers\Tenant\TenantDashboardController;
+use App\Http\Controllers\Tenant\TenantUserController;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/platform-console/login');
+
+Route::post('/api/mpesa/callback/{token}', [MpesaCallbackController::class, 'handle'])
+    ->withoutMiddleware([VerifyCsrfToken::class])
+    ->name('mpesa.callback');
 
 Route::prefix('platform-console')->name('platform.')->middleware(['platform.headers', 'platform.https', 'platform.ip-allowlist'])->group(function (): void {
     Route::get('/login', [AuthController::class, 'create'])->name('login');
@@ -92,6 +103,15 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
                 ->middleware(['platform.permission:platform.tenants.suspend', 'platform.step-up'])->name('tenants.suspend');
             Route::post('/tenants/{tenant}/reactivate', [PlatformTenantController::class, 'reactivate'])
                 ->middleware(['platform.permission:platform.tenants.reactivate', 'platform.step-up'])->name('tenants.reactivate');
+
+            Route::prefix('mpesa')->name('mpesa.')->middleware('platform.permission:platform.tenants.view')->group(function (): void {
+                Route::get('/', [PlatformMpesaController::class, 'index'])->name('index');
+                Route::get('/create', [PlatformMpesaController::class, 'create'])->name('create');
+                Route::post('/', [PlatformMpesaController::class, 'store'])->name('store');
+                Route::get('/{credential}/edit', [PlatformMpesaController::class, 'edit'])->name('edit');
+                Route::put('/{credential}', [PlatformMpesaController::class, 'update'])->name('update');
+                Route::delete('/{credential}', [PlatformMpesaController::class, 'destroy'])->name('destroy');
+            });
 
             Route::get('/provisioning', [PlatformProvisioningController::class, 'index'])
                 ->middleware('platform.permission:platform.provisioning.view')->name('provisioning.index');
@@ -372,41 +392,56 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
     });
 });
 
+// Tenant Authentication
+Route::middleware('web')->group(function (): void {
+    Route::get('/tenant/login', [TenantAuthController::class, 'create'])->name('tenant.login');
+    Route::post('/tenant/login', [TenantAuthController::class, 'store'])->middleware('throttle:10,1')->name('tenant.login.store');
+    Route::post('/tenant/logout', [TenantAuthController::class, 'destroy'])->name('tenant.logout');
+});
+
 Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.resolve', 'tenant.isolate', 'shop.isolate'])->group(function (): void {
     Route::get('/', TenantDashboardController::class)->name('dashboard');
 
+    // Staff & Team Management (Owner & Staff Manager)
+    Route::resource('users', TenantUserController::class)
+        ->middleware('tenant.permission:users.manage')
+        ->except(['show', 'destroy']);
+
     // Catalog - Categories
-    Route::resource('categories', CategoryController::class)->except(['show']);
+    Route::resource('categories', CategoryController::class)
+        ->middleware('tenant.permission:catalog.categories.manage')
+        ->except(['show']);
 
     // Catalog - Products
     Route::get('/products/lookup', [ProductController::class, 'lookup'])->name('products.lookup');
-    Route::resource('products', ProductController::class);
+    Route::resource('products', ProductController::class)
+        ->middleware('tenant.permission:catalog.products.manage');
 
     // Point of Sale & Checkout
-    Route::get('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
-    Route::post('/pos/process', [PosController::class, 'processSale'])->name('pos.process');
-    Route::get('/pos/receipt/{sale}', [PosController::class, 'receipt'])->name('pos.receipt');
-    Route::get('/pos/sales', [PosController::class, 'sales'])->name('pos.sales');
-    Route::post('/pos/sales/{sale}/void', [PosController::class, 'voidSale'])->name('pos.void');
+    Route::get('/pos/checkout', [PosController::class, 'checkout'])->middleware('tenant.permission:pos.sale.create')->name('pos.checkout');
+    Route::post('/pos/process', [PosController::class, 'processSale'])->middleware('tenant.permission:pos.sale.create')->name('pos.process');
+    Route::get('/pos/receipt/{sale}', [PosController::class, 'receipt'])->middleware('tenant.permission:pos.sales.view')->name('pos.receipt');
+    Route::get('/pos/sales', [PosController::class, 'sales'])->middleware('tenant.permission:pos.sales.view')->name('pos.sales');
+    Route::post('/pos/sales/{sale}/void', [PosController::class, 'voidSale'])->middleware('tenant.permission:pos.sale.void')->name('pos.void');
 
     // Cashier Shifts
-    Route::get('/shifts', [CashierShiftController::class, 'index'])->name('shifts.index');
-    Route::get('/shifts/create', [CashierShiftController::class, 'create'])->name('shifts.create');
-    Route::post('/shifts', [CashierShiftController::class, 'store'])->name('shifts.store');
-    Route::get('/shifts/{shift}', [CashierShiftController::class, 'show'])->name('shifts.show');
-    Route::post('/shifts/{shift}/cash-movement', [CashierShiftController::class, 'cashMovement'])->name('shifts.cash-movement');
-    Route::post('/shifts/{shift}/close', [CashierShiftController::class, 'close'])->name('shifts.close');
+    Route::get('/shifts', [CashierShiftController::class, 'index'])->middleware('tenant.permission:shifts.view')->name('shifts.index');
+    Route::get('/shifts/create', [CashierShiftController::class, 'create'])->middleware('tenant.permission:shifts.manage')->name('shifts.create');
+    Route::post('/shifts', [CashierShiftController::class, 'store'])->middleware('tenant.permission:shifts.manage')->name('shifts.store');
+    Route::get('/shifts/{shift}', [CashierShiftController::class, 'show'])->middleware('tenant.permission:shifts.view')->name('shifts.show');
+    Route::post('/shifts/{shift}/cash-movement', [CashierShiftController::class, 'cashMovement'])->middleware('tenant.permission:shifts.manage')->name('shifts.cash-movement');
+    Route::post('/shifts/{shift}/close', [CashierShiftController::class, 'close'])->middleware('tenant.permission:shifts.manage')->name('shifts.close');
 
     // Inventory Stock & Movements
-    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-    Route::get('/inventory/adjust', [InventoryController::class, 'adjustForm'])->name('inventory.adjust');
-    Route::post('/inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust.store');
-    Route::get('/inventory/receive', [InventoryController::class, 'receiveForm'])->name('inventory.receive');
-    Route::post('/inventory/receive', [InventoryController::class, 'receive'])->name('inventory.receive.store');
-    Route::get('/inventory/movements', [InventoryController::class, 'movements'])->name('inventory.movements');
+    Route::get('/inventory', [InventoryController::class, 'index'])->middleware('tenant.permission:inventory.view')->name('inventory.index');
+    Route::get('/inventory/adjust', [InventoryController::class, 'adjustForm'])->middleware('tenant.permission:inventory.adjust')->name('inventory.adjust');
+    Route::post('/inventory/adjust', [InventoryController::class, 'adjust'])->middleware('tenant.permission:inventory.adjust')->name('inventory.adjust.store');
+    Route::get('/inventory/receive', [InventoryController::class, 'receiveForm'])->middleware('tenant.permission:inventory.receive')->name('inventory.receive');
+    Route::post('/inventory/receive', [InventoryController::class, 'receive'])->middleware('tenant.permission:inventory.receive')->name('inventory.receive.store');
+    Route::get('/inventory/movements', [InventoryController::class, 'movements'])->middleware('tenant.permission:inventory.view')->name('inventory.movements');
 
     // Financial Ledgers & Double-Entry Accounting
-    Route::prefix('accounting')->name('accounting.')->group(function (): void {
+    Route::prefix('accounting')->name('accounting.')->middleware('tenant.permission:accounting.view')->group(function (): void {
         Route::resource('accounts', ChartOfAccountsController::class)->only(['index', 'create', 'store']);
         Route::resource('journals', JournalEntryController::class)->only(['index', 'create', 'store', 'show']);
         Route::resource('expenses', ExpenseController::class)->only(['index', 'create', 'store']);
@@ -414,5 +449,22 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
         Route::get('/reports/profit-loss', [AccountingReportController::class, 'profitLoss'])->name('reports.profit-loss');
         Route::get('/reports/balance-sheet', [AccountingReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
         Route::get('/reports/general-ledger', [AccountingReportController::class, 'generalLedger'])->name('reports.general-ledger');
+    });
+
+    // Restaurant Dining Tables
+    Route::get('/tables', [TableController::class, 'index'])->middleware('tenant.permission:pos.sale.create')->name('tables.index');
+    Route::post('/tables', [TableController::class, 'store'])->middleware('tenant.permission:users.manage')->name('tables.store');
+    Route::patch('/tables/{table}/status', [TableController::class, 'updateStatus'])->middleware('tenant.permission:pos.sale.create')->name('tables.status');
+    Route::delete('/tables/{table}', [TableController::class, 'destroy'])->middleware('tenant.permission:users.manage')->name('tables.destroy');
+
+    // M-Pesa Credential Vault
+    Route::middleware('tenant.permission:users.manage')->group(function (): void {
+        Route::get('/mpesa', [MpesaCredentialController::class, 'index'])->name('mpesa.index');
+        Route::get('/mpesa/create', [MpesaCredentialController::class, 'create'])->name('mpesa.create');
+        Route::post('/mpesa', [MpesaCredentialController::class, 'store'])->name('mpesa.store');
+        Route::get('/mpesa/{mpesaCredential}/edit', [MpesaCredentialController::class, 'edit'])->name('mpesa.edit');
+        Route::put('/mpesa/{mpesaCredential}', [MpesaCredentialController::class, 'update'])->name('mpesa.update');
+        Route::delete('/mpesa/{mpesaCredential}', [MpesaCredentialController::class, 'destroy'])->name('mpesa.destroy');
+        Route::post('/mpesa/{mpesaCredential}/test', [MpesaCredentialController::class, 'testConnection'])->name('mpesa.test')->middleware('throttle:5,1');
     });
 });
