@@ -1,13 +1,13 @@
 # BlePOS Progress Ledger
 
 ## Session header
-- Last updated: 2026-11-25 11:45 UTC / 14:45 EAT
+- Last updated: 2026-11-25 11:51 UTC / 14:51 EAT
 - Last agent / session ID: codex-app-review-remediation-2026-11-25
 - Current tier / phase: App review remediation, excluding M-Pesa settlement/callback requirements (implemented; environment-dependent work listed below).
 - Build status: `npm run build` passed (2026-11-25).
 - Last full test run: `php artisan test --compact`, 243 tests and 2,491 assertions passed (2026-11-25).
 - Resume verification: `vendor/bin/pint --test` passed; browser acceptance passed (4 end-to-end tests); fresh SQLite migrations and seeding passed.
-- Git working branch / checkpoint: `main`; platform restart fix and centered authentication card ready to commit.
+- Git working branch / checkpoint: `main`; pushed commit `be0049b` (platform restart fix and centered authentication card).
 
 ## App review remediation — 2026-11-25
 
