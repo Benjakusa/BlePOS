@@ -1,43 +1,20 @@
-# BlePOS — Backups, Disaster Recovery & Business Continuity
+# BlePOS — Backups and Recovery
 
-## 1. Objectives & Metrics
+## Current capability
 
-- **RPO (Recovery Point Objective)**: Maximum 15 minutes of transactional data loss.
-- **RTO (Recovery Time Objective)**:
-  - Complete Platform Infrastructure Recovery: Under 4 hours.
-  - Individual Tenant Database Restore: Under 1 hour.
+The platform console can create an on-demand encrypted snapshot of the central database. It records the storage disk, byte count, SHA-256 checksum of the stored encrypted bytes, and verification time. SQLite uses `VACUUM INTO` to create a consistent snapshot. MySQL requires `mysqldump`; PostgreSQL requires `pg_dump`. `BACKUP_DISK` must point to durable off-host object storage in production. Production boot checks reject the local backup disk.
 
----
+The restore workflow verifies the encrypted artifact checksum and can decrypt a SQLite snapshot into an isolated sandbox, then checks `PRAGMA integrity_check`. It never overwrites production data. The scheduler creates a central encrypted database snapshot daily at 01:00 and expires backup artifacts after `PLATFORM_BACKUP_RETENTION_DAYS` (30 days by default) at 02:00. Expired run metadata and checksums are retained for audit history. The host must run Laravel's scheduler every minute for these tasks to execute. MySQL/PostgreSQL isolated restore targets, tenant-only snapshots, uploaded-file snapshots, and point-in-time recovery are not implemented. A central database snapshot is not proof that tenant-specific recovery is available.
 
-## 2. Backup Architecture
+## Operator procedure
 
-### 2.1 Scope
-1. **Central Platform Database**: User accounts, tenant registry, provisioning history, plans, billing records, and cryptographic audit log.
-2. **Tenant Databases**: Operational transactions, sales ledger, stock movements, customers, and general ledger.
-3. **Application State & Secrets**: Encrypted environment configuration, eTIMS certificates, and key rotation history.
-4. **Tenant Assets**: Uploaded receipts, invoices, product images, and compliance documents.
+1. Configure the application key, an off-host `BACKUP_DISK`, and `PLATFORM_BACKUP_RETENTION_DAYS`; grant the application identity only the required object permissions.
+2. Run the Laravel scheduler every minute and confirm `platform:backup` and `platform:backup-prune` appear in the scheduled task list.
+3. Trigger a central database snapshot from Platform → Infrastructure → Backups, or run `php artisan platform:backup`.
+4. Confirm the run is `verified`, inspect the recorded checksum and destination, and confirm the object exists in the configured storage provider.
+5. Request a restore test and obtain a second administrator's approval. The current executable sandbox restore supports SQLite only and records `test_restored`; production recovery is never reported as complete.
+6. After a separately managed recovery, run `php artisan platform:audit-verify` and the health probes before routing traffic.
 
-### 2.2 Schedule & Retention
-- **Continuous / High Frequency**: Transaction write-ahead logs (WAL) streamed continuously.
-- **Daily Snapshots**: Automated full backup executed daily during off-peak hours (02:00 EAT), encrypted with AES-256 before upload to secondary object storage.
-- **Retention Tiers**:
-  - Daily backups retained for 30 days.
-  - Monthly snapshots retained for 12 months.
-  - End-of-year financial archive snapshots retained for 7 years (statutory tax compliance).
+## Production readiness gaps
 
----
-
-## 3. Restoration & Verification Protocol
-
-### 3.1 Verification & Synthetic Restores
-A backup is not considered complete merely because a dump file was generated. BlePOS mandates regular automated restore testing:
-- Backups are restored into an isolated sandbox environment.
-- Table row counts, schema migrations, and audit chain cryptographic integrity are systematically verified.
-- Restoration metrics are recorded to `backup_runs` and visible in the platform console.
-
-### 3.2 Tenant Restore Workflow
-Restoring a tenant's database to a previous point in time is an audited, safeguarded workflow:
-1. Operator submits a `TenantRestoreRequest` specifying target tenant, point-in-time timestamp, and justification.
-2. Step-up authentication + Two-person approval (Security Officer + Operations Administrator).
-3. The restore is executed into an isolated staging schema and validated against consistency checks.
-4. Upon confirmation, traffic is routed to the recovered database and the operation is recorded in the platform audit log.
+The application schedules snapshots and applies artifact retention, but no RPO/RTO target or successful production restore drill is claimed until the host scheduler, storage lifecycle, and operators have verified a restore on the selected production database engine. Configure independent monitoring for backup age, failed snapshot jobs, object-storage errors, and restore-drill age. Keep database, application, and queue infrastructure on managed services with tested provider-level point-in-time recovery where required.

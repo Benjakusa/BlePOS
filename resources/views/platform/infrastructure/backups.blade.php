@@ -68,17 +68,9 @@
             @csrf
             <x-input type="select" name="backup_type" label="Backup Scope / Type">
                 <option value="database">Central Database Snapshot</option>
-                <option value="tenant_database">Tenant Database Snapshot</option>
-                <option value="files">Platform Storage & Files</option>
-                <option value="full_system">Full System Disaster Recovery Snapshot</option>
             </x-input>
 
-            <x-input type="select" name="tenant_id" label="Specific Tenant (if tenant scope)">
-                <option value="">None (Platform-wide)</option>
-                @foreach($tenants as $t)
-                    <option value="{{ $t->id }}">{{ $t->name }} ({{ $t->slug }})</option>
-                @endforeach
-            </x-input>
+            <p class="muted">Creates an encrypted central database snapshot on the configured backup disk. Configure BACKUP_DISK as an off-host object store in production.</p>
 
             <button type="submit" style="margin-top: 4px;">Start Backup Run</button>
         </form>

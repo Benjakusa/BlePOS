@@ -38,8 +38,10 @@ class TenantAuthTest extends TestCase
         $response->assertRedirect(route('tenant.dashboard'));
 
         $dashboardResponse = $this->get(route('tenant.dashboard'));
-        $dashboardResponse->assertStatus(200);
-        $dashboardResponse->assertSee('Grand Horizon Hotel');
+        $dashboardResponse->assertRedirect(route('tenant.mfa.setup'));
+        $this->get(route('tenant.mfa.setup'))
+            ->assertOk()
+            ->assertSee('Set up two-factor authentication');
     }
 
     public function test_tenant_user_cannot_authenticate_with_invalid_password(): void

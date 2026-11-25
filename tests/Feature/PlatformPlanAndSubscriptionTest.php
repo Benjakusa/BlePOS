@@ -172,7 +172,7 @@ class PlatformPlanAndSubscriptionTest extends TestCase
 
         $assignResponse->assertRedirect(route('platform.tenants.show', $tenant));
 
-        $subscription = Subscription::where('tenant_id', $tenant->id)->first();
+        $subscription = Subscription::withoutGlobalScopes()->where('tenant_id', $tenant->id)->first();
         $this->assertNotNull($subscription);
         $this->assertEquals($plan->id, $subscription->plan_id);
         $this->assertEquals('trial', $subscription->status);

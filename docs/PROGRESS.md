@@ -1,23 +1,40 @@
 # BlePOS Progress Ledger
 
 ## Session header
-- Last updated: 2026-11-25 08:31 UTC / 11:31 EAT
-- Last agent / session ID: antigravity-tenant-rbac-staff-restaurant-2026-11-25
-- Current tier / phase: Tenant RBAC, Staff Management, Route Authorization & Restaurant Seeding (Verified; 213 tests passing)
-- Build status: Passed
-- Last full test run: `php artisan test --compact` — 213 tests, 2260 assertions (2026-11-25).
-- Resume verification: TenantStaffAndRoleIsolationTest passed (5 tests, 38 assertions); full suite passed (213 tests, 2260 assertions); `vendor/bin/pint --test` passed; `npm run build` passed.
-- Git working branch / checkpoint: Comprehensive tenant RBAC implemented. Tenant owner has unrestricted access across all modules, dedicated staff management created (`tenant.users.*`), granular middleware route enforcement (`tenant.permission`), dynamic permission-aware sidebar filtering, and fully seeded Restaurant tenant (`Savanna Bistro & Grill`) with distinct owner, cashier, inventory officer, and accountant roles.
+- Last updated: 2026-11-25 11:23 UTC / 14:23 EAT
+- Last agent / session ID: codex-app-review-remediation-2026-11-25
+- Current tier / phase: App review remediation, excluding M-Pesa settlement/callback requirements (implemented; environment-dependent work listed below).
+- Build status: `npm run build` passed (2026-11-25).
+- Last full test run: `php artisan test --compact`, 242 tests and 2,490 assertions passed (2026-11-25).
+- Resume verification: `vendor/bin/pint --test` passed; browser acceptance passed (3 end-to-end tests); fresh SQLite migrations and seeding passed.
+- Git working branch / checkpoint: Existing worktree changes were present at session start; preserved and extended them. No commit created.
+
+## App review remediation — 2026-11-25
+
+- Status: **IMPLEMENTED within the requested scope; M-Pesa requirements excluded per user instruction.** This does not certify production readiness or live provider/regulatory behavior.
+- Implemented in the worktree: server-derived product prices and tax, permission-gated discounts, exact paid-or-authorized-credit settlement, provider-payment blocking until verified, sale idempotency fingerprinting, pending subscription payment attempts, pharmacy batch/expiry/quarantine/prescription checks in checkout with dispensing records, fail-closed tenant/shop scopes and context cleanup, tenant MFA enrollment/challenge/recovery, production boot assertions, trusted-proxy configuration, CI workflow, and corrected industry/API docs.
+- Additional hardening in this session: duplicate checkout keys are bound to a request fingerprint; controlled-substance authorization cannot name another user; tenant MFA markers are cleared at login and expire; backup snapshots use a consistent SQLite snapshot and compare checksums to stored bytes; restore integrity checks require `ok`; recovery-readiness and queue-backlog probes are recorded; daily backup and retention commands are scheduled, with expired artifact bytes removed while audit metadata remains; stale Vite hot files are ignored unless the Vite client endpoint is reachable, so compiled platform styles remain available after server restarts.
+- Backup/restore limits: MySQL/PostgreSQL snapshot creation requires `mysqldump`/`pg_dump`; isolated restore currently supports SQLite only. Tenant-only snapshots and asset snapshots remain unavailable; the host must run Laravel's scheduler and set off-host storage/retention policies. Production-engine restore drills remain an operator task. The console never claims production recovery.
+- Product/test gaps: MySQL and PostgreSQL matrix runs are configured in CI but were not executed locally; production load/concurrency runs remain operational work. Live provider reconciliation and regulated pharmacist credential verification need provider/regulator credentials and are not represented as complete. Health probes detect queue backlog and stale backups/restore drills, but delivery to an external alert destination needs deployment credentials. Industry modules outside the generic POS/restaurant/pharmacy baseline are clearly marked planned in `docs/INDUSTRIES.md`.
+- Validation completed: `php artisan test --compact` — 242 passed, 2,490 assertions; `vendor/bin/pint --test` — passed; `npm run build` — passed; `npm run test:e2e` — 3 browser tests passed, including the stale-Vite restart case with an HTTP 200 for compiled CSS, tenant MFA login, cash POS sale, product image upload, pending bank-transfer billing attempt, support ticket, pharmacist MFA login, and medicine batch intake; fresh SQLite migration and browser fixture seeding — passed; `php artisan schedule:list` shows both daily backup tasks; JavaScript syntax checks and `git diff --check` — passed. No M-Pesa request or settlement flow was exercised.
 
 ## RESUME POINT
-- Next action (exact): Live demonstration and testing of Restaurant tenant accounts with granular role permissions and staff management.
-- Preconditions / what must be true first: Full test suite passing (213 tests, 2260 assertions); database seeded with Restaurant trial tenant and staff accounts.
-- Files in flight: None. All models, migrations, seeders, controllers, views, middleware, docs, and tests are clean and passing.
-- First commands to run on resume: `php artisan test --compact`, `vendor/bin/pint --test`.
+- Next action (exact): Run the configured CI matrix on MySQL and PostgreSQL, then configure real provider/regulatory credentials and external alert delivery before production use.
+- Preconditions / what must be true first: Preserve current worktree changes and use the status above as the source of truth for remediation progress.
+- Files in flight: POS, billing, pharmacy, tenant scopes/MFA, infrastructure backups/probes, CI, docs and test updates.
+- First commands to run on resume: `php artisan test --compact`, `vendor/bin/pint --test`, `npm run build`.
 
 ## Latest session verification
 | Suite | Command | Date | Passed | Failed | Skipped | Notes |
 |---|---|---|---:|---:|---:|---|
+| App review full regression | `php artisan test --compact` | 2026-11-25 | 242 | 0 | 0 | 2,490 assertions; includes POS/tender security, pharmacy sale policy, tenant/shop isolation, MFA, billing attempts, backup behavior, backup retention, and stale Vite fallback. |
+| Browser acceptance | `npm run test:e2e` | 2026-11-25 | 3 | 0 | 0 | 21.9 seconds; stale Vite fallback returns compiled CSS, tenant POS/product/billing/support, and pharmacist MFA/batch intake. Fresh isolated SQLite database. |
+| SQLite migration + E2E fixtures | `php artisan migrate --force`; `db:seed --class=RestaurantTenantSeeder`; `db:seed --class=BrowserAcceptanceSeeder` | 2026-11-25 | Passed | — | — | Fresh SQLite database; includes cashier shift number migration. |
+| PHP style | `vendor/bin/pint --test` | 2026-11-25 | Passed | — | — | Zero code style issues. |
+| Scheduler configuration | `php artisan schedule:list` | 2026-11-25 | Passed | — | — | Daily backup and backup-pruning tasks registered. |
+| Pharmacy sale safety | `php artisan test --compact tests/Feature/PharmacyCheckoutSafetyTest.php` | 2026-11-25 | 4 | 0 | 0 | 19 assertions for expiry blocking, prescription enforcement, batch depletion/dispensing audit, and pharmacist identity enforcement. |
+| Frontend production build | `npm run build` | 2026-11-25 | Passed | — | — | Vite production assets generated. |
+| JavaScript syntax and whitespace | `node --check playwright.config.js`; `node --check tests/e2e/app-review.spec.js`; `git diff --check` | 2026-11-25 | Passed | — | — | No syntax or whitespace errors. |
 | Tenant Staff & Role Isolation | `php artisan test tests/Feature/TenantStaffAndRoleIsolationTest.php` | 2026-11-25 | 5 | 0 | 0 | 38 assertions, exit 0 |
 | Full PHPUnit suite | `php artisan test --compact` | 2026-11-25 | 213 | 0 | 0 | 2260 assertions, exit 0 |
 | PHP style | `vendor/bin/pint --test` | 2026-11-25 | Passed | — | — | Zero code style issues |

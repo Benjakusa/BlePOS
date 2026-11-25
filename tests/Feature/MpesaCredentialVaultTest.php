@@ -302,7 +302,7 @@ class MpesaCredentialVaultTest extends TestCase
             ->assertJsonPath('context.tenant_id', $branchCred->tenant_id)
             ->assertJsonPath('context.branch_id', $branchCred->branch_id);
 
-        $this->assertSame($branchCred->tenant_id, TenantContext::getTenantId());
+        $this->assertNull(TenantContext::getTenantId(), 'Tenant context is cleared after callback request cleanup.');
 
         $this->postJson(route('mpesa.callback', 'invalid-token-xyz'), [])->assertStatus(403);
     }

@@ -56,22 +56,22 @@
                         <td style="padding: 8px;"><code>{{ $restore->backupRun->filename }}</code></td>
                         <td style="padding: 8px;">{{ $restore->requester->name }}</td>
                         <td style="text-align: center; padding: 8px;">
-                            <span class="badge" style="background: #EAEEF3; color: {{ $restore->status === 'production_completed' ? '#16A34A' : '#B45309' }};">
+                            <span class="badge" style="background: #EAEEF3; color: {{ $restore->status === 'test_restored' ? '#16A34A' : '#B45309' }};">
                                 {{ strtoupper(str_replace('_', ' ', $restore->status)) }}
                             </span>
                         </td>
                         <td style="text-align: right; padding: 8px;">
-                            @if($restore->status !== 'production_completed')
+                            @if($restore->status === 'requested')
                                 @if($restore->requested_by !== auth('platform')->id())
-                                    <form method="POST" action="{{ route('platform.infrastructure.restores.approve', $restore) }}" style="display: inline;" onsubmit="return confirm('Execute production recovery for tenant {{ $restore->tenant->name }}?');">
+                                    <form method="POST" action="{{ route('platform.infrastructure.restores.approve', $restore) }}" style="display: inline;" onsubmit="return confirm('Verify an isolated restore for tenant {{ $restore->tenant->name }}?');">
                                         @csrf
-                                        <button type="submit" class="btn" style="padding: 4px 8px; font-size: 12px;">Approve & Execute</button>
+                                        <button type="submit" class="btn" style="padding: 4px 8px; font-size: 12px;">Approve & Verify Sandbox</button>
                                     </form>
                                 @else
                                     <span class="muted" style="font-size: 12px;">Two-person rule: awaits 2nd admin</span>
                                 @endif
                             @else
-                                <span class="muted" style="font-size: 12px;">Completed {{ $restore->executed_at?->format('M d, H:i') }}</span>
+                                <span class="muted" style="font-size: 12px;">Sandbox verified {{ $restore->executed_at?->format('M d, H:i') }}</span>
                             @endif
                         </td>
                     </tr>

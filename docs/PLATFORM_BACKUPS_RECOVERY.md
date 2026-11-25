@@ -1,24 +1,7 @@
-# BlePOS — Platform Backups & Disaster Recovery
+# Platform Backup and Recovery Status
 
-## 1. Overview
+The platform supports on-demand and scheduled encrypted central database snapshots, byte-level SHA-256 verification, configurable artifact retention, and an isolated SQLite restore check. A daily snapshot runs at 01:00 and daily artifact pruning runs at 02:00; the default retention is 30 days. Snapshot creation for MySQL and PostgreSQL depends on `mysqldump` and `pg_dump` being installed and usable by the application process. Production requires `BACKUP_DISK` to be an off-host object store and the host scheduler to run every minute.
 
-BlePOS incorporates an automated backup and disaster recovery architecture designed to safeguard multi-tenant data integrity against infrastructure failure, data corruption, or catastrophic loss.
+Restore requests are executed only into an isolated SQLite sandbox and finish with status `test_restored`. The production database is never overwritten by this workflow. MySQL/PostgreSQL sandbox restore execution, tenant-only restore, uploaded-file backup, point-in-time recovery, and periodic restore-drill automation remain unavailable. Do not use the console as a production disaster-recovery procedure until a production-engine restore drill has passed.
 
-## 2. Backup Strategy
-
-- **Database Dumps**: Nightly and on-demand compressed SQL snapshots.
-- **SHA-256 Checksums**: Every backup file is hashed immediately upon creation (`sha256`) and the checksum is recorded in the platform database.
-- **Verification Routine**: Automated test routines simulate backup creation, checksum computation, tamper detection, and clean restoration.
-- **Retention**: Daily backups retained for 30 days; weekly archives retained for 12 months; monthly archives retained for 7 years in cold storage for compliance.
-
-## 3. Disaster Recovery Procedures
-
-1. **Integrity Validation**: Calculate SHA-256 checksum of the target archive and verify against `platform_backups.checksum_sha256`.
-2. **Schema & Data Restoration**: Import validated dump into staging/recovery instance.
-3. **Audit Chain Re-Verification**: Run `php artisan platform:audit-verify` to ensure cryptographic consistency post-restore.
-4. **Health Check Validation**: Execute platform health probes before switching traffic.
-
-## 4. Key References
-
-- Existing Documentation: `docs/BACKUPS_AND_RECOVERY.md`
-- Test: `tests/Feature/PlatformHardeningAndReleaseReadinessTest::test_backup_sha256_checksum_and_restore_verification`
+The console stores the checksum of encrypted artifact bytes in `platform_backup_runs`. Restore verifies that checksum before decryption, then checks SQLite integrity. See [Backups and Recovery](BACKUPS_AND_RECOVERY.md) for the operator steps and known limits.

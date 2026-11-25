@@ -4,6 +4,10 @@
 
 @section('content')
 
+@if(session('tenant_recovery_codes'))
+    <div role="alert" class="alert alert-warning"><strong>Save these one-time recovery codes now.</strong><ul>@foreach(session('tenant_recovery_codes') as $recoveryCode)<li><code>{{ $recoveryCode }}</code></li>@endforeach</ul></div>
+@endif
+
 {{-- Top Greeting & Header --}}
 <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
     <div>

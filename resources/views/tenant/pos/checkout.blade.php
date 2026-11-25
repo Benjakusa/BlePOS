@@ -495,6 +495,10 @@
     }
 
     function addToCart(product) {
+        const prescriptionId = product.requires_prescription ? prompt('Enter the active prescription ID for ' + product.name + ':') : null;
+        if (product.requires_prescription && !prescriptionId) return;
+        const pharmacistUserId = product.is_controlled_substance ? prompt('Enter the verifying pharmacist user ID:') : null;
+        if (product.is_controlled_substance && !pharmacistUserId) return;
         const existing = cart.find(i => i.id === product.id);
         if (existing) {
             existing.qty += 1;
@@ -505,6 +509,8 @@
                 sku: product.sku,
                 price: parseFloat(product.selling_price),
                 tax_rate: parseFloat(product.tax_rate || 0),
+                prescription_id: prescriptionId ? parseInt(prescriptionId, 10) : null,
+                pharmacist_user_id: pharmacistUserId ? parseInt(pharmacistUserId, 10) : null,
                 qty: 1
             });
         }
@@ -725,12 +731,12 @@
             items: cart.map(i => ({
                 product_id: i.id,
                 quantity: i.qty,
-                unit_price: i.price,
-                tax_rate: i.tax_rate
+                prescription_id: i.prescription_id,
+                pharmacist_user_id: i.pharmacist_user_id
             })),
             payments: [{
                 method: paymentMethod.value,
-                amount: totals.grand,
+                amount: paymentMethod.value === 'cash' ? tendered : totals.grand,
                 reference: document.getElementById('payment-ref')?.value || null
             }]
         };
@@ -741,7 +747,8 @@
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'Idempotency-Key': crypto.randomUUID()
                 },
                 body: JSON.stringify(payload)
             });

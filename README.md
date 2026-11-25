@@ -3,9 +3,9 @@
 **BlePOS** is a multi-tenant, multi-shop, multi-industry Point of Sale (POS) and Business Management SaaS engineered for Kenya, East Africa, and global commercial operations.
 
 > [!NOTE]
-> **Annex A Full Specification Complete & Verified (183 tests, 1,970 assertions, 100% pass rate).**
-> - **KRA eTIMS**: Sandbox simulation placeholder active (`BLOCKED-ON-CERTIFICATION`). Ready for production keys upon formal KRA sign-off.
-> - **Safaricom M-Pesa**: Sandbox simulation placeholder active. Ready for production credentials upon telecommunications onboarding.
+> **Implementation status:** Core tenant POS, inventory, accounting, and platform administration are implemented. The app review dated 25 November 2026 records remaining release blockers and verification gaps; see [the review](docs/APP_REVIEW_2026-11-25.md) and [progress ledger](docs/PROGRESS.md).
+> - **KRA eTIMS**: Compliance checklist only; live submission is blocked on certification.
+> - **Safaricom M-Pesa**: Sandbox initiation exists; verified settlement and callback reconciliation are not implemented.
 
 ---
 
@@ -16,19 +16,19 @@
 - **Tenant Operations & Role Dashboards (`/tenant`)**:
   - Tailored operational perspectives: Cashier Terminal (active shift float, cash/M-Pesa sales receipts, open-shift workflow, strictly restricted from business margins/profits/cost prices), Shop Manager (branch sales, cashier shifts on duty, register cash variance, low stock alerts), and Executive Owner (multi-branch comparison matrix, gross/net sales, 16% VAT, payment breakdown, loss prevention void alerts).
   - Dynamic shop scoping with `EnforceShopIsolation` middleware supporting header, route, input (`shop_id`), and session-based branch switching for authorized multi-branch managers and business owners.
-  - Industry blueprint integrations including Pharmacy (prescription & controlled substance dispensing compliance) and Hospitality (table folios, open tabs, order queues).
+  - Industry views show current baselines; they do not imply that every advertised industry workflow is implemented. See [industry status](docs/INDUSTRIES.md).
 - **Platform Control Plane (`/platform-console`)**:
   - Isolated administrative environment with dedicated guard (`platform`), separate session cookie (`PLATFORM_SESSION_COOKIE`), progressive lockout, mandatory TOTP MFA, step-up authentication, and two-person approvals.
   - Live integrated command center dashboard with real-time headline KPIs (MRR/ARR calculated via `bcmath`, collection efficiency, tenant retention rates).
   - Subsystem reliability probes monitoring Database, Cache, Object Storage, and Queues with live latency and diagnostic details.
   - Security Centre with threat intelligence, dynamic IP allowlist/denylist rules, cryptographic envelope key governance, and full incident response lifecycle.
   - Regulatory Compliance & eTIMS console with KRA checklist validation, statutory 30-day Kenya DPA 2019 / GDPR DSAR workflow, and versioned legal documents.
-  - Automated encrypted backup pipeline with SHA-256 integrity verification and strict two-person authorization rule on disaster restore operations.
+  - On-demand encrypted central database snapshots with byte checksums and SQLite sandbox restore verification; production-engine restore and scheduled retention remain unavailable.
   - Formula-safe CSV reporting engine for commercial revenue, tenant directories, and module adoption.
 - **Append-Only Cryptographic Audit Log**: Tamper-evident SHA-256 hash chaining with SQLite trigger locks and automated verification commands.
-- **Multi-Industry Engine**: Deep operational support for General Retail, Supermarkets, Pharmacies, Restaurants & Bars, Hotels & Hospitality, Wholesale, Salons, and Fuel Stations.
+- **Industry coverage**: Generic retail/POS, basic restaurant tables, and a pharmacy checkout safety baseline exist. Hotel, wholesale, salon, and fuel workflows are roadmap items.
 - **East African Payment & Compliance Rails**:
-  - Safaricom M-Pesa Daraja 2.0 (STK Push, C2B Paybill/Till, and automated reconciliation).
+  - Safaricom M-Pesa Daraja STK initiation exists in sandbox form; authoritative payment reconciliation is not available.
   - KRA eTIMS (Electronic Tax Invoice Management System) fiscal compliance and QR code receipt signing (technical placeholder surfacing honest `BLOCKED-ON-CERTIFICATION` status pending regulatory clearance).
 - **Enterprise Financial Ledger**: Integrated double-entry accounting with automated general ledger entries from POS sales, inventory receipts, and expenses.
 

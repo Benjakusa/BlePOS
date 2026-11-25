@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CashierShift;
+use App\Models\PharmacyBatch;
 use App\Models\Product;
 use App\Models\Register;
 use App\Models\Sale;
@@ -17,7 +18,8 @@ class SaleService
 {
     public function __construct(
         protected InventoryService $inventory,
-        protected AccountingService $accounting
+        protected AccountingService $accounting,
+        protected PharmacyService $pharmacy
     ) {}
 
     /**
@@ -34,7 +36,8 @@ class SaleService
         array $payments,
         ?CashierShift $shift = null,
         ?string $notes = null,
-        ?int $diningTableId = null
+        ?int $diningTableId = null,
+        ?string $idempotencyKey = null
     ): Sale {
         return DB::transaction(function () use (
             $shop,
@@ -44,8 +47,32 @@ class SaleService
             $payments,
             $shift,
             $notes,
-            $diningTableId
+            $diningTableId,
+            $idempotencyKey
         ): Sale {
+            $idempotencyFingerprint = hash('sha256', json_encode([
+                'shop_id' => $shop->id,
+                'register_id' => $register->id,
+                'user_id' => $user->id,
+                'shift_id' => $shift?->id,
+                'dining_table_id' => $diningTableId,
+                'items' => $items,
+                'payments' => $payments,
+                'notes' => $notes,
+            ], JSON_THROW_ON_ERROR));
+            if ($idempotencyKey) {
+                $existing = Sale::withoutGlobalScopes()->where('tenant_id', $shop->tenant_id)
+                    ->where('idempotency_key', $idempotencyKey)->first();
+                if ($existing) {
+                    abort_unless(
+                        hash_equals((string) $existing->idempotency_fingerprint, $idempotencyFingerprint),
+                        409,
+                        'This idempotency key was already used for a different checkout.'
+                    );
+
+                    return $existing;
+                }
+            }
             abort_if(empty($items), 422, 'Sale must contain at least one item.');
             abort_if(empty($payments), 422, 'Sale must contain at least one payment.');
 
@@ -53,6 +80,7 @@ class SaleService
             $discountTotal = '0.00';
             $taxTotal = '0.00';
             $grandTotal = '0.00';
+            $pharmacyDispensings = [];
 
             $saleNumber = 'SL-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));
 
@@ -71,15 +99,39 @@ class SaleService
                 'grand_total' => 0.00,
                 'paid_total' => 0.00,
                 'change_due' => 0.00,
-                'payment_status' => 'paid',
+                'payment_status' => 'pending',
+                'idempotency_key' => $idempotencyKey,
+                'idempotency_fingerprint' => $idempotencyKey ? $idempotencyFingerprint : null,
                 'notes' => $notes,
             ]);
 
             foreach ($items as $itemData) {
-                $product = Product::query()->findOrFail($itemData['product_id']);
+                $product = Product::query()->where('tenant_id', $shop->tenant_id)
+                    ->where('is_active', true)->lockForUpdate()->findOrFail($itemData['product_id']);
                 $qty = (float) ($itemData['quantity'] ?? 1.0);
-                $unitPrice = (string) ($itemData['unit_price'] ?? $product->selling_price);
+                if ($shop->tenant?->industry === 'pharmacy') {
+                    abort_if(
+                        ! empty($itemData['pharmacist_user_id']) && (int) $itemData['pharmacist_user_id'] !== (int) $user->id,
+                        403,
+                        'The dispensing pharmacist must authenticate as the cashier performing this checkout.'
+                    );
+                    $pharmacist = ! empty($itemData['pharmacist_user_id'])
+                        ? $user
+                        : null;
+                    $batch = $this->pharmacy->validateItemForSale(
+                        shop: $shop,
+                        product: $product,
+                        batchId: isset($itemData['batch_id']) ? (int) $itemData['batch_id'] : null,
+                        authorizingPharmacist: $pharmacist,
+                        quantity: $qty,
+                        prescriptionId: isset($itemData['prescription_id']) ? (int) $itemData['prescription_id'] : null,
+                    );
+                    $pharmacyDispensings[] = [$product, $qty, $batch, $itemData, $pharmacist];
+                }
+                $unitPrice = (string) $product->selling_price;
                 $itemDiscount = (string) ($itemData['discount'] ?? '0.00');
+                abort_if(bccomp($itemDiscount, '0.00', 2) > 0 && ! $user->hasPermission('pos.sale.discount'), 403, 'Discount permission required.');
+                abort_if(bccomp($itemDiscount, bcmul($unitPrice, (string) $qty, 2), 2) > 0, 422, 'Discount cannot exceed item price.');
 
                 $lineSub = bcsub(bcmul($unitPrice, (string) $qty, 4), $itemDiscount, 2);
 
@@ -132,8 +184,24 @@ class SaleService
                 $grandTotal = bcadd($grandTotal, $lineTotal, 2);
             }
 
+            foreach ($pharmacyDispensings as [$product, $qty, $batch, $itemData, $pharmacist]) {
+                if ($batch instanceof PharmacyBatch) {
+                    $this->pharmacy->recordSaleDispensing(
+                        shop: $shop,
+                        user: $user,
+                        product: $product,
+                        quantity: $qty,
+                        batch: $batch,
+                        sale: $sale,
+                        prescriptionId: isset($itemData['prescription_id']) ? (int) $itemData['prescription_id'] : null,
+                        verifiedBy: $pharmacist,
+                    );
+                }
+            }
+
             // Record Payments
             $paidTotal = '0.00';
+            $creditTotal = '0.00';
             $cashAmount = '0.00';
             $mpesaAmount = '0.00';
             $cardAmount = '0.00';
@@ -141,6 +209,22 @@ class SaleService
             foreach ($payments as $paymentData) {
                 $amount = (string) $paymentData['amount'];
                 $method = $paymentData['method'];
+
+                if ($method === 'credit') {
+                    abort_if(! $user->hasPermission('pos.sale.credit'), 403, 'Credit sale permission required.');
+                    $creditTotal = bcadd($creditTotal, $amount, 2);
+                    SalePayment::query()->create([
+                        'sale_id' => $sale->id,
+                        'payment_method' => 'credit',
+                        'amount' => $amount,
+                        'reference' => $paymentData['reference'] ?? null,
+                        'metadata' => ['status' => 'outstanding'],
+                    ]);
+
+                    continue;
+                }
+                abort_if(in_array($method, ['mpesa', 'card', 'cheque'], true), 422, 'This payment method requires a verified provider settlement before checkout. Cash or authorized credit is available.');
+                abort_if(bccomp($amount, '0.00', 2) <= 0, 422, 'Payment amount must be positive.');
 
                 SalePayment::query()->create([
                     'sale_id' => $sale->id,
@@ -161,6 +245,14 @@ class SaleService
                 }
             }
 
+            $settledTotal = bcadd($paidTotal, $creditTotal, 2);
+            $hasCredit = bccomp($creditTotal, '0.00', 2) > 0;
+            abort_if($hasCredit
+                ? bccomp($settledTotal, $grandTotal, 2) !== 0
+                : bccomp($paidTotal, $grandTotal, 2) < 0,
+                422,
+                'Tender must settle the total or explicitly record the exact balance as authorized credit.');
+
             $changeDue = bccomp($paidTotal, $grandTotal, 2) > 0 ? bcsub($paidTotal, $grandTotal, 2) : '0.00';
 
             // Actual cash received into drawer is payment minus change
@@ -173,6 +265,7 @@ class SaleService
                 'grand_total' => $grandTotal,
                 'paid_total' => $paidTotal,
                 'change_due' => $changeDue,
+                'payment_status' => bccomp($paidTotal, $grandTotal, 2) >= 0 ? 'paid' : 'credit',
             ]);
 
             // Update Cashier Shift if attached

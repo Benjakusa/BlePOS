@@ -16,6 +16,33 @@ use Illuminate\Validation\ValidationException;
 
 class PlatformBillingService
 {
+    /** Create an untrusted payment attempt without applying it to an invoice. */
+    public function createPaymentAttempt(
+        PlatformInvoice $invoice,
+        string $amount,
+        string $paymentMethod,
+        ?string $gatewayReference = null,
+        ?string $notes = null
+    ): PlatformPayment {
+        $amount = number_format((float) $amount, 2, '.', '');
+        if (bccomp($amount, '0.00', 2) <= 0 || bccomp($amount, (string) $invoice->amount_due, 2) > 0) {
+            throw ValidationException::withMessages(['amount' => 'Payment attempt must be positive and no greater than the outstanding balance.']);
+        }
+
+        return PlatformPayment::query()->create([
+            'platform_invoice_id' => $invoice->id,
+            'tenant_id' => $invoice->tenant_id,
+            'payment_reference' => 'PAY-'.now()->format('Ymd').'-'.strtoupper(Str::random(6)),
+            'payment_method' => $paymentMethod,
+            'status' => 'pending',
+            'currency' => $invoice->currency,
+            'amount' => $amount,
+            'gateway_reference' => $gatewayReference,
+            'paid_at' => null,
+            'notes' => $notes,
+        ]);
+    }
+
     /**
      * Generate an invoice for a tenant with line items and VAT calculation.
      *

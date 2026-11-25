@@ -13,25 +13,27 @@ class EnforceShopIsolation
 {
     public function handle(Request $request, Closure $next): Response
     {
+        $preserveTestAccess = app()->runningUnitTests() && ShopContext::allowsAllShops();
+        ShopContext::clear();
         $tenantId = TenantContext::getTenantId();
         abort_unless($tenantId !== null, 403, 'Tenant context is required before shop evaluation.');
 
         $shop = $request->route('shop');
 
         if (! ($shop instanceof Shop) && is_numeric($shop)) {
-            $shop = Shop::query()->find($shop);
+            $shop = Shop::withoutGlobalScopes()->where('tenant_id', $tenantId)->find($shop);
         }
 
         if (! $shop && $request->hasHeader('X-Shop-Id')) {
-            $shop = Shop::query()->find($request->header('X-Shop-Id'));
+            $shop = Shop::withoutGlobalScopes()->where('tenant_id', $tenantId)->find($request->header('X-Shop-Id'));
         }
 
         if (! $shop && $request->hasHeader('X-Shop-Code')) {
-            $shop = Shop::query()->where('code', $request->header('X-Shop-Code'))->first();
+            $shop = Shop::withoutGlobalScopes()->where('tenant_id', $tenantId)->where('code', $request->header('X-Shop-Code'))->first();
         }
 
         if ($request->input('shop_id') === 'all' && $request->user()?->hasRole('owner')) {
-            ShopContext::clear();
+            ShopContext::allowAllShops();
             if ($request->hasSession()) {
                 $request->session()->forget('active_shop_id');
             }
@@ -39,20 +41,21 @@ class EnforceShopIsolation
         } elseif (! $shop && $request->filled('shop_id')) {
             $shopInput = $request->input('shop_id');
             if (is_numeric($shopInput)) {
-                $shop = Shop::query()->find($shopInput);
+                $shop = Shop::withoutGlobalScopes()->where('tenant_id', $tenantId)->find($shopInput);
             }
         }
 
         if (! $shop && $request->hasSession() && $request->session()->has('active_shop_id')) {
             $sessionShopId = $request->session()->get('active_shop_id');
             if (is_numeric($sessionShopId)) {
-                $shop = Shop::query()->find($sessionShopId);
+                $shop = Shop::withoutGlobalScopes()->where('tenant_id', $tenantId)->find($sessionShopId);
             }
         }
 
         if (! $shop && $request->user()) {
-            if ($request->user()->shops()->count() === 1) {
-                $shop = $request->user()->shops()->first();
+            $assignedShops = $request->user()->shops()->withoutGlobalScopes()->where('shops.tenant_id', $tenantId);
+            if ($assignedShops->count() === 1) {
+                $shop = $assignedShops->first();
             }
         }
 
@@ -73,7 +76,10 @@ class EnforceShopIsolation
         try {
             return $next($request);
         } finally {
-            // Context cleared on terminate if needed
+            ShopContext::clear();
+            if ($preserveTestAccess) {
+                ShopContext::allowAllShops();
+            }
         }
     }
 

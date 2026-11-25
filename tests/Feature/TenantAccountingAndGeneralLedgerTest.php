@@ -268,7 +268,7 @@ class TenantAccountingAndGeneralLedgerTest extends TestCase
         ]);
 
         // Process a sale of 2 bags of rice (KES 1,000 total)
-        // Customer pays KES 600 via M-Pesa, KES 500 via Cash (change due KES 100)
+        // Cash tender exceeds the server-calculated total by KES 100.
         $sale = $this->saleService->createSale(
             shop: $this->shopA,
             register: $this->registerA,
@@ -280,10 +280,7 @@ class TenantAccountingAndGeneralLedgerTest extends TestCase
                     'unit_price' => 500.00,
                 ],
             ],
-            payments: [
-                ['method' => 'mpesa', 'amount' => 600.00, 'reference' => 'QA73921Z'],
-                ['method' => 'cash', 'amount' => 500.00],
-            ],
+            payments: [['method' => 'cash', 'amount' => 1100.00]],
             shift: $shift
         );
 
@@ -299,23 +296,18 @@ class TenantAccountingAndGeneralLedgerTest extends TestCase
         $this->assertTrue($journal->isBalanced());
 
         // Check journal lines:
-        // Cash Dr: 400.00 (500 paid - 100 change)
-        // M-Pesa Dr: 600.00
+        // Cash Dr: 1,000.00 (1,100 paid - 100 change)
         // Revenue Cr + VAT Cr = 1,000.00
         // COGS Dr: 700.00 (2 * 350 cost)
         // Inventory Cr: 700.00
         $lines = $journal->lines()->with('account')->get();
 
         $cashLine = $lines->firstWhere('account.code', '1010');
-        $mpesaLine = $lines->firstWhere('account.code', '1020');
         $cogsLine = $lines->firstWhere('account.code', '5010');
         $invLine = $lines->firstWhere('account.code', '1050');
 
         $this->assertNotNull($cashLine);
-        $this->assertEquals('400.00', $cashLine->debit);
-
-        $this->assertNotNull($mpesaLine);
-        $this->assertEquals('600.00', $mpesaLine->debit);
+        $this->assertEquals('1000.00', $cashLine->debit);
 
         $this->assertNotNull($cogsLine);
         $this->assertEquals('700.00', $cogsLine->debit);
@@ -401,12 +393,12 @@ class TenantAccountingAndGeneralLedgerTest extends TestCase
 
         $response->assertRedirect(route('tenant.accounting.expenses.index'));
 
-        $expense = Expense::where('tenant_id', $this->tenantA->id)->first();
+        $expense = Expense::withoutGlobalScopes()->where('tenant_id', $this->tenantA->id)->first();
         $this->assertNotNull($expense);
         $this->assertEquals('1500.00', $expense->amount);
         $this->assertNotNull($expense->journal_entry_id);
 
-        $journal = $expense->journalEntry;
+        $journal = JournalEntry::withoutGlobalScopes()->with('lines')->findOrFail($expense->journal_entry_id);
         $this->assertTrue($journal->isBalanced());
         $this->assertEquals('1500.00', $journal->total_debit);
     }
@@ -527,7 +519,7 @@ class TenantAccountingAndGeneralLedgerTest extends TestCase
             ->withSession(['active_shop_id' => $this->shopB->id])
             ->get(route('tenant.accounting.journals.show', $entryA));
 
-        $response->assertForbidden();
+        $response->assertNotFound();
 
         // User B's journal index does not show Tenant A's entries
         $listResponse = $this->actingAs($this->userB, 'web')

@@ -53,6 +53,10 @@
         <div style="display: flex; gap: 24px; margin-top: 4px;">
             <x-input type="toggle" name="track_stock" value="1" :checked="true" label="Track Inventory Stock" />
             <x-input type="toggle" name="is_active" value="1" :checked="true" label="Active (Available in POS)" />
+            @if(($tenant->industry ?? null) === 'pharmacy')
+                <x-input type="toggle" name="requires_prescription" value="1" label="Prescription required" />
+                <x-input type="toggle" name="is_controlled_substance" value="1" label="Controlled substance (pharmacist verification required)" />
+            @endif
         </div>
 
         <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 16px;">

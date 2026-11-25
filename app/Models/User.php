@@ -16,9 +16,15 @@ class User extends Authenticatable
 
     protected $guarded = ['id'];
 
+    protected $attributes = [
+        'status' => 'active',
+    ];
+
     protected $hidden = [
         'password',
         'remember_token',
+        'totp_secret',
+        'recovery_code_hashes',
     ];
 
     /**
@@ -32,6 +38,9 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'must_reset_password' => 'boolean',
+            'totp_secret' => 'encrypted',
+            'recovery_code_hashes' => 'array',
+            'mfa_confirmed_at' => 'datetime',
         ];
     }
 

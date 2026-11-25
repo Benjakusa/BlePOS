@@ -49,7 +49,7 @@ class Product extends Model
     public function getStockInShop(Shop|int $shop): float
     {
         $shopId = $shop instanceof Shop ? $shop->id : $shop;
-        $stock = $this->stocks()->where('shop_id', $shopId)->first();
+        $stock = $this->stocks()->withoutGlobalScopes()->where('tenant_id', $this->tenant_id)->where('shop_id', $shopId)->first();
 
         return (float) ($stock?->quantity ?? 0);
     }

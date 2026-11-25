@@ -132,7 +132,7 @@ class TenantSubscriptionController extends Controller
             }
         }
 
-        $billing->recordPayment(
+        $payment = $billing->createPaymentAttempt(
             invoice: $invoice,
             amount: $amountDue,
             paymentMethod: $methodForRecord,
@@ -140,35 +140,7 @@ class TenantSubscriptionController extends Controller
             notes: 'Paid via tenant self-service subscription portal',
         );
 
-        // Activate / renew subscription & tenant status
-        $renewsAt = $cycle === 'annual' ? now()->addYear() : now()->addMonth();
-        if ($subscription) {
-            $subscription->update([
-                'plan_id' => $selectedPlan?->id ?? $subscription->plan_id,
-                'billing_cycle' => $cycle,
-                'status' => 'active',
-                'renews_at' => $renewsAt,
-            ]);
-        } elseif ($selectedPlan) {
-            Subscription::create([
-                'tenant_id' => $tenant->id,
-                'plan_id' => $selectedPlan->id,
-                'status' => 'active',
-                'billing_cycle' => $cycle,
-                'starts_at' => now(),
-                'renews_at' => $renewsAt,
-            ]);
-        }
-
-        if (in_array($tenant->status, ['trial', 'suspended'], true)) {
-            $tenant->update([
-                'status' => 'active',
-                'suspended_at' => null,
-                'suspension_reason' => null,
-            ]);
-        }
-
         return redirect()->route('tenant.subscription.index')
-            ->with('success', "Subscription payment of {$invoice->currency} {$amountDue} recorded ({$invoice->invoice_number}). Your account is active.");
+            ->with('success', "Payment attempt {$payment->payment_reference} for {$invoice->currency} {$amountDue} is pending confirmation ({$invoice->invoice_number}). Subscription access changes only after settlement is verified.");
     }
 }

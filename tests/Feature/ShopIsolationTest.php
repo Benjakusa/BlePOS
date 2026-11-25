@@ -24,7 +24,7 @@ class ShopIsolationTest extends TestCase
         TenantContext::clear();
         ShopContext::clear();
 
-        Route::middleware(['web', 'tenant.isolate', 'shop.isolate'])->get('/test/shops/{shop}/pos', function (Shop $shop) {
+        Route::middleware(['web', 'tenant.resolve', 'tenant.isolate', 'shop.isolate'])->get('/tenant/test/shops/{shop}/pos', function (Shop $shop) {
             return response()->json([
                 'shop_id' => $shop->id,
                 'active_context_shop_id' => ShopContext::getShopId(),
@@ -51,12 +51,12 @@ class ShopIsolationTest extends TestCase
         $cashier->shops()->attach($shopA->id, ['is_primary' => true]);
 
         // Cashier accesses assigned Shop A -> OK (200)
-        $responseA = $this->actingAs($cashier)->get("/test/shops/{$shopA->id}/pos");
+        $responseA = $this->actingAs($cashier)->get("/tenant/test/shops/{$shopA->id}/pos");
         $responseA->assertOk();
         $this->assertEquals($shopA->id, $responseA->json('shop_id'));
 
         // Cashier attempts to access unassigned Shop B -> Denied (403)
-        $responseB = $this->actingAs($cashier)->get("/test/shops/{$shopB->id}/pos");
+        $responseB = $this->actingAs($cashier)->get("/tenant/test/shops/{$shopB->id}/pos");
         $responseB->assertForbidden();
     }
 
@@ -75,7 +75,7 @@ class ShopIsolationTest extends TestCase
 
         // Attempting to access Shop B (which belongs to Tenant B):
         // Route model binding with TenantScope safely reports 404 (does not leak existence)
-        $response = $this->actingAs($userA)->get("/test/shops/{$shopB->id}/pos");
+        $response = $this->actingAs($userA)->get("/tenant/test/shops/{$shopB->id}/pos");
         $response->assertNotFound();
     }
 
@@ -101,10 +101,10 @@ class ShopIsolationTest extends TestCase
         $role->permissions()->attach($permission->id);
         $manager->roles()->attach($role->id);
 
-        $responseA = $this->actingAs($manager)->get("/test/shops/{$shopA->id}/pos");
+        $responseA = $this->actingAs($manager)->get("/tenant/test/shops/{$shopA->id}/pos");
         $responseA->assertOk();
 
-        $responseB = $this->actingAs($manager)->get("/test/shops/{$shopB->id}/pos");
+        $responseB = $this->actingAs($manager)->get("/tenant/test/shops/{$shopB->id}/pos");
         $responseB->assertOk();
     }
 

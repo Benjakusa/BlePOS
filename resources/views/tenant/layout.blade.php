@@ -145,6 +145,9 @@
                 <span class="nav-label">Adjust Stock</span>
             </a>
             @endif
+            @if(($tenant->industry ?? null) === 'pharmacy' && auth()->user()->hasPermission('inventory.view'))
+            <a href="{{ route('tenant.pharmacy.index') }}" class="nav-link {{ request()->routeIs('tenant.pharmacy.*') ? 'active' : '' }}"><span>Pharmacy operations</span></a>
+            @endif
             @if(auth()->user()->hasPermission('inventory.receive'))
             <a href="{{ route('tenant.inventory.receive') }}"
                class="nav-link {{ request()->routeIs('tenant.inventory.receive') ? 'active' : '' }}"

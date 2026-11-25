@@ -20,6 +20,7 @@ APP_NAME=BlePOS
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://blepos.co.ke
+APP_KEY=base64:replace-with-managed-secret
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -30,9 +31,15 @@ DB_PASSWORD=secret_production_password
 
 # Platform Security & Isolation
 PLATFORM_FORCE_HTTPS=true
+SESSION_SECURE_COOKIE=true
+PLATFORM_SESSION_SECURE_COOKIE=true
 PLATFORM_SESSION_COOKIE=blepos_platform_session
 SESSION_COOKIE=blepos_session
 TRUSTED_PROXIES=127.0.0.1,10.0.0.0/8
+FILESYSTEM_DISK=s3
+BACKUP_DISK=s3
+QUEUE_CONNECTION=redis
+CACHE_STORE=redis
 PLATFORM_IP_ALLOWLIST_ENABLED=false
 PLATFORM_IP_ALLOWLIST=
 
@@ -46,6 +53,8 @@ MPESA_PASSKEY=
 ETIMS_ENV=production
 ETIMS_SERVER_URL=https://etims.kra.go.ke
 ```
+
+The application refuses to boot in production when debug is enabled, `APP_KEY` is missing, secure session cookies are disabled, SQLite is selected, or upload/backup storage defaults to local disks. Store secrets in the host's secret manager. Configure the `s3` disk credentials, private bucket policies, lifecycle retention, encryption at rest, Redis, trusted proxy addresses, and TLS termination before deployment. `.env.example` uses non-debug defaults; its local database and storage values are for development only.
 
 ---
 
@@ -76,6 +85,8 @@ php artisan queue:restart
 php artisan up
 ```
 
+The platform layout uses the Vite development server only while its `/@vite/client` endpoint responds. If a server is restarted after the dev server stopped unexpectedly, a stale `public/hot` file is ignored and Laravel serves the compiled manifest assets instead. `npm run dev` and `npm run build` also clear an old hot file before starting.
+
 ---
 
 ## 4. Background Processes & Scheduler
@@ -84,6 +95,8 @@ Crontab configuration for scheduled tasks:
 ```cron
 * * * * * cd /var/www/blepos && php artisan schedule:run >> /dev/null 2>&1
 ```
+
+The scheduler runs the encrypted platform database backup daily at 01:00 and expires backup artifacts at 02:00 using `PLATFORM_BACKUP_RETENTION_DAYS` (30 days by default). Monitor both scheduled commands and verify restore drills on the selected production database engine; only SQLite sandbox restores are currently executable in-app.
 
 Supervisor configuration (`/etc/supervisor/conf.d/blepos-worker.conf`):
 ```ini

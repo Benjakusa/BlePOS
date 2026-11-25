@@ -8,15 +8,18 @@ use App\Http\Middleware\EnsurePlatformMfa;
 use App\Http\Middleware\EnsurePlatformPermission;
 use App\Http\Middleware\EnsurePlatformStepUp;
 use App\Http\Middleware\EnsureTenantIndustry;
+use App\Http\Middleware\EnsureTenantMfa;
 use App\Http\Middleware\EnsureTenantPermission;
 use App\Http\Middleware\PlatformSecurityHeaders;
 use App\Http\Middleware\ResolveTenantContext;
+use App\Http\Middleware\ResolveTenantForRouteBinding;
 use App\Http\Middleware\StartBleposSession;
 use App\Http\Middleware\TrackPlatformSession;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -29,7 +32,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(replace: [
             StartSession::class => StartBleposSession::class,
         ]);
+        $middleware->insertBeforeInGroup('web', SubstituteBindings::class, ResolveTenantForRouteBinding::class);
         $middleware->trustProxies(
+            at: array_values(array_filter(array_map(
+                'trim',
+                explode(',', (string) env('TRUSTED_PROXIES', '')),
+            ))),
             headers: Request::HEADER_X_FORWARDED_FOR
                 | Request::HEADER_X_FORWARDED_HOST
                 | Request::HEADER_X_FORWARDED_PORT
@@ -56,6 +64,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'shop.isolate' => EnforceShopIsolation::class,
             'tenant.permission' => EnsureTenantPermission::class,
             'tenant.industry' => EnsureTenantIndustry::class,
+            'tenant.mfa' => EnsureTenantMfa::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

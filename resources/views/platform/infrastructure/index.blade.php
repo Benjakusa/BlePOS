@@ -38,7 +38,7 @@
             </div>
             <div class="muted" style="font-size: 12px; margin-top: 4px;">
                 @foreach($probe['details'] as $k => $v)
-                    <div>{{ $k }}: <strong>{{ is_bool($v) ? ($v ? 'true' : 'false') : $v }}</strong></div>
+                    <div>{{ $k }}: <strong>{{ is_array($v) ? json_encode($v) : (is_bool($v) ? ($v ? 'true' : 'false') : $v) }}</strong></div>
                 @endforeach
             </div>
         </div>

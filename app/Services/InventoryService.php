@@ -8,6 +8,7 @@ use App\Models\Shop;
 use App\Models\StockMovement;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class InventoryService
 {
@@ -34,7 +35,8 @@ class InventoryService
             $referenceType,
             $referenceId
         ): StockMovement {
-            $stock = InventoryStock::query()
+            $stock = InventoryStock::withoutGlobalScopes()
+                ->where('tenant_id', $shop->tenant_id)
                 ->where('shop_id', $shop->id)
                 ->where('product_id', $product->id)
                 ->lockForUpdate()
@@ -42,6 +44,11 @@ class InventoryService
 
             $balanceBefore = (float) ($stock?->quantity ?? 0.0);
             $balanceAfter = $balanceBefore + $quantityDelta;
+            if ($type === 'sale' && $balanceAfter < -0.00001) {
+                throw ValidationException::withMessages([
+                    'stock' => 'Insufficient stock to complete this sale.',
+                ]);
+            }
 
             if ($stock) {
                 $stock->update(['quantity' => $balanceAfter]);
@@ -98,7 +105,8 @@ class InventoryService
      */
     public function getStock(Product $product, Shop $shop): float
     {
-        $stock = InventoryStock::query()
+        $stock = InventoryStock::withoutGlobalScopes()
+            ->where('tenant_id', $shop->tenant_id)
             ->where('shop_id', $shop->id)
             ->where('product_id', $product->id)
             ->first();

@@ -81,7 +81,8 @@ class TenantPosAndShiftTest extends TestCase
 
         // 0. Render create shift view
         $createViewResponse = $this->actingAs($cashier)->get(route('tenant.shifts.create'));
-        $createViewResponse->assertStatus(200);
+        $this->assertSame($shop->id, session('active_shop_id'));
+        $this->assertSame(200, $createViewResponse->status(), $createViewResponse->getContent());
         $createViewResponse->assertSee('Open Work Shift');
         $createViewResponse->assertSee('Main Till');
 
@@ -93,7 +94,7 @@ class TenantPosAndShiftTest extends TestCase
             'notes' => 'Morning shift',
         ]);
 
-        $shift = CashierShift::query()->where('user_id', $cashier->id)->first();
+        $shift = CashierShift::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('shop_id', $shop->id)->where('user_id', $cashier->id)->first();
         $this->assertNotNull($shift);
         $this->assertEquals('open', $shift->status);
         $this->assertEquals('2500.00', $shift->opening_float);
@@ -114,7 +115,7 @@ class TenantPosAndShiftTest extends TestCase
             'reason' => 'Additional change added',
         ]);
 
-        $shift->refresh();
+        $shift = CashierShift::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('shop_id', $shop->id)->findOrFail($shift->id);
         $this->assertEquals('500.00', $shift->cash_in);
         $this->assertEquals('3000.00', $shift->expected_cash);
 
@@ -125,7 +126,7 @@ class TenantPosAndShiftTest extends TestCase
         ]);
 
         $closeResponse->assertRedirect(route('tenant.shifts.show', $shift));
-        $shift->refresh();
+        $shift = CashierShift::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('shop_id', $shop->id)->findOrFail($shift->id);
         $this->assertEquals('closed', $shift->status);
         $this->assertEquals('3050.00', $shift->actual_cash);
         $this->assertEquals('50.00', $shift->variance);
@@ -176,7 +177,19 @@ class TenantPosAndShiftTest extends TestCase
             'opened_at' => now(),
         ]);
 
-        // Process POS sale: 2 packets of milk @ 65 = 130
+        // A client cannot complete an underpaid sale or override the product price.
+        $underpaid = $this->actingAs($cashier)->postJson(route('tenant.pos.process'), [
+            'shift_id' => $shift->id,
+            'shop_id' => $shop->id,
+            'register_id' => $register->id,
+            'items' => [['product_id' => $product->id, 'quantity' => 2, 'unit_price' => 0.01]],
+            'payments' => [['method' => 'cash', 'amount' => 0.02]],
+        ]);
+        $underpaid->assertStatus(422);
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertSame(50.0, (float) InventoryStock::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('shop_id', $shop->id)->where('product_id', $product->id)->value('quantity'));
+
+        // Process POS sale: server price for 2 packets of milk @ 65 = 130.
         $saleResponse = $this->actingAs($cashier)->postJson(route('tenant.pos.process'), [
             'shift_id' => $shift->id,
             'shop_id' => $shop->id,
@@ -185,8 +198,8 @@ class TenantPosAndShiftTest extends TestCase
                 [
                     'product_id' => $product->id,
                     'quantity' => 2,
-                    'unit_price' => 65.00,
-                    'tax_rate' => 16.00,
+                    'unit_price' => 0.01,
+                    'tax_rate' => 0,
                 ],
             ],
             'payments' => [
@@ -205,16 +218,16 @@ class TenantPosAndShiftTest extends TestCase
         ]);
 
         $saleId = $saleResponse->json('sale_id');
-        $sale = Sale::find($saleId);
+        $sale = Sale::withoutGlobalScopes()->where('tenant_id', $tenant->id)->find($saleId);
         $this->assertNotNull($sale);
         $this->assertEquals('completed', $sale->status);
 
         // Verify stock deducted from 50 to 48
-        $currentStock = InventoryStock::where('shop_id', $shop->id)->where('product_id', $product->id)->first();
+        $currentStock = InventoryStock::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('shop_id', $shop->id)->where('product_id', $product->id)->first();
         $this->assertEquals(48.0, (float) $currentStock->quantity);
 
         // Verify shift cash_sales updated
-        $shift->refresh();
+        $shift = CashierShift::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('shop_id', $shop->id)->findOrFail($shift->id);
         $this->assertEquals('130.00', $shift->cash_sales);
 
         // Verify receipt view renders correctly

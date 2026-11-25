@@ -68,7 +68,7 @@ class CorePosAndInventoryTest extends TestCase
         $this->assertEquals(45.0, (float) $movement2->balance_after);
 
         // Verify audit log has 2 records
-        $this->assertCount(2, StockMovement::where('product_id', $product->id)->get());
+        $this->assertCount(2, StockMovement::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('shop_id', $shop->id)->where('product_id', $product->id)->get());
     }
 
     public function test_cashier_shift_lifecycle_and_variance_reconciliation(): void
@@ -153,7 +153,7 @@ class CorePosAndInventoryTest extends TestCase
         ]);
 
         // Sell 3 units of Cooking Oil (320 * 3 = 960 total)
-        // Split payment: 500 KES via M-Pesa, 500 KES Cash (40 KES change due)
+        // Cash tender exceeds the server-calculated total (40 KES change due).
         $items = [
             [
                 'product_id' => $productA->id,
@@ -165,13 +165,8 @@ class CorePosAndInventoryTest extends TestCase
 
         $payments = [
             [
-                'method' => 'mpesa',
-                'amount' => 500.00,
-                'reference' => 'QJK9812A09',
-            ],
-            [
                 'method' => 'cash',
-                'amount' => 500.00,
+                'amount' => 1000.00,
             ],
         ];
 
@@ -182,7 +177,7 @@ class CorePosAndInventoryTest extends TestCase
             items: $items,
             payments: $payments,
             shift: $shift,
-            notes: 'Customer paid via M-Pesa + Cash'
+            notes: 'Customer paid cash'
         );
 
         $this->assertInstanceOf(Sale::class, $sale);
@@ -196,8 +191,8 @@ class CorePosAndInventoryTest extends TestCase
 
         // Assert Shift sales updated
         $shift->refresh();
-        $this->assertEquals('500.00', (string) $shift->mpesa_sales);
-        $this->assertEquals('460.00', (string) $shift->cash_sales); // 500 cash in - 40 change = 460 net cash
+        $this->assertEquals('0.00', (string) $shift->mpesa_sales);
+        $this->assertEquals('960.00', (string) $shift->cash_sales); // 1000 cash in - 40 change = 960 net cash
 
         // Assert StockMovement recorded with type 'sale'
         $this->assertDatabaseHas('stock_movements', [

@@ -18,6 +18,7 @@ class EnforceTenantIsolation
         abort_if($tenant->isSuspended(), 403, 'This business account is currently suspended.');
 
         if ($request->user()) {
+            abort_if($request->user()->status !== 'active', 403, 'This tenant user account is inactive.');
             abort_unless(
                 (int) $request->user()->tenant_id === (int) $tenant->id,
                 403,

@@ -40,10 +40,12 @@ use App\Http\Controllers\Tenant\Accounting\ChartOfAccountsController;
 use App\Http\Controllers\Tenant\Accounting\ExpenseController;
 use App\Http\Controllers\Tenant\Accounting\JournalEntryController;
 use App\Http\Controllers\Tenant\Auth\TenantAuthController;
+use App\Http\Controllers\Tenant\Auth\TenantMfaController;
 use App\Http\Controllers\Tenant\CashierShiftController;
 use App\Http\Controllers\Tenant\CategoryController;
 use App\Http\Controllers\Tenant\InventoryController;
 use App\Http\Controllers\Tenant\MpesaCredentialController;
+use App\Http\Controllers\Tenant\PharmacyController;
 use App\Http\Controllers\Tenant\PosController;
 use App\Http\Controllers\Tenant\ProductController;
 use App\Http\Controllers\Tenant\TableController;
@@ -406,7 +408,14 @@ Route::middleware('web')->group(function (): void {
     Route::post('/tenant/logout', [TenantAuthController::class, 'destroy'])->name('tenant.logout');
 });
 
-Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.resolve', 'tenant.isolate', 'shop.isolate'])->group(function (): void {
+Route::middleware(['web', 'auth'])->prefix('tenant/mfa')->name('tenant.mfa.')->group(function (): void {
+    Route::get('/setup', [TenantMfaController::class, 'setup'])->name('setup');
+    Route::post('/setup', [TenantMfaController::class, 'confirmSetup'])->middleware('throttle:10,1')->name('setup.confirm');
+    Route::get('/challenge', [TenantMfaController::class, 'challenge'])->name('challenge');
+    Route::post('/challenge', [TenantMfaController::class, 'verify'])->middleware('throttle:10,1')->name('verify');
+});
+
+Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.resolve', 'tenant.mfa', 'tenant.isolate', 'shop.isolate'])->group(function (): void {
     Route::get('/', TenantDashboardController::class)->name('dashboard');
     Route::get('/notifications', [NotificationCenterController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/read', [NotificationCenterController::class, 'read'])->name('notifications.read');
@@ -435,6 +444,12 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
     Route::get('/products/lookup', [ProductController::class, 'lookup'])->name('products.lookup');
     Route::resource('products', ProductController::class)
         ->middleware('tenant.permission:catalog.products.manage');
+
+    Route::middleware('tenant.industry:pharmacy')->prefix('pharmacy')->name('pharmacy.')->group(function (): void {
+        Route::get('/', [PharmacyController::class, 'index'])->middleware('tenant.permission:inventory.view')->name('index');
+        Route::post('/batches', [PharmacyController::class, 'storeBatch'])->middleware('tenant.permission:inventory.receive')->name('batches.store');
+        Route::post('/prescriptions', [PharmacyController::class, 'storePrescription'])->middleware('tenant.permission:users.manage')->name('prescriptions.store');
+    });
 
     // Point of Sale & Checkout
     Route::get('/pos/checkout', [PosController::class, 'checkout'])->middleware('tenant.permission:pos.sale.create')->name('pos.checkout');

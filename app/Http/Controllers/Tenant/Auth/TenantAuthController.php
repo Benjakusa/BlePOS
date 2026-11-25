@@ -33,7 +33,10 @@ class TenantAuthController extends Controller
         ]);
 
         $email = mb_strtolower($validated['email']);
-        $user = User::query()->where('email', $email)->first();
+        // Login happens before tenant middleware can establish a context. Email is
+        // globally unique in the tenant-user table, so resolve the identity here,
+        // then bind every subsequent request to this user's tenant.
+        $user = User::withoutGlobalScopes()->where('email', $email)->first();
 
         if (! $user || ! Hash::check($validated['password'], $user->password)) {
             throw ValidationException::withMessages([
@@ -48,7 +51,7 @@ class TenantAuthController extends Controller
         }
 
         // Verify tenant account is active
-        $tenant = Tenant::query()->find($user->tenant_id);
+        $tenant = Tenant::withoutGlobalScopes()->find($user->tenant_id);
         if (! $tenant || ! $tenant->isActive()) {
             throw ValidationException::withMessages([
                 'email' => 'This business account is inactive or suspended.',
@@ -57,10 +60,12 @@ class TenantAuthController extends Controller
 
         Auth::guard('web')->login($user, $request->boolean('remember'));
         $request->session()->regenerate();
+        $request->session()->forget('tenant_mfa_verified_at');
 
         // If user is assigned to a shop, pre-set session active_shop_id
-        $primaryShop = $user->shops()->wherePivot('is_primary', true)->first()
-            ?? $user->shops()->first();
+        $assignedShops = $user->shops()->withoutGlobalScopes()->where('shops.tenant_id', $user->tenant_id);
+        $primaryShop = (clone $assignedShops)->wherePivot('is_primary', true)->first()
+            ?? $assignedShops->first();
 
         if ($primaryShop) {
             $request->session()->put('active_shop_id', $primaryShop->id);

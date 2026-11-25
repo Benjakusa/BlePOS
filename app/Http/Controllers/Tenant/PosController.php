@@ -80,12 +80,14 @@ class PosController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
-            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'items.*.batch_id' => ['nullable', 'integer'],
+            'items.*.prescription_id' => ['nullable', 'integer'],
+            'items.*.pharmacist_user_id' => ['nullable', 'integer'],
             'items.*.discount' => ['nullable', 'numeric', 'min:0'],
             'items.*.tax_rate' => ['nullable', 'numeric', 'min:0'],
             'payments' => ['required', 'array', 'min:1'],
             'payments.*.method' => ['required', 'string', 'in:cash,mpesa,card,cheque,credit'],
-            'payments.*.amount' => ['required', 'numeric', 'min:0.01'],
+            'payments.*.amount' => ['required', 'numeric', 'min:0'],
             'payments.*.reference' => ['nullable', 'string', 'max:100'],
         ]);
 
@@ -100,6 +102,12 @@ class PosController extends Controller
         $register = $validated['register_id']
             ? Register::query()->findOrFail($validated['register_id'])
             : Register::query()->where('shop_id', $shop->id)->firstOrFail();
+        abort_unless((int) $register->shop_id === (int) $shop->id, 422, 'Register does not belong to this shop.');
+        abort_unless($request->user()->canAccessShop($shop), 403, 'You are not assigned to this shop.');
+        abort_if(collect($validated['items'])->contains(fn ($item) => (float) ($item['discount'] ?? 0) > 0)
+            && ! $request->user()->hasPermission('pos.sale.discount'), 403, 'Discount permission required.');
+        abort_if(collect($validated['payments'])->contains(fn ($payment) => $payment['method'] === 'credit')
+            && ! $request->user()->hasPermission('pos.sale.credit'), 403, 'Credit sale permission required.');
 
         $sale = $this->saleService->createSale(
             shop: $shop,
@@ -110,6 +118,7 @@ class PosController extends Controller
             shift: $shift,
             notes: $validated['notes'] ?? null,
             diningTableId: $validated['dining_table_id'] ?? null,
+            idempotencyKey: $request->header('Idempotency-Key'),
         );
 
         // If table was selected, update table status

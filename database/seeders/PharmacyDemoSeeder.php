@@ -19,6 +19,7 @@ use App\Models\TenantRole;
 use App\Models\User;
 use App\Services\ModuleService;
 use App\Services\TenantContext;
+use App\Support\SeederScopeContext;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -27,6 +28,7 @@ class PharmacyDemoSeeder extends Seeder
 {
     public function run(): void
     {
+        $scope = new SeederScopeContext;
         $this->call(ModuleCatalogueSeeder::class);
 
         $plan = Plan::firstOrCreate(

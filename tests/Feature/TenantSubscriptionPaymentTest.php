@@ -38,7 +38,7 @@ class TenantSubscriptionPaymentTest extends TestCase
             ->assertSee(route('tenant.subscription.index'));
     }
 
-    public function test_tenant_can_pay_subscription_directly_via_platform_mpesa_stk_push_without_prior_invoice(): void
+    public function test_stk_initiation_creates_pending_attempt_without_marking_invoice_paid(): void
     {
         $owner = User::where('email', 'restaurant.owner@blepos.co.ke')->firstOrFail();
         $tenant = Tenant::findOrFail($owner->tenant_id);
@@ -76,22 +76,23 @@ class TenantSubscriptionPaymentTest extends TestCase
                 && str_contains($request['CallBackURL'], $platformCred->callback_token);
         });
 
+        $invoice = PlatformInvoice::query()->where('tenant_id', $tenant->id)->latest('id')->firstOrFail();
+        $this->assertSame('issued', $invoice->status);
         $this->assertDatabaseHas('platform_invoices', [
             'tenant_id' => $tenant->id,
-            'status' => 'paid',
+            'status' => 'issued',
         ]);
 
         $this->assertDatabaseHas('platform_payments', [
             'tenant_id' => $tenant->id,
             'payment_method' => 'mpesa',
             'gateway_reference' => 'ws_CO_SUB_123456',
-            'status' => 'completed',
+            'status' => 'pending',
         ]);
 
         $sub = Subscription::withoutGlobalScopes()->where('tenant_id', $tenant->id)->latest('id')->firstOrFail();
-        $this->assertEquals($plan->id, $sub->plan_id);
-        $this->assertEquals('active', $sub->status);
-        $this->assertEquals('active', $tenant->fresh()->status);
+        $this->assertNotSame($plan->id, $sub->plan_id);
+        $this->assertNotSame('active', $tenant->fresh()->status);
     }
 
     public function test_tenant_can_pay_existing_sent_invoice_and_cannot_pay_other_tenant_invoice(): void
@@ -110,7 +111,12 @@ class TenantSubscriptionPaymentTest extends TestCase
             'gateway_reference' => 'QDF12345XY',
         ])->assertRedirect(route('tenant.subscription.index'));
 
-        $this->assertTrue($invoiceA->fresh()->isPaid());
+        $this->assertFalse($invoiceA->fresh()->isPaid());
+        $this->assertDatabaseHas('platform_payments', [
+            'platform_invoice_id' => $invoiceA->id,
+            'status' => 'pending',
+            'gateway_reference' => 'QDF12345XY',
+        ]);
 
         $this->actingAs($ownerA, 'web')->post(route('tenant.subscription.pay'), [
             'invoice_id' => $invoiceB->id,

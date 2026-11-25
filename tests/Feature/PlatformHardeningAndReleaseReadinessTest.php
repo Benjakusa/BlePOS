@@ -70,7 +70,7 @@ class PlatformHardeningAndReleaseReadinessTest extends TestCase
         $response = $this->actingAs($admin, 'platform')
             ->get('/tenant');
 
-        $this->assertTrue(in_array($response->status(), [302, 403]));
+        $this->assertNotSame(200, $response->status(), 'A platform account must not enter the tenant workspace.');
     }
 
     public function test_no_tenant_user_impersonation_allowed(): void

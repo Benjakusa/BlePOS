@@ -120,12 +120,12 @@ class TenantInventoryTest extends TestCase
         $response->assertRedirect(route('tenant.inventory.index', ['shop_id' => $shop->id]));
 
         // Check stock quantity updated
-        $stock = InventoryStock::where('product_id', $product->id)->where('shop_id', $shop->id)->first();
+        $stock = InventoryStock::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('product_id', $product->id)->where('shop_id', $shop->id)->first();
         $this->assertNotNull($stock);
         $this->assertEquals(20.0, (float) $stock->quantity);
 
         // Check immutable StockMovement record created
-        $movement = StockMovement::where('product_id', $product->id)->first();
+        $movement = StockMovement::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('shop_id', $shop->id)->where('product_id', $product->id)->first();
         $this->assertNotNull($movement);
         $this->assertEquals('receipt', $movement->type);
         $this->assertEquals(0.0, (float) $movement->balance_before);
@@ -169,10 +169,10 @@ class TenantInventoryTest extends TestCase
 
         $response->assertRedirect(route('tenant.inventory.index', ['shop_id' => $shop->id]));
 
-        $stock = InventoryStock::where('product_id', $product->id)->where('shop_id', $shop->id)->first();
+        $stock = InventoryStock::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('product_id', $product->id)->where('shop_id', $shop->id)->first();
         $this->assertEquals(13.0, (float) $stock->quantity);
 
-        $movement = StockMovement::where('product_id', $product->id)->latest()->first();
+        $movement = StockMovement::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('shop_id', $shop->id)->where('product_id', $product->id)->latest()->first();
         $this->assertEquals('damage', $movement->type);
         $this->assertEquals(15.0, (float) $movement->balance_before);
         $this->assertEquals(-2.0, (float) $movement->quantity);

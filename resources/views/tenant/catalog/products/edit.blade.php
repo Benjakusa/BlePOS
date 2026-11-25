@@ -57,6 +57,10 @@
         <div style="display: flex; gap: 20px;">
             <x-input type="toggle" name="track_stock" value="1" :checked="$product->track_stock" label="Track Inventory Stock" />
             <x-input type="toggle" name="is_active" value="1" :checked="$product->is_active" label="Active" />
+            @if(($tenant->industry ?? null) === 'pharmacy')
+                <x-input type="toggle" name="requires_prescription" value="1" :checked="(bool) ($product->metadata['requires_prescription'] ?? false)" label="Prescription required" />
+                <x-input type="toggle" name="is_controlled_substance" value="1" :checked="(bool) ($product->metadata['is_controlled_substance'] ?? false)" label="Controlled substance (pharmacist verification required)" />
+            @endif
         </div>
 
         <div style="margin-top: 8px;">

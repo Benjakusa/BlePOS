@@ -96,6 +96,12 @@ class ProductController extends Controller
         $validated['track_stock'] = $request->boolean('track_stock', true);
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['tax_rate'] = $validated['tax_rate'] ?? '0.00';
+        if ($tenant->industry === 'pharmacy') {
+            $validated['metadata'] = [
+                'requires_prescription' => $request->boolean('requires_prescription'),
+                'is_controlled_substance' => $request->boolean('is_controlled_substance'),
+            ];
+        }
 
         Product::query()->create($validated);
 
@@ -169,6 +175,12 @@ class ProductController extends Controller
 
         $validated['track_stock'] = $request->boolean('track_stock', true);
         $validated['is_active'] = $request->boolean('is_active', true);
+        if (TenantContext::getTenant()?->industry === 'pharmacy') {
+            $validated['metadata'] = [
+                'requires_prescription' => $request->boolean('requires_prescription'),
+                'is_controlled_substance' => $request->boolean('is_controlled_substance'),
+            ];
+        }
 
         $product->update($validated);
 
@@ -223,6 +235,8 @@ class ProductController extends Controller
                     'tax_rate' => $product->tax_rate,
                     'unit_of_measure' => $product->unit_of_measure,
                     'track_stock' => $product->track_stock,
+                    'requires_prescription' => (bool) ($product->metadata['requires_prescription'] ?? false),
+                    'is_controlled_substance' => (bool) ($product->metadata['is_controlled_substance'] ?? false),
                     'image_url' => $product->imageUrl(),
                 ],
             ]);
@@ -242,6 +256,8 @@ class ProductController extends Controller
                 'tax_rate' => $p->tax_rate,
                 'unit_of_measure' => $p->unit_of_measure,
                 'track_stock' => $p->track_stock,
+                'requires_prescription' => (bool) ($p->metadata['requires_prescription'] ?? false),
+                'is_controlled_substance' => (bool) ($p->metadata['is_controlled_substance'] ?? false),
                 'category_name' => $p->category?->name ?? 'General',
                 'image_url' => $p->imageUrl(),
             ]),

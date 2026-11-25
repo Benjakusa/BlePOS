@@ -44,7 +44,7 @@ class PharmacyBatch extends Model
 
     public function isExpired(): bool
     {
-        return $this->expiry_date->isPast();
+        return $this->expiry_date->lt(now()->startOfDay());
     }
 
     public function daysUntilExpiry(): int

@@ -34,7 +34,7 @@ class TenantPlatformCommunicationTest extends TestCase
     {
         [$agent, $session] = $this->createPlatformUser('support-agent');
         $owner = User::where('email', 'restaurant.owner@blepos.co.ke')->firstOrFail();
-        $otherOwner = User::where('email', 'hotel.owner@blepos.co.ke')->firstOrFail();
+        $otherOwner = User::withoutGlobalScopes()->where('email', 'hotel.owner@blepos.co.ke')->firstOrFail();
 
         $this->actingAs($owner)->post(route('tenant.support.cases.store'), [
             'subject' => 'Need help with reports',
@@ -110,7 +110,7 @@ class TenantPlatformCommunicationTest extends TestCase
         $this->actingAs($owner)->get(route('tenant.notifications.index'))->assertOk()->assertSee('New invoice from BlePOS');
         $this->actingAs($owner)->post(route('tenant.notifications.read', $notification->id))->assertRedirect(route('tenant.subscription.index'));
 
-        $otherOwner = User::where('email', 'hotel.owner@blepos.co.ke')->firstOrFail();
+        $otherOwner = User::withoutGlobalScopes()->where('email', 'hotel.owner@blepos.co.ke')->firstOrFail();
         $this->actingAs($otherOwner)->get(route('tenant.subscription.index'))
             ->assertOk()
             ->assertDontSee($invoice->invoice_number);
@@ -122,7 +122,7 @@ class TenantPlatformCommunicationTest extends TestCase
     public function test_targeted_platform_announcement_is_visible_only_to_its_tenant(): void
     {
         $owner = User::where('email', 'restaurant.owner@blepos.co.ke')->firstOrFail();
-        $otherOwner = User::where('email', 'hotel.owner@blepos.co.ke')->firstOrFail();
+        $otherOwner = User::withoutGlobalScopes()->where('email', 'hotel.owner@blepos.co.ke')->firstOrFail();
         $announcement = app(SupportService::class)->createAnnouncement([
             'title' => 'Restaurant maintenance window',
             'content' => 'Scheduled maintenance is at 11 PM.',

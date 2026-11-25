@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Services\MpesaCredentialResolver;
 use App\Services\MpesaEncryptionService;
+use App\Support\ResilientVite;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Foundation\Vite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -19,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(MpesaEncryptionService::class);
         $this->app->singleton(MpesaCredentialResolver::class);
+        $this->app->singleton(Vite::class, ResilientVite::class);
     }
 
     /**
@@ -26,6 +29,36 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (app()->isProduction()) {
+            $problems = [];
+            if ((bool) config('app.debug')) {
+                $problems[] = 'APP_DEBUG must be false';
+            }
+            if (! config('app.key')) {
+                $problems[] = 'APP_KEY must be configured';
+            }
+            if (! config('session.secure')) {
+                $problems[] = 'SESSION_SECURE_COOKIE must be true';
+            }
+            if (config('database.default') === 'sqlite') {
+                $problems[] = 'SQLite is not supported for production';
+            }
+            $uploadDisk = (string) config('filesystems.default');
+            if (config('filesystems.disks.'.$uploadDisk.'.driver') !== 's3') {
+                $problems[] = 'production uploads require durable object storage';
+            }
+            $backupDisk = (string) config('platform.backup_disk');
+            if (config('filesystems.disks.'.$backupDisk.'.driver') !== 's3') {
+                $problems[] = 'production backups require off-host object storage';
+            }
+            if (config('trustedproxy.proxies') === []) {
+                $problems[] = 'TRUSTED_PROXIES must list the reverse proxy addresses';
+            }
+            if ($problems !== []) {
+                throw new \RuntimeException('Unsafe production configuration: '.implode('; ', $problems).'.');
+            }
+        }
+
         RateLimiter::for('platform-login', function (Request $request): array {
             $account = Str::lower($request->string('email')->toString());
 

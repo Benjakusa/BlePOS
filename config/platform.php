@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'backup_disk' => env('BACKUP_DISK', 'local'),
+    'backup_retention_days' => max(1, (int) env('PLATFORM_BACKUP_RETENTION_DAYS', 30)),
     'security' => [
         'force_https' => env('PLATFORM_FORCE_HTTPS', env('APP_ENV') === 'production'),
         'ip_allowlist_enabled' => (bool) env('PLATFORM_IP_ALLOWLIST_ENABLED', false),

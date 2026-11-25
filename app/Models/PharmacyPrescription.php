@@ -32,8 +32,13 @@ class PharmacyPrescription extends Model
         return $this->hasMany(PharmacyDispensingLog::class, 'prescription_id');
     }
 
+    public function items(): HasMany
+    {
+        return $this->hasMany(PharmacyPrescriptionItem::class, 'prescription_id');
+    }
+
     public function isExpired(): bool
     {
-        return $this->expiry_date->isPast();
+        return $this->expiry_date->lt(now()->startOfDay());
     }
 }

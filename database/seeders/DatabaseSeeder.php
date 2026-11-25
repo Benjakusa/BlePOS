@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Support\SeederScopeContext;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -14,6 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $scope = new SeederScopeContext;
         $this->call([
             PlatformRoleSeeder::class,
             ModuleCatalogueSeeder::class,

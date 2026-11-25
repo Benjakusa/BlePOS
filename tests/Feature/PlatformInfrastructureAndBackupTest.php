@@ -8,9 +8,11 @@ use App\Models\PlatformRole;
 use App\Models\PlatformSession;
 use App\Models\PlatformUser;
 use App\Models\Tenant;
+use App\Services\InfrastructureService;
 use Database\Seeders\PlatformRoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -138,7 +140,7 @@ class PlatformInfrastructureAndBackupTest extends TestCase
         $response->assertSee('MIGRATED');
     }
 
-    public function test_operations_admin_can_trigger_encrypted_backup_and_audit(): void
+    public function test_unsupported_tenant_backup_is_rejected_without_fabricating_a_run(): void
     {
         [$user, $sessionId] = $this->createPlatformAdmin();
         $tenant = Tenant::factory()->create(['status' => 'active']);
@@ -149,19 +151,58 @@ class PlatformInfrastructureAndBackupTest extends TestCase
                 'tenant_id' => $tenant->id,
             ]);
 
-        $response->assertRedirectToRoute('platform.infrastructure.backups');
-
-        $this->assertDatabaseHas('platform_backup_runs', [
-            'backup_type' => 'tenant_database',
-            'tenant_id' => $tenant->id,
-            'is_encrypted' => true,
-            'destination' => 'local_encrypted',
-            'status' => 'verified',
-        ]);
-
-        $this->assertDatabaseHas('platform_audit_log', [
+        $response->assertSessionHasErrors('backup_type');
+        $this->assertDatabaseCount('platform_backup_runs', 0);
+        $this->assertDatabaseMissing('platform_audit_log', [
             'action' => 'infrastructure.backup.trigger',
             'actor_id' => $user->id,
+        ]);
+    }
+
+    public function test_backup_retention_removes_expired_artifacts_but_preserves_audit_metadata(): void
+    {
+        Storage::fake('retention-backups');
+        Storage::disk('retention-backups')->put('backups/old.enc', 'old-artifact');
+        Storage::disk('retention-backups')->put('backups/recent.enc', 'recent-artifact');
+
+        $expired = PlatformBackupRun::query()->create([
+            'backup_type' => 'database',
+            'status' => 'verified',
+            'filename' => 'backups/old.enc',
+            'destination' => 'retention-backups',
+            'size_bytes' => 12,
+            'checksum' => hash('sha256', 'old-artifact'),
+            'is_encrypted' => true,
+            'verified_at' => now()->subDays(31),
+            'started_at' => now()->subDays(31),
+            'completed_at' => now()->subDays(31),
+        ]);
+        $recent = PlatformBackupRun::query()->create([
+            'backup_type' => 'database',
+            'status' => 'verified',
+            'filename' => 'backups/recent.enc',
+            'destination' => 'retention-backups',
+            'size_bytes' => 15,
+            'checksum' => hash('sha256', 'recent-artifact'),
+            'is_encrypted' => true,
+            'verified_at' => now(),
+            'started_at' => now(),
+            'completed_at' => now(),
+        ]);
+
+        $result = app(InfrastructureService::class)->pruneExpiredBackups(30);
+
+        $this->assertSame(['expired' => 1, 'failed' => 0, 'retention_days' => 30], $result);
+        Storage::disk('retention-backups')->assertMissing('backups/old.enc');
+        Storage::disk('retention-backups')->assertExists('backups/recent.enc');
+        $this->assertDatabaseHas('platform_backup_runs', [
+            'id' => $expired->id,
+            'status' => 'expired',
+            'checksum' => hash('sha256', 'old-artifact'),
+        ]);
+        $this->assertDatabaseHas('platform_backup_runs', [
+            'id' => $recent->id,
+            'status' => 'verified',
         ]);
     }
 
@@ -175,6 +216,7 @@ class PlatformInfrastructureAndBackupTest extends TestCase
             'backup_type' => 'tenant_database',
             'tenant_id' => $tenant->id,
             'status' => 'verified',
+            'destination' => 'local',
             'filename' => 'tenant_backup_snapshot.enc.sql',
             'size_bytes' => 2048000,
             'checksum' => hash('sha256', 'tenant_backup_snapshot'),
@@ -208,23 +250,19 @@ class PlatformInfrastructureAndBackupTest extends TestCase
         $this->assertSame('requested', $restore->status);
         $this->assertNull($restore->approved_by);
 
-        // Step 3: Second administrator approves restore request -> SUCCESS
+        // Step 3: A second administrator cannot mark a missing artifact as restored.
         $validApprovalResponse = $this->platformRequest($approver, $appSession)
             ->post(route('platform.infrastructure.restores.approve', $restore), [
                 'verification_notes' => 'Tested in isolated sandbox. Verified all shop registers match.',
             ]);
 
-        $validApprovalResponse->assertRedirectToRoute('platform.infrastructure.restores');
+        $validApprovalResponse->assertRedirect();
+        $validApprovalResponse->assertSessionHasErrors('backup');
 
         $restore->refresh();
-        $this->assertSame('production_completed', $restore->status);
-        $this->assertSame($approver->id, $restore->approved_by);
-        $this->assertNotNull($restore->executed_at);
-
-        $this->assertDatabaseHas('platform_audit_log', [
-            'action' => 'infrastructure.restore.approve',
-            'actor_id' => $approver->id,
-        ]);
+        $this->assertSame('requested', $restore->status);
+        $this->assertNull($restore->approved_by);
+        $this->assertNull($restore->executed_at);
     }
 
     public function test_unprivileged_role_cannot_access_infrastructure(): void

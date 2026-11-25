@@ -71,7 +71,9 @@ class PharmacyService
         Shop $shop,
         Product $product,
         ?int $batchId = null,
-        ?User $authorizingPharmacist = null
+        ?User $authorizingPharmacist = null,
+        float $quantity = 0,
+        ?int $prescriptionId = null
     ): ?PharmacyBatch {
         $batch = null;
 
@@ -86,9 +88,29 @@ class PharmacyService
                 ->where('shop_id', $shop->id)
                 ->where('product_id', $product->id)
                 ->where('is_quarantined', false)
-                ->where('current_quantity', '>', 0)
+                ->where('current_quantity', '>=', $quantity)
+                ->lockForUpdate()
                 ->orderBy('expiry_date', 'asc')
                 ->first();
+        }
+
+        if (! $batch) {
+            throw ValidationException::withMessages(['batch' => "Dispensing blocked: no available, non-quarantined batch exists for {$product->name}."]);
+        }
+        if ((float) $batch->current_quantity < $quantity) {
+            throw ValidationException::withMessages(['batch' => "Dispensing blocked: batch #{$batch->batch_number} has insufficient quantity."]);
+        }
+
+        $requiresPrescription = (bool) ($product->metadata['requires_prescription'] ?? false);
+        if ($requiresPrescription) {
+            $prescription = $prescriptionId ? PharmacyPrescription::query()->where('shop_id', $shop->id)->find($prescriptionId) : null;
+            if (! $prescription || $prescription->status !== 'active' || $prescription->isExpired()) {
+                throw ValidationException::withMessages(['prescription' => 'A valid, active prescription is required for this product.']);
+            }
+            $prescribedItem = $prescription->items()->where('product_id', $product->id)->first();
+            if (! $prescribedItem || bccomp(bcsub((string) $prescribedItem->prescribed_quantity, (string) $prescribedItem->dispensed_quantity, 4), number_format($quantity, 4, '.', ''), 4) < 0) {
+                throw ValidationException::withMessages(['prescription' => 'The prescription does not authorize this product quantity.']);
+            }
         }
 
         if ($batch) {
@@ -151,6 +173,9 @@ class PharmacyService
                 'current_quantity' => bcsub((string) $batch->current_quantity, (string) $quantity, 4),
             ]);
         }
+        if ($batch && (float) $batch->current_quantity < $quantity) {
+            throw ValidationException::withMessages(['batch' => 'Dispensing quantity exceeds the selected batch balance.']);
+        }
 
         return PharmacyDispensingLog::query()->create([
             'tenant_id' => $shop->tenant_id,
@@ -167,6 +192,51 @@ class PharmacyService
             'verified_by_user_id' => $verifiedBy?->id,
             'verified_at' => $verifiedBy ? now() : null,
             'dosage_instructions' => $dosageInstructions,
+        ]);
+    }
+
+    public function recordSaleDispensing(
+        Shop $shop,
+        User $user,
+        Product $product,
+        float $quantity,
+        PharmacyBatch $batch,
+        Sale $sale,
+        ?int $prescriptionId = null,
+        ?User $verifiedBy = null
+    ): PharmacyDispensingLog {
+        $batch = PharmacyBatch::query()->whereKey($batch->id)->lockForUpdate()->firstOrFail();
+        if ((float) $batch->current_quantity < $quantity) {
+            throw ValidationException::withMessages(['batch' => 'Dispensing quantity exceeds the selected batch balance.']);
+        }
+        $prescription = $prescriptionId ? PharmacyPrescription::query()->where('shop_id', $shop->id)->findOrFail($prescriptionId) : null;
+        $prescriptionItem = $prescription?->items()->where('product_id', $product->id)->lockForUpdate()->first();
+        if ($prescription && (! $prescriptionItem || bccomp(bcsub((string) $prescriptionItem->prescribed_quantity, (string) $prescriptionItem->dispensed_quantity, 4), number_format($quantity, 4, '.', ''), 4) < 0)) {
+            throw ValidationException::withMessages(['prescription' => 'The prescription does not authorize this product quantity.']);
+        }
+        $batch->update(['current_quantity' => bcsub((string) $batch->current_quantity, (string) $quantity, 4)]);
+        if ($prescriptionItem) {
+            $newDispensed = bcadd((string) $prescriptionItem->dispensed_quantity, number_format($quantity, 4, '.', ''), 4);
+            $prescriptionItem->update(['dispensed_quantity' => $newDispensed]);
+            if (bccomp($newDispensed, (string) $prescriptionItem->prescribed_quantity, 4) >= 0) {
+                $prescriptionItem->prescription()->update(['status' => 'dispensed']);
+            }
+        }
+
+        return PharmacyDispensingLog::query()->create([
+            'tenant_id' => $shop->tenant_id,
+            'shop_id' => $shop->id,
+            'user_id' => $user->id,
+            'prescription_id' => $prescription?->id,
+            'product_id' => $product->id,
+            'batch_id' => $batch->id,
+            'sale_id' => $sale->id,
+            'quantity' => $quantity,
+            'patient_name' => $prescription?->patient_name ?? 'Not recorded',
+            'is_controlled_substance' => (bool) ($product->metadata['is_controlled_substance'] ?? false),
+            'pharmacist_verified' => $verifiedBy !== null,
+            'verified_by_user_id' => $verifiedBy?->id,
+            'verified_at' => $verifiedBy ? now() : null,
         ]);
     }
 

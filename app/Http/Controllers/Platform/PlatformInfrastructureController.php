@@ -245,6 +245,6 @@ class PlatformInfrastructureController extends Controller
         );
 
         return redirect()->route('platform.infrastructure.restores')
-            ->with('notice', "Restore request #{$restore->id} approved and production recovery executed.");
+            ->with('notice', "Restore request #{$restore->id} approved; isolated restore verification completed. No production data was changed.");
     }
 }

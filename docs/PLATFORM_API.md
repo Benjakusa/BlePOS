@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-BlePOS exposes RESTful API endpoints for external integrations and administrative automations.
+BlePOS does **not currently expose a public REST API**. This document is a target specification only; no `/api/v1` routes, Sanctum API authentication, webhook signing, or public API guarantees exist. The M-Pesa callback route is a separate provider integration endpoint. Build a versioned API only when an integration is approved and define its authentication and tenant boundaries before publishing clients.
 
 ## 2. Security & Boundaries
 
