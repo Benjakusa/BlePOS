@@ -61,7 +61,7 @@ class InventoryService
                 ]);
             }
 
-            return StockMovement::query()->create([
+            $movement = StockMovement::query()->create([
                 'tenant_id' => $shop->tenant_id,
                 'shop_id' => $shop->id,
                 'product_id' => $product->id,
@@ -75,6 +75,13 @@ class InventoryService
                 'reference_id' => $referenceId,
                 'reason' => $reason,
             ]);
+            app(TenantFinancialAuditRecorder::class)->record(
+                (int) $shop->tenant_id, (int) $shop->id, $user?->id,
+                StockMovement::class, $movement->id, 'stock.'.$type,
+                ['quantity' => $balanceBefore], ['quantity' => $balanceAfter, 'movement_id' => $movement->id]
+            );
+
+            return $movement;
         });
     }
 

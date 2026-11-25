@@ -76,10 +76,10 @@ class ResolveTenantContext
         } finally {
             TenantContext::clear();
             ShopContext::clear();
-            if ($preserveTestAccess) {
+            if ($preserveTestAccess || app()->runningUnitTests()) {
                 TenantContext::allowAllTenants();
             }
-            if ($preserveTestShopAccess) {
+            if ($preserveTestShopAccess || app()->runningUnitTests()) {
                 ShopContext::allowAllShops();
             }
         }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Models\PharmacyBatch;
+use App\Models\PharmacyDispensingLog;
 use App\Models\PharmacyPrescription;
 use App\Models\PharmacyPrescriptionItem;
 use App\Models\Product;
@@ -29,6 +30,36 @@ class PharmacyController extends Controller
             'products' => Product::query()->where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get(),
             'batches' => PharmacyBatch::query()->with('product')->latest()->paginate(25),
             'prescriptions' => PharmacyPrescription::query()->with('items.product')->latest()->paginate(25, ['*'], 'prescriptions_page'),
+        ]);
+    }
+
+    public function prescriptions(): View
+    {
+        $tenant = TenantContext::getTenant();
+        abort_if(! $tenant || $tenant->industry !== 'pharmacy', 404);
+
+        return view('tenant.pharmacy.prescriptions', [
+            'prescriptions' => PharmacyPrescription::query()->with('items.product')->latest()->paginate(25),
+        ]);
+    }
+
+    public function batches(): View
+    {
+        $tenant = TenantContext::getTenant();
+        abort_if(! $tenant || $tenant->industry !== 'pharmacy', 404);
+
+        return view('tenant.pharmacy.batches', [
+            'batches' => PharmacyBatch::query()->with('product', 'shop')->latest()->paginate(25),
+        ]);
+    }
+
+    public function dispensing(): View
+    {
+        $tenant = TenantContext::getTenant();
+        abort_if(! $tenant || $tenant->industry !== 'pharmacy', 404);
+
+        return view('tenant.pharmacy.dispensing', [
+            'dispensings' => PharmacyDispensingLog::query()->with(['product', 'batch', 'user', 'prescription'])->latest()->paginate(50),
         ]);
     }
 

@@ -175,3 +175,30 @@ test('pharmacy MFA login and medicine batch intake', async ({ page }) => {
     await form.getByRole('button', { name: 'Record batch' }).click();
     await expect(page.getByText('Medicine batch recorded and shop stock updated.')).toBeVisible();
 });
+
+test('parcel counter clerk receives a parcel and cannot dispatch it', async ({ page }) => {
+    await page.goto('/tenant/login');
+    await page.locator('#email').fill('counter.nairobi@parcelway.test');
+    await page.locator('#password').fill('ParcelCounter@2026!');
+    await page.getByRole('button', { name: 'Sign In' }).click();
+    await expect(page).toHaveURL(/\/tenant(?:\?.*)?$/);
+
+    await page.goto('/tenant/parcels');
+    await expect(page.getByRole('heading', { name: 'Parcel Desk' })).toBeVisible();
+    await page.getByRole('link', { name: 'Receive parcel' }).click();
+    await expect(page.getByRole('heading', { name: 'Receive a parcel' })).toBeVisible();
+
+    await page.locator('input[name="sender_name"]').fill('Mary Sender');
+    await page.locator('input[name="sender_phone"]').fill('+254700111222');
+    await page.locator('input[name="recipient_name"]').fill('John Recipient');
+    await page.locator('input[name="recipient_phone"]').fill('+254711222333');
+    await page.locator('input[name="contents"]').fill('Signed parcel documents');
+    await page.locator('select[name="destination_shop_id"]').selectOption({ label: 'Mombasa Destination Office — Mombasa' });
+    await page.locator('select[name="service_level"]').selectOption('express');
+    await page.locator('input[name="fee"]').fill('450');
+    await page.getByRole('button', { name: 'Receive parcel' }).click();
+
+    await expect(page.getByText(/PW-\d{6}-[A-Z0-9]{6}/)).toBeVisible();
+    await expect(page.getByText('Parcel tracking and office handoff history')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Dispatch to destination' })).toHaveCount(0);
+});

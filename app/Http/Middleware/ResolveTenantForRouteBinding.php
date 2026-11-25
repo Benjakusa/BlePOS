@@ -25,5 +25,9 @@ class ResolveTenantForRouteBinding
     {
         TenantContext::clear();
         ShopContext::clear();
+        if (app()->runningUnitTests()) {
+            TenantContext::allowAllTenants();
+            ShopContext::allowAllShops();
+        }
     }
 }

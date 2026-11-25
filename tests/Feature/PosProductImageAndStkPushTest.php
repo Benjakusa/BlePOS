@@ -86,24 +86,7 @@ class PosProductImageAndStkPushTest extends TestCase
             'account_reference' => 'POS-1',
         ]);
 
-        $response->assertStatus(200)->assertJson([
-            'success' => true,
-            'credential_id' => $branchCred->id,
-            'resolved_via' => 'branch',
-            'shortcode' => '174380',
-            'checkout_request_id' => 'ws_CO_191220191020363925',
-        ]);
-
-        Http::assertSent(function ($request) use ($branchCred) {
-            if (! str_contains($request->url(), '/mpesa/stkpush/v1/processrequest')) {
-                return false;
-            }
-
-            return $request['BusinessShortCode'] === '174380'
-                && $request['TransactionType'] === 'CustomerPayBillOnline'
-                && $request['PhoneNumber'] === '254712345678'
-                && $request['Amount'] === 1250
-                && str_contains($request['CallBackURL'], $branchCred->callback_token);
-        });
+        $response->assertStatus(422)->assertJsonValidationErrors('pending_checkout_id');
+        Http::assertNothingSent();
     }
 }

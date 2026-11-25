@@ -109,6 +109,19 @@ class TenantSubscriptionController extends Controller
             ? 'mpesa'
             : $validated['payment_method'];
         $gatewayRef = $validated['gateway_reference'] ?? null;
+        $payment = $billing->createPaymentAttempt(
+            invoice: $invoice,
+            amount: $amountDue,
+            paymentMethod: $methodForRecord,
+            gatewayReference: null,
+            notes: 'Payment attempt started through tenant self-service; settlement is unverified.',
+        );
+        if ($invoice->subscription_id) {
+            $linkedSubscription = Subscription::withoutGlobalScopes()->where('tenant_id', $tenant->id)->find($invoice->subscription_id);
+            if ($linkedSubscription && in_array($linkedSubscription->status, ['trial', 'trialing', 'awaiting_payment'], true)) {
+                $linkedSubscription->update(['status' => 'awaiting_payment']);
+            }
+        }
 
         if ($validated['payment_method'] === 'mpesa_stk') {
             try {
@@ -120,25 +133,27 @@ class TenantSubscriptionController extends Controller
                     amount: (float) $amountDue,
                     accountReference: $invoice->invoice_number,
                     description: 'Sub Pay',
+                    paymentAttempt: $payment,
                 );
 
-                if (! $stkResult['success']) {
+                if ($stkResult['status'] !== 'initiated') {
+                    $payment->forceFill(['status' => 'failed'])->save();
+
                     return back()->withErrors(['payment' => $stkResult['customer_message']]);
                 }
 
                 $gatewayRef = $stkResult['checkout_request_id'] ?? $gatewayRef;
+                $payment->forceFill(['gateway_reference' => $gatewayRef])->save();
             } catch (\Throwable $e) {
+                $payment->forceFill(['status' => 'failed'])->save();
+
                 return back()->withErrors(['payment' => 'M-Pesa STK Push failed: '.$e->getMessage()]);
             }
         }
 
-        $payment = $billing->createPaymentAttempt(
-            invoice: $invoice,
-            amount: $amountDue,
-            paymentMethod: $methodForRecord,
-            gatewayReference: $gatewayRef,
-            notes: 'Paid via tenant self-service subscription portal',
-        );
+        if ($validated['payment_method'] !== 'mpesa_stk' && $gatewayRef !== null) {
+            $payment->forceFill(['gateway_reference' => $gatewayRef])->save();
+        }
 
         return redirect()->route('tenant.subscription.index')
             ->with('success', "Payment attempt {$payment->payment_reference} for {$invoice->currency} {$amountDue} is pending confirmation ({$invoice->invoice_number}). Subscription access changes only after settlement is verified.");

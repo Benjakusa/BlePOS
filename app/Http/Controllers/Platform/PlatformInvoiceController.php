@@ -126,7 +126,7 @@ class PlatformInvoiceController extends Controller
         $validated = $request->validate([
             'amount' => ['required', 'numeric', 'min:0.01'],
             'payment_method' => ['required', 'string', 'in:mpesa,bank_transfer,card,manual'],
-            'gateway_reference' => ['nullable', 'string', 'max:128'],
+            'gateway_reference' => ['required', 'string', 'min:4', 'max:128'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -134,7 +134,9 @@ class PlatformInvoiceController extends Controller
             invoice: $invoice,
             amount: (string) $validated['amount'],
             paymentMethod: $validated['payment_method'],
-            gatewayReference: $validated['gateway_reference'] ?? null,
+            source: 'platform_reconciliation',
+            evidenceReference: $validated['gateway_reference'],
+            reconciler: $request->user('platform'),
             notes: $validated['notes'] ?? null,
         );
 

@@ -723,4 +723,70 @@
     </div>
 </div>
 
+<!-- Legal & Regulatory Compliance Panel -->
+<div class="card" style="margin-top: 24px; border: 1px solid var(--clr-border);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h3 class="section-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="bi bi-shield-check" style="color: var(--clr-green);"></i>
+                <span>Legal &amp; Regulatory Compliance</span>
+            </h3>
+            <p class="muted" style="margin: 4px 0 0; font-size: 13px;">
+                Statutory policies and agreements governing this workspace under the Laws of Kenya.
+            </p>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <span class="badge badge-success" style="font-size: 12px;">Kenya DPA 2019 Active</span>
+            <span class="badge badge-outline" style="font-size: 12px;">16% VAT &middot; KRA eTIMS</span>
+        </div>
+    </div>
+
+    <div class="grid grid-2 gap-3">
+        <a href="{{ route('tenant.legal.privacy') }}" class="card p-3" style="text-decoration: none; color: inherit; background: var(--clr-bg); border: 1px solid var(--clr-border); transition: transform var(--dur-fast);">
+            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(37, 99, 235, 0.1); color: var(--clr-blue); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">
+                    <i class="bi bi-shield-lock"></i>
+                </div>
+                <div>
+                    <strong style="font-size: 14px; display: block; color: var(--clr-text);">Privacy Policy (Kenya DPA 2019)</strong>
+                    <span class="muted" style="font-size: 12px; display: block; margin-top: 2px;">
+                        Data controller/processor obligations, AES-256 data isolation, data subject rights, and ODPC redress.
+                    </span>
+                    <span style="font-size: 12px; color: var(--clr-blue); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-top: 6px;">
+                        Read Privacy Policy <i class="bi bi-arrow-right"></i>
+                    </span>
+                </div>
+            </div>
+        </a>
+
+        <a href="{{ route('tenant.legal.terms') }}" class="card p-3" style="text-decoration: none; color: inherit; background: var(--clr-bg); border: 1px solid var(--clr-border); transition: transform var(--dur-fast);">
+            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(22, 163, 74, 0.1); color: var(--clr-green); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">
+                    <i class="bi bi-file-earmark-ruled"></i>
+                </div>
+                <div>
+                    <strong style="font-size: 14px; display: block; color: var(--clr-text);">Terms of Service &amp; SaaS Agreement</strong>
+                    <span class="muted" style="font-size: 12px; display: block; margin-top: 2px;">
+                        KICA Cap 411A electronic contract, 99.9% uptime SLA, M-Pesa direct settlement terms, and CIArb arbitration.
+                    </span>
+                    <span style="font-size: 12px; color: var(--clr-green); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-top: 6px;">
+                        Read Terms of Service <i class="bi bi-arrow-right"></i>
+                    </span>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--clr-border); display: flex; justify-content: space-between; align-items: center; font-size: 12px; flex-wrap: wrap; gap: 8px;" class="muted">
+        <div>
+            <span>Data Protection Officer: <a href="mailto:dpo@blepos.co.ke">dpo@blepos.co.ke</a></span>
+            &bull;
+            <span>Arbitration Forum: Nairobi, Kenya</span>
+        </div>
+        <a href="{{ route('tenant.legal.index') }}" style="color: var(--clr-blue); font-weight: 600; text-decoration: none;">
+            View All Legal Documents (DPA &amp; SLA) &rarr;
+        </a>
+    </div>
+</div>
+
 @endsection

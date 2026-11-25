@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\MpesaCredential;
+use App\Models\MpesaTransaction;
 use App\Models\Plan;
 use App\Models\PlatformInvoice;
+use App\Models\PlatformPayment;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
@@ -89,9 +91,19 @@ class TenantSubscriptionPaymentTest extends TestCase
             'gateway_reference' => 'ws_CO_SUB_123456',
             'status' => 'pending',
         ]);
+        $attempt = PlatformPayment::query()->where('tenant_id', $tenant->id)->latest('id')->firstOrFail();
+        $this->assertDatabaseHas('mpesa_transactions', [
+            'platform_payment_id' => $attempt->id,
+            'mpesa_credential_id' => $platformCred->id,
+            'checkout_request_id' => 'ws_CO_SUB_123456',
+            'merchant_request_id' => '111-222-333',
+            'status' => 'pending',
+        ]);
+        $this->assertSame(64, strlen((string) MpesaTransaction::query()->where('platform_payment_id', $attempt->id)->value('phone_hash')));
 
         $sub = Subscription::withoutGlobalScopes()->where('tenant_id', $tenant->id)->latest('id')->firstOrFail();
         $this->assertNotSame($plan->id, $sub->plan_id);
+        $this->assertSame('awaiting_payment', $sub->status);
         $this->assertNotSame('active', $tenant->fresh()->status);
     }
 

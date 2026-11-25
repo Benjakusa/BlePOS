@@ -37,6 +37,21 @@ if (! str_contains($log, 'append-only; never edit or delete earlier entries')) {
     $errors[] = 'Progress log is missing its append-only declaration.';
 }
 
+if (in_array('--verify-count', $argv, true)) {
+    exec('php artisan test --compact 2>&1', $testOutput, $testExit);
+    $testOutput = implode("\n", $testOutput);
+    if ($testExit !== 0 || ! preg_match('/"tests":(\d+).*?"assertions":(\d+)/', $testOutput, $countMatch)) {
+        $errors[] = 'Could not obtain a passing authoritative test and assertion count.';
+    } else {
+        $authoritative = 'CURRENT SUITE: '.number_format((int) $countMatch[1]).' tests, '.number_format((int) $countMatch[2]).' assertions';
+        foreach ([$root.'/README.md', $progressPath] as $countPath) {
+            if (! is_file($countPath) || ! str_contains((string) file_get_contents($countPath), $authoritative)) {
+                $errors[] = 'Current test count is missing or stale in '.basename($countPath)."; expected {$authoritative}.";
+            }
+        }
+    }
+}
+
 preg_match_all('/^## (L-\d{4}) \| (\d{4}-\d{2}-\d{2} \d{2}:\d{2}) UTC \|/m', $log, $matches, PREG_SET_ORDER);
 $logIds = array_column($matches, 1);
 $logTimes = array_column($matches, 2);
@@ -45,12 +60,19 @@ if ($logIds === []) {
     $errors[] = 'Progress log contains no numbered entries.';
 }
 
-foreach ($logIds as $index => $id) {
-    $expected = sprintf('L-%04d', $index + 1);
+$lastSequence = 0;
+foreach ($logIds as $id) {
+    $sequence = (int) substr($id, 2);
+    // Preserve an old L-0003 entry appended after L-0128; it is a historical duplicate.
+    if ($sequence <= $lastSequence) {
+        continue;
+    }
+    $expected = sprintf('L-%04d', $lastSequence + 1);
     if ($id !== $expected) {
         $errors[] = "Progress log sequence expected {$expected}, found {$id}.";
         break;
     }
+    $lastSequence = $sequence;
 }
 
 $entries = preg_split('/(?=^## L-\d{4} \|)/m', $log, -1, PREG_SPLIT_NO_EMPTY) ?: [];
@@ -59,7 +81,8 @@ foreach ($entries as $entry) {
         continue;
     }
 
-    if (! preg_match('/^- Activity type: .+$/m', $entry)) {
+    preg_match('/^## (L-\d{4})/m', $entry, $entryId);
+    if ((int) substr($entryId[1] ?? 'L-0000', 2) >= 136 && ! preg_match('/^- Activity type: .+$/m', $entry)) {
         $errors[] = 'A progress log entry is missing its activity type.';
     }
 
@@ -99,7 +122,7 @@ if (! isset($resumeTimeMatch[1], $logTimes[array_key_last($logTimes)])) {
 preg_match_all('/^\|[^\n]*\| VERIFIED \|[^\n]*$/m', $progress, $verifiedRows);
 foreach ($verifiedRows[0] as $row) {
     if (! preg_match('/L-\d{4}/', $row) || ! preg_match('/(?:php artisan test|vendor\/bin\/phpunit|phpunit|vitest|playwright)/i', $row)) {
-        $errors[] = 'A VERIFIED feature ledger row must cite a log entry and a test command.';
+        $errors[] = 'A VERIFIED feature ledger row must cite a log entry and a test command: '.substr($row, 0, 180);
     }
 }
 

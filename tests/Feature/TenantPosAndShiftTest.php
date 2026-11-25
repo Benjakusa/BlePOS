@@ -178,7 +178,7 @@ class TenantPosAndShiftTest extends TestCase
         ]);
 
         // A client cannot complete an underpaid sale or override the product price.
-        $underpaid = $this->actingAs($cashier)->postJson(route('tenant.pos.process'), [
+        $underpaid = $this->actingAs($cashier)->withHeader('Idempotency-Key', 'underpaid-test-0001')->postJson(route('tenant.pos.process'), [
             'shift_id' => $shift->id,
             'shop_id' => $shop->id,
             'register_id' => $register->id,
@@ -190,7 +190,7 @@ class TenantPosAndShiftTest extends TestCase
         $this->assertSame(50.0, (float) InventoryStock::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('shop_id', $shop->id)->where('product_id', $product->id)->value('quantity'));
 
         // Process POS sale: server price for 2 packets of milk @ 65 = 130.
-        $saleResponse = $this->actingAs($cashier)->postJson(route('tenant.pos.process'), [
+        $saleResponse = $this->actingAs($cashier)->withHeader('Idempotency-Key', 'cash-sale-test-0001')->postJson(route('tenant.pos.process'), [
             'shift_id' => $shift->id,
             'shop_id' => $shop->id,
             'register_id' => $register->id,
@@ -249,5 +249,89 @@ class TenantPosAndShiftTest extends TestCase
         // Verify stock was restored to 50
         $currentStock->refresh();
         $this->assertEquals(50.0, (float) $currentStock->quantity);
+    }
+
+    public function test_sale_requires_an_idempotency_key_and_duplicate_key_returns_the_original_sale(): void
+    {
+        $tenant = Tenant::factory()->create();
+        TenantContext::setTenant($tenant);
+        $shop = Shop::factory()->create(['tenant_id' => $tenant->id]);
+        $register = Register::create(['tenant_id' => $tenant->id, 'shop_id' => $shop->id, 'name' => 'Idempotent Till', 'code' => 'IDEM']);
+        $cashier = $this->createCashierUser($tenant, $shop);
+        $product = Product::create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Tea',
+            'sku' => 'TEA-IDEM',
+            'cost_price' => '10.00',
+            'selling_price' => '25.00',
+            'track_stock' => false,
+        ]);
+        $shift = CashierShift::create([
+            'tenant_id' => $tenant->id,
+            'shop_id' => $shop->id,
+            'register_id' => $register->id,
+            'user_id' => $cashier->id,
+            'status' => 'open',
+            'opening_float' => '100.00',
+            'opened_at' => now(),
+        ]);
+        $payload = [
+            'shift_id' => $shift->id,
+            'shop_id' => $shop->id,
+            'register_id' => $register->id,
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+            'payments' => [['method' => 'cash', 'amount' => '25.00']],
+        ];
+
+        $this->actingAs($cashier)->postJson(route('tenant.pos.process'), $payload)->assertUnprocessable();
+        $this->assertDatabaseCount('sales', 0);
+
+        $first = $this->actingAs($cashier)->withHeader('Idempotency-Key', 'checkout-test-0001')
+            ->postJson(route('tenant.pos.process'), $payload)->assertOk();
+        $duplicate = $this->actingAs($cashier)->withHeader('Idempotency-Key', 'checkout-test-0001')
+            ->postJson(route('tenant.pos.process'), $payload)->assertOk();
+
+        $this->assertSame($first->json('sale_id'), $duplicate->json('sale_id'));
+        $this->assertDatabaseCount('sales', 1);
+    }
+
+    public function test_discount_permission_does_not_allow_discount_above_the_configured_cap(): void
+    {
+        $tenant = Tenant::factory()->create();
+        TenantContext::setTenant($tenant);
+        $shop = Shop::factory()->create(['tenant_id' => $tenant->id]);
+        $register = Register::create(['tenant_id' => $tenant->id, 'shop_id' => $shop->id, 'name' => 'Discount Till', 'code' => 'DISC']);
+        $cashier = $this->createCashierUser($tenant, $shop);
+        $discountPermission = TenantPermission::firstOrCreate(['name' => 'pos.sale.discount'], ['group' => 'pos', 'description' => 'Apply discounts']);
+        $cashier->roles()->firstOrFail()->permissions()->syncWithoutDetaching([$discountPermission->id]);
+        config(['pos.max_discount_percent' => 10]);
+        $product = Product::create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Coffee',
+            'sku' => 'COFFEE-DISC',
+            'cost_price' => '30.00',
+            'selling_price' => '100.00',
+            'track_stock' => false,
+        ]);
+        $shift = CashierShift::create([
+            'tenant_id' => $tenant->id,
+            'shop_id' => $shop->id,
+            'register_id' => $register->id,
+            'user_id' => $cashier->id,
+            'status' => 'open',
+            'opening_float' => '100.00',
+            'opened_at' => now(),
+        ]);
+
+        $this->actingAs($cashier)->withHeader('Idempotency-Key', 'discount-over-cap-0001')
+            ->postJson(route('tenant.pos.process'), [
+                'shift_id' => $shift->id,
+                'shop_id' => $shop->id,
+                'register_id' => $register->id,
+                'items' => [['product_id' => $product->id, 'quantity' => 1, 'discount' => '10.01']],
+                'payments' => [['method' => 'cash', 'amount' => '89.99']],
+            ])->assertUnprocessable();
+
+        $this->assertDatabaseCount('sales', 0);
     }
 }

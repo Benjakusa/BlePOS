@@ -11,6 +11,7 @@ use App\Models\Register;
 use App\Models\Shop;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\PharmacyService;
 use Database\Seeders\PharmacyDemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -123,6 +124,25 @@ class PharmacyCheckoutSafetyTest extends TestCase
         $response->assertForbidden();
         $this->assertDatabaseCount('sales', 0);
         $this->assertDatabaseCount('pharmacy_dispensing_logs', 0);
+    }
+
+    public function test_log_dispensing_accepts_valid_depletion_and_commits_batch_and_log_atomically(): void
+    {
+        $product = $this->product('AFY-OTC-001');
+        $batch = $this->batch($product, 'ATOMIC-LOG-TEST', now()->addYear()->toDateString(), 5);
+
+        $log = app(PharmacyService::class)->logDispensing(
+            shop: $this->shop,
+            user: $this->pharmacist,
+            product: $product,
+            quantity: 4,
+            patientName: 'Test Patient',
+            batch: $batch,
+        );
+
+        $this->assertSame(1.0, (float) PharmacyBatch::withoutGlobalScopes()->findOrFail($batch->id)->current_quantity);
+        $this->assertSame(4.0, (float) $log->quantity);
+        $this->assertDatabaseHas('pharmacy_dispensing_logs', ['id' => $log->id, 'batch_id' => $batch->id]);
     }
 
     private function checkout(Product $product, array $itemOverrides = [])

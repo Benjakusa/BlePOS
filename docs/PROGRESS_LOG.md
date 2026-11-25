@@ -1650,3 +1650,87 @@
 - **Full Suite Regression:** `php artisan test --compact` → **283 tests, 2,667 assertions, 0 failures, exit 0.**
 - **Code Quality:** `./vendor/bin/pint app database routes tests` → **PASSED**; `npm run build` → **PASSED**.
 ---
+
+## L-0135 | 2026-11-25 15:05 UTC | 2026-11-25 18:05 EAT | agent: Codex | tier/phase: Full Application Review
+- **Status:** REVIEW DOCUMENTED; follow-up fixes remain open.
+- **Review:** [App review 2026.md](../App%20review%202026.md) records a code-and-test evidence audit of functionality, tenant isolation, RBAC, industry gating, financial integrity, and cross-cutting security.
+- **Baseline:** `php artisan test --compact` — 291 tests, 2,752 assertions, 0 failures; `vendor/bin/pint --test` — passed; `npm run build` — passed; `php artisan route:list --except-vendor` — 331 routes.
+- **Findings:** 0 P0, 2 P1, 4 P2, 1 P3. P1 items: standard provisioning's cashier permission does not match the POS route/controller permission, and the SHA-256 verifier covers platform audit records but not tenant financial events. A P2 finding records that the product DELETE route has no controller destroy method.
+- **Limitations:** exhaustive per-route IDOR replay and tenant controller middleware-removal tests were not performed. `migrate:fresh --seed` and the 30-step disposable provisioning drill were not run because the configured database was not confirmed disposable.
+---
+
+## L-0136 | 2026-11-25 15:41 UTC | 2026-11-25 18:41 EAT | agent: Codex | tier/phase: P0/P1 remediation — P0-1 POS integrity
+- Activity type: IMPLEMENTATION + TEST
+- Status: PARTIAL. Server-derived prices/tax, discount cap, mandatory idempotency, request fingerprint, transaction stock locks, and tender balance checks are covered. Parallel-process concurrency coverage remains open.
+- Failing-before evidence: the two new tests `test_sale_requires_an_idempotency_key_and_duplicate_key_returns_the_original_sale` and `test_discount_permission_does_not_allow_discount_above_the_configured_cap` were run before implementation: 2 failed, 0 passed (missing idempotency key accepted; over-cap discount accepted).
+- Passing-after evidence: full suite `php artisan test --compact` passed 304 tests / 2,801 assertions; focused POS suite passed as part of the 18-test focused run.
+---
+
+## L-0137 | 2026-11-25 15:41 UTC | 2026-11-25 18:41 EAT | agent: Codex | tier/phase: P0/P1 remediation — P0-2 billing settlement
+- Activity type: IMPLEMENTATION + TEST
+- Status: PARTIAL. Settlement requires platform reconciliation source/evidence/reconciler; tenant-entered payment references remain pending, and STK attempts are persisted before initiation.
+- Regression: `test_billing_service_rejects_payment_without_verified_reconciliation_source`; M-Pesa/billing focused suite passed 31 tests / 144 assertions. A pre-fix run for this individual regression was not captured, so no failing-before claim is made. Subscription awaiting-payment lifecycle and full route step-up audit remain open.
+---
+
+## L-0138 | 2026-11-25 15:41 UTC | 2026-11-25 18:41 EAT | agent: Codex | tier/phase: P0/P1 remediation — P0-3 M-Pesa callbacks
+- Activity type: IMPLEMENTATION + TEST
+- Status: PARTIAL. Callback credential and request IDs, amount, receipt, provider failure, duplicate handling, unmatched storage, transaction persistence, and callback throttling are implemented. POS sale callback completion and live provider validation remain open.
+- Regression: `MpesaCallbackReconciliationTest` and combined M-Pesa/billing suite passed (31 tests / 144 assertions). Individual failing-before output was not captured.
+---
+
+## L-0139 | 2026-11-25 15:41 UTC | 2026-11-25 18:41 EAT | agent: Codex | tier/phase: P0/P1 remediation — P0-4 pharmacy checkout
+- Activity type: IMPLEMENTATION + TEST
+- Status: PARTIAL. Pharmacy views/routes require entitlement; batch validation and atomic dispense logging are connected to checkout. Full controlled-substance policy and pharmacist step-up requirements remain open.
+- Regression: focused pharmacy and entitlement tests passed 9 tests / 26 assertions after correcting the unscoped batch lock; latest focused hardening batch passed 18 tests / 96 assertions. Individual failing-before output was not captured.
+---
+
+## L-0140 | 2026-11-25 15:41 UTC | 2026-11-25 18:41 EAT | agent: Codex | tier/phase: P0/P1 remediation — P0-5 backup and restore
+- Activity type: EVIDENCE REVIEW
+- Status: PARTIAL. Existing service creates encrypted dumps, checks the stored artifact checksum, prunes artifact bytes, and restores SQLite into an isolated sandbox. No MySQL/PostgreSQL dump execution or new adversarial missing-disk/checksum/restore matrix was run in this session; production restore promotion remains unavailable.
+- Evidence: existing `PlatformInfrastructureAndBackupTest` coverage; latest full suite passed 304 tests / 2,801 assertions. No pre-fix failure output was recorded for backup cases.
+---
+
+## L-0141 | 2026-11-25 15:41 UTC | 2026-11-25 18:41 EAT | agent: Codex | tier/phase: P0/P1 remediation — P1-1 tenant MFA
+- Activity type: IMPLEMENTATION + TEST
+- Status: PARTIAL. MFA is required for owner, shop-manager, pharmacist, and configured privileged permission holders; tenant logout clears the marker. Sensitive-action step-up freshness and explicit one-time recovery/logout marker adversarial cases remain unverified.
+- Evidence: `TenantAuthTest` and `ReleaseHardeningTest` passed in the full 304-test suite. No failing-before output for the role coverage was captured.
+---
+
+## L-0142 | 2026-11-25 15:41 UTC | 2026-11-25 18:41 EAT | agent: Codex | tier/phase: P0/P1 remediation — P1-2 tenant scopes
+- Activity type: IMPLEMENTATION + TEST
+- Status: PARTIAL. Missing tenant context throws `TenantContextMissingException`, tenant routes require resolved context, and request context clears in `finally`. Tenant-aware jobs and the allow-all call-site static checker remain open.
+- Regression: `test_tenant_scope_throws_without_context_and_allows_explicit_platform_scope` passed. Existing test helper and seeder still use explicit all-tenant scope; this is not yet restricted to platform controller/command code.
+---
+
+## L-0143 | 2026-11-25 15:41 UTC | 2026-11-25 18:41 EAT | agent: Codex | tier/phase: P0/P1 remediation — P1-3 CI and test counts
+- Activity type: IMPLEMENTATION + TEST
+- Status: PARTIAL. CI matrix config now combines PHP 8.3/8.4 with SQLite/MySQL/PostgreSQL, fresh seeded migrations, coverage, and test-count consistency guard. Only local SQLite was executed; CI/DB matrix has not run here.
+- Evidence: local suite 304 tests / 2,801 assertions; build passed. Remote matrix outcomes are pending CI.
+---
+
+## L-0144 | 2026-11-25 15:41 UTC | 2026-11-25 18:41 EAT | agent: Codex | tier/phase: P0/P1 remediation — P1-4 STK linkage
+- Activity type: IMPLEMENTATION + TEST
+- Status: PARTIAL. STK requires a server-recorded pending-payment sale, derives amount/reference from it, rejects a duplicate recent attempt, and is rate-limited per user/shop/hashed phone. There is no workflow creating that pending sale state yet.
+- Regression: `PosProductImageAndStkPushTest::test_pos_mpesa_stk_push_uses_resolved_credential_and_sends_stk_request` now asserts arbitrary body-supplied shop/amount cannot initiate a push; latest focused suite passed.
+---
+
+## L-0145 | 2026-11-25 15:41 UTC | 2026-11-25 18:41 EAT | agent: Codex | tier/phase: P0/P1 remediation — P1-5 production assertions
+- Activity type: IMPLEMENTATION + TEST
+- Status: PARTIAL. Shared boot/command assertions check environment, debug, key, secure cookie, HTTPS, database, object storage, queue/cache, and proxies; `platform:production-check` is registered.
+- Regression: `test_production_check_reports_all_configuration_violations` passed and reported 11 errors. A configured production environment boot test was not run; no failing-before output was captured.
+---
+
+## L-0146 | 2026-11-25 15:41 UTC | 2026-11-25 18:41 EAT | agent: Codex | tier/phase: P0/P1 remediation — P1-6 tenant financial audit
+- Activity type: IMPLEMENTATION + TEST
+- Status: PARTIAL. Per-tenant SHA-256 chain records sale create/void and stock movements and `platform:audit-verify` includes tenant chains. Shift, refund, price, credit, pharmacy dispense, and subscription mutations remain open.
+- Regression: `test_tenant_financial_audit_chain_verifies_and_detects_tampering` passed; full suite passed 304 tests / 2,801 assertions. No failing-before output was captured.
+---
+
+## L-0147 | 2026-11-25 15:48 UTC | 2026-11-25 18:48 EAT | agent: Codex | tier/phase: P0/P1 remediation — final verification
+- Activity type: TEST
+- What and why: Re-ran the full suite after final code changes and verified style/build/count tracking.
+- Commands: `php artisan test --compact`; `vendor/bin/pint --test`; `npm run build`; `php scripts/progress-check --verify-count`; `git diff --check`.
+- Actual results: Full suite passed 304 tests / 2,802 assertions; Pint passed; frontend build passed; progress checker/count guard passed; whitespace check passed. Count guard was rerun after the final code and documentation changes and matched both published markers.
+- Limitations: This is local SQLite evidence. MySQL/PostgreSQL CI, production check against real deployment settings, live M-Pesa callbacks, and production-engine backup drills remain unverified.
+- Status: Partial completion; per-finding status remains in L-0136 through L-0146.
+---

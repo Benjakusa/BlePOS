@@ -106,3 +106,7 @@ BlePOS needs a persistent PHP web process, a relational database, queue workers,
 - [`docs/SECURITY.md`](SECURITY.md) and [`docs/PLATFORM_SECURITY.md`](PLATFORM_SECURITY.md)
 - [`docs/INDUSTRIES.md`](INDUSTRIES.md), [`app/Services/PharmacyService.php`](../app/Services/PharmacyService.php), and [`routes/web.php`](../routes/web.php)
 - [`app/Services/InfrastructureService.php`](../app/Services/InfrastructureService.php)
+
+## Remediation — 25 November 2026
+
+Implementation follow-up is partial. The local suite passes with 304 tests / 2,802 assertions, Pint passes, and `npm run build` passes. MySQL/PostgreSQL CI, live provider settlement, and production recovery drills remain unverified. Item-by-item statuses and tests are recorded in [`App review 2026.md`](../App%20review%202026.md) and `docs/PROGRESS_LOG.md` L-0136–L-0146. No P0/P1 item is marked fully closed in this follow-up.

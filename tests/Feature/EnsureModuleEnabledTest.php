@@ -84,4 +84,14 @@ class EnsureModuleEnabledTest extends TestCase
 
         $response->assertOk();
     }
+
+    public function test_non_pharmacy_tenant_gets_forbidden_on_pharmacy_routes_without_entitlement(): void
+    {
+        [$tenant, $shop, $user] = $this->createTenantUser('retail');
+
+        $this->actingAs($user, 'web')
+            ->withSession(['active_shop_id' => $shop->id, 'tenant_id' => $tenant->id])
+            ->get(route('tenant.pharmacy.batches.index'))
+            ->assertForbidden();
+    }
 }

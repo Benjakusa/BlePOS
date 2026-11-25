@@ -80,6 +80,7 @@ class TenantAuthController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
+        $request->session()->forget('tenant_mfa_verified_at');
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

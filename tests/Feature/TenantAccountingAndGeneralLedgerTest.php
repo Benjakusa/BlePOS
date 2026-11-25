@@ -281,7 +281,8 @@ class TenantAccountingAndGeneralLedgerTest extends TestCase
                 ],
             ],
             payments: [['method' => 'cash', 'amount' => 1100.00]],
-            shift: $shift
+            shift: $shift,
+            idempotencyKey: 'tenant-accounting-sale-0001'
         );
 
         $this->assertEquals('100.00', $sale->change_due);
@@ -354,7 +355,8 @@ class TenantAccountingAndGeneralLedgerTest extends TestCase
             ],
             payments: [
                 ['method' => 'cash', 'amount' => 300.00],
-            ]
+            ],
+            idempotencyKey: 'tenant-accounting-void-0001'
         );
 
         // Void the sale

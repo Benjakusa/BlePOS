@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CashierShift;
 use App\Models\Category;
 use App\Models\DiningTable;
+use App\Models\MpesaTransaction;
 use App\Models\Register;
 use App\Models\Sale;
 use App\Models\Shop;
@@ -70,6 +71,8 @@ class PosController extends Controller
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403);
         abort_unless($request->user()?->hasPermission('pos.sale.create'), 403);
+        $idempotencyKey = trim((string) $request->header('Idempotency-Key', ''));
+        abort_if($idempotencyKey === '' || strlen($idempotencyKey) > 100, 422, 'A valid Idempotency-Key header is required.');
 
         $validated = $request->validate([
             'shift_id' => ['required', 'integer', 'exists:cashier_shifts,id'],
@@ -104,8 +107,11 @@ class PosController extends Controller
             : Register::query()->where('shop_id', $shop->id)->firstOrFail();
         abort_unless((int) $register->shop_id === (int) $shop->id, 422, 'Register does not belong to this shop.');
         abort_unless($request->user()->canAccessShop($shop), 403, 'You are not assigned to this shop.');
-        abort_if(collect($validated['items'])->contains(fn ($item) => (float) ($item['discount'] ?? 0) > 0)
-            && ! $request->user()->hasPermission('pos.sale.discount'), 403, 'Discount permission required.');
+        $hasDiscount = collect($validated['items'])->contains(fn ($item) => bccomp((string) ($item['discount'] ?? '0.00'), '0.00', 2) > 0);
+        abort_if($hasDiscount
+            && ! $request->user()->hasPermission('pos.discount.apply')
+            && ! $request->user()->hasPermission('pos.sale.discount')
+            && ! $request->user()->hasPermission('pos.discount.override'), 403, 'Discount permission required.');
         abort_if(collect($validated['payments'])->contains(fn ($payment) => $payment['method'] === 'credit')
             && ! $request->user()->hasPermission('pos.sale.credit'), 403, 'Credit sale permission required.');
 
@@ -118,7 +124,7 @@ class PosController extends Controller
             shift: $shift,
             notes: $validated['notes'] ?? null,
             diningTableId: $validated['dining_table_id'] ?? null,
-            idempotencyKey: $request->header('Idempotency-Key'),
+            idempotencyKey: $idempotencyKey,
         );
 
         // If table was selected, update table status
@@ -146,26 +152,27 @@ class PosController extends Controller
         abort_unless($request->user()?->hasPermission('pos.sale.create'), 403);
 
         $validated = $request->validate([
-            'shop_id' => ['required', 'integer', 'exists:shops,id'],
+            'pending_checkout_id' => ['required', 'integer', 'exists:sales,id'],
             'phone_number' => ['required', 'string', 'min:9', 'max:20'],
-            'amount' => ['required', 'numeric', 'min:1'],
-            'account_reference' => ['nullable', 'string', 'max:32'],
         ]);
 
-        $shop = Shop::query()->findOrFail($validated['shop_id']);
-        abort_if((int) $shop->tenant_id !== (int) $tenant->id, 403);
+        $sale = Sale::query()->where('status', 'pending_payment')->findOrFail($validated['pending_checkout_id']);
+        abort_if((int) $sale->tenant_id !== (int) $tenant->id, 403);
+        abort_if(bccomp((string) $sale->grand_total, '0.00', 2) <= 0, 422, 'Pending checkout has no payable balance.');
+        abort_if(MpesaTransaction::query()->where('sale_id', $sale->id)->where('status', 'pending')->where('created_at', '>=', now()->subMinutes(5))->exists(), 409, 'An STK request is already pending for this checkout.');
 
         try {
             $result = $stkPush->initiate(
                 tenantId: $tenant->id,
-                branchId: $shop->id,
+                branchId: $sale->shop_id,
                 phoneNumber: $validated['phone_number'],
-                amount: (float) $validated['amount'],
-                accountReference: $validated['account_reference'] ?? $shop->code ?? 'BLEPOS',
+                amount: (float) $sale->grand_total,
+                accountReference: $sale->sale_number,
                 description: 'POS Sale',
+                saleId: $sale->id,
             );
 
-            return response()->json($result, $result['success'] ? 200 : 422);
+            return response()->json($result, $result['status'] === 'initiated' ? 202 : 422);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,

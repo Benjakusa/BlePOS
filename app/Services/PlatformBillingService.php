@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\MpesaTransaction;
 use App\Models\PlatformDunningEvent;
 use App\Models\PlatformInvoice;
 use App\Models\PlatformPayment;
@@ -123,10 +124,16 @@ class PlatformBillingService
     public function recordPayment(
         PlatformInvoice $invoice,
         string $amount,
-        string $paymentMethod = 'bank_transfer',
-        ?string $gatewayReference = null,
+        string $paymentMethod,
+        string $source,
+        string $evidenceReference,
+        PlatformUser $reconciler,
         ?string $notes = null
     ): PlatformPayment {
+        if ($source !== 'platform_reconciliation' || ! $reconciler->hasPermission('platform.billing.subscriptions.manage') || trim($evidenceReference) === '') {
+            throw new \DomainException('A privileged platform reconciliation with evidence is required to confirm invoice payment.');
+        }
+
         $amount = number_format((float) $amount, 2, '.', '');
 
         if (bccomp($amount, '0.00', 2) <= 0) {
@@ -141,20 +148,60 @@ class PlatformBillingService
             ]);
         }
 
-        return DB::transaction(function () use ($invoice, $amount, $paymentMethod, $gatewayReference, $notes): PlatformPayment {
-            $payment = PlatformPayment::query()->create([
-                'platform_invoice_id' => $invoice->id,
-                'tenant_id' => $invoice->tenant_id,
-                'payment_reference' => 'PAY-'.now()->format('Ymd').'-'.strtoupper(Str::random(6)),
-                'payment_method' => $paymentMethod,
-                'status' => 'completed',
-                'currency' => $invoice->currency,
-                'amount' => $amount,
-                'gateway_reference' => $gatewayReference,
-                'paid_at' => now(),
-                'notes' => $notes,
-            ]);
+        $payment = PlatformPayment::query()->create([
+            'platform_invoice_id' => $invoice->id,
+            'tenant_id' => $invoice->tenant_id,
+            'payment_reference' => 'PAY-'.now()->format('Ymd').'-'.strtoupper(Str::random(6)),
+            'payment_method' => $paymentMethod,
+            'status' => 'pending',
+            'currency' => $invoice->currency,
+            'amount' => $amount,
+            'gateway_reference' => $evidenceReference,
+            'paid_at' => null,
+            'notes' => trim(($notes ?? '').' [source=platform_reconciliation; reconciler='.$reconciler->id.']'),
+        ]);
 
+        return $this->confirmPayment($payment);
+    }
+
+    /** Confirm a previously stored payment attempt after an authenticated provider callback. */
+    public function confirmVerifiedProviderPayment(
+        PlatformPayment $payment,
+        MpesaTransaction $transaction,
+        string $providerReceipt
+    ): PlatformPayment {
+        if ($transaction->status !== 'confirmed'
+            || (int) $transaction->platform_payment_id !== (int) $payment->id
+            || ! hash_equals((string) $transaction->provider_receipt, $providerReceipt)) {
+            throw new \DomainException('A persisted, verified provider transaction is required to confirm settlement.');
+        }
+
+        $payment->forceFill([
+            'gateway_reference' => $providerReceipt,
+            'notes' => trim(($payment->notes ?? '').' [source=verified_provider]'),
+        ])->save();
+
+        return $this->confirmPayment($payment);
+    }
+
+    private function confirmPayment(PlatformPayment $payment): PlatformPayment
+    {
+        return DB::transaction(function () use ($payment): PlatformPayment {
+            $lockedPayment = PlatformPayment::query()->lockForUpdate()->findOrFail($payment->id);
+            if ($lockedPayment->status !== 'pending') {
+                if (in_array($lockedPayment->status, ['completed', 'partially_refunded', 'refunded'], true)) {
+                    return $lockedPayment;
+                }
+                throw new \DomainException('Only a pending payment attempt can be confirmed.');
+            }
+
+            $invoice = PlatformInvoice::query()->lockForUpdate()->findOrFail($lockedPayment->platform_invoice_id);
+            $amount = (string) $lockedPayment->amount;
+            if (bccomp($amount, '0.00', 2) <= 0 || bccomp($amount, (string) $invoice->amount_due, 2) > 0) {
+                throw ValidationException::withMessages(['amount' => 'Confirmed payment exceeds the remaining invoice balance.']);
+            }
+
+            $lockedPayment->forceFill(['status' => 'completed', 'paid_at' => now()])->save();
             $newAmountPaid = bcadd((string) $invoice->amount_paid, $amount, 2);
             $newAmountDue = bcsub((string) $invoice->total_amount, $newAmountPaid, 2);
             $isPaid = bccomp($newAmountDue, '0.00', 2) <= 0;
@@ -166,15 +213,10 @@ class PlatformBillingService
                 'paid_at' => $isPaid ? now() : $invoice->paid_at,
             ]);
 
-            // If subscription was in past_due, restore to active
             if ($isPaid && $invoice->subscription_id) {
                 $sub = $invoice->subscription;
-                if ($sub && in_array($sub->status, ['past_due', 'suspended'], true)) {
-                    $sub->update([
-                        'status' => 'active',
-                    ]);
-
-                    // Also reactivate tenant if it was suspended due to billing
+                if ($sub && in_array($sub->status, ['awaiting_payment', 'past_due', 'suspended'], true)) {
+                    $sub->update(['status' => 'active']);
                     if ($invoice->tenant->status === 'suspended') {
                         $invoice->tenant->update([
                             'status' => 'active',
@@ -185,7 +227,7 @@ class PlatformBillingService
                 }
             }
 
-            return $payment;
+            return $lockedPayment;
         });
     }
 

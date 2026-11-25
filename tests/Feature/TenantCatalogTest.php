@@ -145,6 +145,7 @@ class TenantCatalogTest extends TestCase
         // Tracked products must have available stock before the POS can find them.
         $shop = Shop::factory()->create(['tenant_id' => $tenant->id]);
         $user->shops()->attach($shop->id);
+        TenantContext::setTenant($tenant);
         InventoryStock::create([
             'tenant_id' => $tenant->id,
             'shop_id' => $shop->id,

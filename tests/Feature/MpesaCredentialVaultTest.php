@@ -295,12 +295,11 @@ class MpesaCredentialVaultTest extends TestCase
             'Body' => ['stkCallback' => ['ResultCode' => 0]],
         ]);
 
-        $response->assertStatus(200)
-            ->assertJsonPath('ResultCode', 0)
-            ->assertJsonPath('context.credential_id', $branchCred->id)
-            ->assertJsonPath('context.owner_type', 'branch')
-            ->assertJsonPath('context.tenant_id', $branchCred->tenant_id)
-            ->assertJsonPath('context.branch_id', $branchCred->branch_id);
+        $response->assertStatus(202)->assertJsonPath('ResultCode', 1);
+        $this->assertDatabaseHas('unmatched_mpesa_callbacks', [
+            'mpesa_credential_id' => $branchCred->id,
+            'reason' => 'missing_callback_fields',
+        ]);
 
         $this->assertNull(TenantContext::getTenantId(), 'Tenant context is cleared after callback request cleanup.');
 

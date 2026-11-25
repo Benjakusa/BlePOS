@@ -16,6 +16,7 @@ class BrowserAcceptanceSeeder extends Seeder
     public function run(): void
     {
         $this->call(PharmacyDemoSeeder::class);
+        $this->call(ParcelDeliveryDemoSeeder::class);
         $this->call(PlatformRoleSeeder::class);
 
         $platformAdmin = PlatformUser::query()->updateOrCreate(

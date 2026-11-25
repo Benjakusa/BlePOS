@@ -11,6 +11,7 @@ use App\Models\PlatformSession;
 use App\Models\PlatformUser;
 use App\Models\Subscription;
 use App\Models\Tenant;
+use App\Services\PlatformBillingService;
 use Database\Seeders\PlatformRoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -301,10 +302,47 @@ class PlatformBillingAndDunningTest extends TestCase
             ->post(route('platform.invoices.payment', $invoice), [
                 'amount' => '2000.00', // exceeds 1160
                 'payment_method' => 'mpesa',
+                'gateway_reference' => 'OVERSIZED-TEST-REF',
             ]);
 
         $response->assertRedirect();
         $response->assertSessionHasErrors('amount');
+    }
+
+    public function test_billing_service_rejects_payment_without_verified_reconciliation_source(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $invoice = PlatformInvoice::query()->create([
+            'tenant_id' => $tenant->id,
+            'invoice_number' => 'INV-UNVERIFIED-001',
+            'status' => 'issued',
+            'currency' => 'KES',
+            'subtotal' => '100.00',
+            'tax_rate' => '16.00',
+            'tax_amount' => '16.00',
+            'total_amount' => '116.00',
+            'amount_paid' => '0.00',
+            'amount_due' => '116.00',
+            'due_date' => now()->addDay()->toDateString(),
+        ]);
+        $reconciler = PlatformUser::factory()->create();
+
+        try {
+            app(PlatformBillingService::class)->recordPayment(
+                invoice: $invoice,
+                amount: '116.00',
+                paymentMethod: 'bank_transfer',
+                source: 'tenant_reference',
+                evidenceReference: 'CUSTOMER-TYPED-REF',
+                reconciler: $reconciler,
+            );
+            $this->fail('Unverified payment source was accepted.');
+        } catch (\DomainException $exception) {
+            $this->assertStringContainsString('platform reconciliation', strtolower($exception->getMessage()));
+        }
+
+        $this->assertDatabaseCount('platform_payments', 0);
+        $this->assertSame('issued', $invoice->fresh()->status);
     }
 
     public function test_recording_refund_updates_payment_status_and_invoice_balance(): void

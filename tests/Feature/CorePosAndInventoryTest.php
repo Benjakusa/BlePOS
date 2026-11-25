@@ -177,13 +177,14 @@ class CorePosAndInventoryTest extends TestCase
             items: $items,
             payments: $payments,
             shift: $shift,
-            notes: 'Customer paid cash'
+            notes: 'Customer paid cash',
+            idempotencyKey: 'core-pos-split-tender-0001'
         );
 
         $this->assertInstanceOf(Sale::class, $sale);
         $this->assertEquals('completed', $sale->status);
         $this->assertEquals('960.00', (string) $sale->grand_total);
-        $this->assertEquals('1000.00', (string) $sale->paid_total);
+        $this->assertEquals('960.00', (string) $sale->paid_total);
         $this->assertEquals('40.00', (string) $sale->change_due);
 
         // Assert Stock Deducted from 20 down to 17
@@ -231,7 +232,8 @@ class CorePosAndInventoryTest extends TestCase
             register: $register,
             user: $cashier,
             items: [['product_id' => $product->id, 'quantity' => 2]],
-            payments: [['method' => 'cash', 'amount' => 130.00]]
+            payments: [['method' => 'cash', 'amount' => 130.00]],
+            idempotencyKey: 'core-pos-void-0001'
         );
 
         $this->assertEquals(8.0, $inventory->getStock($product, $shop));

@@ -4,8 +4,9 @@
 
 > [!NOTE]
 > **Implementation status:** Core tenant POS, inventory, accounting, and platform administration are implemented. The app review dated 25 November 2026 records remaining release blockers and verification gaps; see [the review](docs/APP_REVIEW_2026-11-25.md) and [progress ledger](docs/PROGRESS.md).
+> **CURRENT SUITE: 304 tests, 2,802 assertions** (SQLite, local verification on 25 November 2026). CI is configured for PHP 8.3/8.4 and SQLite/MySQL/PostgreSQL; remote matrix results are not implied by this local count.
 > - **KRA eTIMS**: Compliance checklist only; live submission is blocked on certification.
-> - **Safaricom M-Pesa**: Sandbox initiation exists; verified settlement and callback reconciliation are not implemented.
+> - **Safaricom M-Pesa**: Platform invoice callbacks have credential-bound reconciliation; POS sale callback completion and live-provider verification remain open.
 
 ---
 
@@ -28,7 +29,7 @@
 - **Append-Only Cryptographic Audit Log**: Tamper-evident SHA-256 hash chaining with SQLite trigger locks and automated verification commands.
 - **Industry coverage**: Generic retail/POS, basic restaurant tables, and a pharmacy checkout safety baseline exist. Hotel, wholesale, salon, and fuel workflows are roadmap items.
 - **East African Payment & Compliance Rails**:
-  - Safaricom M-Pesa Daraja STK initiation exists in sandbox form; authoritative payment reconciliation is not available.
+  - Safaricom M-Pesa Daraja STK initiation exists in sandbox form; platform invoice settlement can use verified callbacks, while POS sale settlement and live-provider reconciliation remain incomplete.
   - KRA eTIMS (Electronic Tax Invoice Management System) fiscal compliance and QR code receipt signing (technical placeholder surfacing honest `BLOCKED-ON-CERTIFICATION` status pending regulatory clearance).
 - **Enterprise Financial Ledger**: Integrated double-entry accounting with automated general ledger entries from POS sales, inventory receipts, and expenses.
 

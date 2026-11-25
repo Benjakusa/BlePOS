@@ -13,6 +13,7 @@ use App\Http\Middleware\EnsureTenantMfa;
 use App\Http\Middleware\EnsureTenantPermission;
 use App\Http\Middleware\PlatformSecurityHeaders;
 use App\Http\Middleware\RecordTenantActivity;
+use App\Http\Middleware\RequiresTenantContext;
 use App\Http\Middleware\ResolveTenantContext;
 use App\Http\Middleware\ResolveTenantForRouteBinding;
 use App\Http\Middleware\StartBleposSession;
@@ -62,6 +63,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'platform.https' => EnforcePlatformHttps::class,
             'platform.ip-allowlist' => EnforcePlatformIpAllowlist::class,
             'tenant.resolve' => ResolveTenantContext::class,
+            'tenant.context-required' => RequiresTenantContext::class,
             'tenant.isolate' => EnforceTenantIsolation::class,
             'tenant.activity' => RecordTenantActivity::class,
             'shop.isolate' => EnforceShopIsolation::class,

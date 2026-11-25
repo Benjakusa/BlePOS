@@ -165,34 +165,40 @@ class PharmacyService
         ?User $verifiedBy = null,
         ?string $dosageInstructions = null
     ): PharmacyDispensingLog {
-        $isControlled = (bool) ($product->metadata['is_controlled_substance'] ?? false);
+        return DB::transaction(function () use ($shop, $user, $product, $quantity, $patientName, $batch, $prescription, $sale, $verifiedBy, $dosageInstructions): PharmacyDispensingLog {
+            $isControlled = (bool) ($product->metadata['is_controlled_substance'] ?? false);
+            if ($batch) {
+                $batch = PharmacyBatch::withoutGlobalScopes()
+                    ->where('tenant_id', $shop->tenant_id)
+                    ->where('shop_id', $shop->id)
+                    ->whereKey($batch->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+                if ((float) $batch->current_quantity < $quantity) {
+                    throw ValidationException::withMessages(['batch' => 'Dispensing quantity exceeds the selected batch balance.']);
+                }
+                $batch->update([
+                    'current_quantity' => bcsub((string) $batch->current_quantity, (string) $quantity, 4),
+                ]);
+            }
 
-        // Deduct from batch current quantity if batch specified
-        if ($batch && (float) $batch->current_quantity >= $quantity) {
-            $batch->update([
-                'current_quantity' => bcsub((string) $batch->current_quantity, (string) $quantity, 4),
+            return PharmacyDispensingLog::query()->create([
+                'tenant_id' => $shop->tenant_id,
+                'shop_id' => $shop->id,
+                'user_id' => $user->id,
+                'prescription_id' => $prescription?->id,
+                'product_id' => $product->id,
+                'batch_id' => $batch?->id,
+                'sale_id' => $sale?->id,
+                'quantity' => $quantity,
+                'patient_name' => $patientName,
+                'is_controlled_substance' => $isControlled,
+                'pharmacist_verified' => $verifiedBy !== null,
+                'verified_by_user_id' => $verifiedBy?->id,
+                'verified_at' => $verifiedBy ? now() : null,
+                'dosage_instructions' => $dosageInstructions,
             ]);
-        }
-        if ($batch && (float) $batch->current_quantity < $quantity) {
-            throw ValidationException::withMessages(['batch' => 'Dispensing quantity exceeds the selected batch balance.']);
-        }
-
-        return PharmacyDispensingLog::query()->create([
-            'tenant_id' => $shop->tenant_id,
-            'shop_id' => $shop->id,
-            'user_id' => $user->id,
-            'prescription_id' => $prescription?->id,
-            'product_id' => $product->id,
-            'batch_id' => $batch?->id,
-            'sale_id' => $sale?->id,
-            'quantity' => $quantity,
-            'patient_name' => $patientName,
-            'is_controlled_substance' => $isControlled,
-            'pharmacist_verified' => $verifiedBy !== null,
-            'verified_by_user_id' => $verifiedBy?->id,
-            'verified_at' => $verifiedBy ? now() : null,
-            'dosage_instructions' => $dosageInstructions,
-        ]);
+        });
     }
 
     public function recordSaleDispensing(

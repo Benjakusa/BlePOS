@@ -49,6 +49,7 @@ use App\Http\Controllers\Tenant\Garage\GarageController;
 use App\Http\Controllers\Tenant\Gym\GymController;
 use App\Http\Controllers\Tenant\InventoryController;
 use App\Http\Controllers\Tenant\MpesaCredentialController;
+use App\Http\Controllers\Tenant\ParcelController;
 use App\Http\Controllers\Tenant\PharmacyController;
 use App\Http\Controllers\Tenant\PosController;
 use App\Http\Controllers\Tenant\Printing\PrintingController;
@@ -57,6 +58,7 @@ use App\Http\Controllers\Tenant\TableController;
 use App\Http\Controllers\Tenant\TenantActivityController;
 use App\Http\Controllers\Tenant\TenantAnnouncementController;
 use App\Http\Controllers\Tenant\TenantDashboardController;
+use App\Http\Controllers\Tenant\TenantLegalDocumentController;
 use App\Http\Controllers\Tenant\TenantSubscriptionController;
 use App\Http\Controllers\Tenant\TenantSupportCaseController;
 use App\Http\Controllers\Tenant\TenantUserController;
@@ -66,6 +68,7 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/platform-console/login');
 
 Route::post('/api/mpesa/callback/{token}', [MpesaCallbackController::class, 'handle'])
+    ->middleware('throttle:mpesa-callback')
     ->withoutMiddleware([VerifyCsrfToken::class])
     ->name('mpesa.callback');
 
@@ -421,7 +424,7 @@ Route::middleware(['web', 'auth'])->prefix('tenant/mfa')->name('tenant.mfa.')->g
     Route::post('/challenge', [TenantMfaController::class, 'verify'])->middleware('throttle:10,1')->name('verify');
 });
 
-Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.resolve', 'tenant.mfa', 'tenant.isolate', 'shop.isolate', 'tenant.activity'])->group(function (): void {
+Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.resolve', 'tenant.context-required', 'tenant.mfa', 'tenant.isolate', 'shop.isolate', 'tenant.activity'])->group(function (): void {
     Route::get('/', TenantDashboardController::class)->name('dashboard');
     Route::get('/activity', [TenantActivityController::class, 'index'])->middleware('tenant.permission:users.manage')->name('activity.index');
     Route::get('/notifications', [NotificationCenterController::class, 'index'])->name('notifications.index');
@@ -436,6 +439,15 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
     Route::post('/support/cases', [TenantSupportCaseController::class, 'store'])->middleware('throttle:10,1')->name('support.cases.store');
     Route::get('/support/cases/{case}', [TenantSupportCaseController::class, 'show'])->whereNumber('case')->name('support.cases.show');
     Route::post('/support/cases/{case}/replies', [TenantSupportCaseController::class, 'reply'])->middleware('throttle:20,1')->whereNumber('case')->name('support.cases.reply');
+
+    // Legal & Regulatory Compliance (Kenya DPA 2019 & Terms of Service)
+    Route::prefix('legal')->name('legal.')->group(function (): void {
+        Route::get('/', [TenantLegalDocumentController::class, 'index'])->name('index');
+        Route::get('/privacy-policy', [TenantLegalDocumentController::class, 'privacy'])->name('privacy');
+        Route::get('/terms-of-service', [TenantLegalDocumentController::class, 'terms'])->name('terms');
+        Route::get('/dpa', [TenantLegalDocumentController::class, 'dpa'])->name('dpa');
+        Route::get('/{slug}', [TenantLegalDocumentController::class, 'show'])->name('show');
+    });
 
     // Staff & Team Management (Owner & Staff Manager)
     Route::resource('users', TenantUserController::class)
@@ -452,16 +464,19 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
     Route::resource('products', ProductController::class)
         ->middleware('tenant.permission:catalog.products.manage');
 
-    Route::middleware('tenant.industry:pharmacy')->prefix('pharmacy')->name('pharmacy.')->group(function (): void {
+    Route::middleware('module.enabled:mod-pharmacy')->prefix('pharmacy')->name('pharmacy.')->group(function (): void {
         Route::get('/', [PharmacyController::class, 'index'])->middleware('tenant.permission:inventory.view')->name('index');
+        Route::get('/batches', [PharmacyController::class, 'batches'])->middleware('tenant.permission:inventory.view')->name('batches.index');
         Route::post('/batches', [PharmacyController::class, 'storeBatch'])->middleware('tenant.permission:inventory.receive')->name('batches.store');
+        Route::get('/prescriptions', [PharmacyController::class, 'prescriptions'])->middleware('tenant.permission:inventory.view')->name('prescriptions.index');
         Route::post('/prescriptions', [PharmacyController::class, 'storePrescription'])->middleware('tenant.permission:users.manage')->name('prescriptions.store');
+        Route::get('/dispensing', [PharmacyController::class, 'dispensing'])->middleware('tenant.permission:inventory.view')->name('dispensing.index');
     });
 
     // Point of Sale & Checkout
     Route::get('/pos/checkout', [PosController::class, 'checkout'])->middleware('tenant.permission:pos.sale.create')->name('pos.checkout');
     Route::post('/pos/process', [PosController::class, 'processSale'])->middleware('tenant.permission:pos.sale.create')->name('pos.process');
-    Route::post('/pos/mpesa/stk-push', [PosController::class, 'initiateMpesaStkPush'])->middleware('tenant.permission:pos.sale.create')->name('pos.mpesa.stk-push');
+    Route::post('/pos/mpesa/stk-push', [PosController::class, 'initiateMpesaStkPush'])->middleware(['tenant.permission:pos.sale.create', 'throttle:mpesa-stk'])->name('pos.mpesa.stk-push');
     Route::get('/pos/receipt/{sale}', [PosController::class, 'receipt'])->middleware('tenant.permission:pos.sales.view')->name('pos.receipt');
     Route::get('/pos/sales', [PosController::class, 'sales'])->middleware('tenant.permission:pos.sales.view')->name('pos.sales');
     Route::post('/pos/sales/{sale}/void', [PosController::class, 'voidSale'])->middleware('tenant.permission:pos.sale.void')->name('pos.void');
@@ -626,5 +641,16 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
         Route::get('/drivers', [FleetController::class, 'drivers'])->name('drivers');
         Route::get('/drivers/create', [FleetController::class, 'createDriver'])->name('drivers.create');
         Route::post('/drivers', [FleetController::class, 'storeDriver'])->name('drivers.store');
+    });
+
+    // Parcel intake, office handoffs, and delivery
+    Route::middleware('module.enabled:parcel-delivery')->prefix('parcels')->name('parcels.')->group(function (): void {
+        Route::get('/', [ParcelController::class, 'index'])->middleware('tenant.permission:parcel.view')->name('index');
+        Route::get('/create', [ParcelController::class, 'create'])->middleware('tenant.permission:parcel.receive')->name('create');
+        Route::post('/', [ParcelController::class, 'store'])->middleware('tenant.permission:parcel.receive')->name('store');
+        Route::get('/{parcel}', [ParcelController::class, 'show'])->middleware('tenant.permission:parcel.view')->name('show');
+        Route::post('/{parcel}/dispatch', [ParcelController::class, 'dispatch'])->middleware('tenant.permission:parcel.dispatch')->name('dispatch');
+        Route::post('/{parcel}/receive-destination', [ParcelController::class, 'receiveAtDestination'])->middleware('tenant.permission:parcel.receive')->name('receive-destination');
+        Route::post('/{parcel}/deliver', [ParcelController::class, 'deliver'])->middleware('tenant.permission:parcel.deliver')->name('deliver');
     });
 });

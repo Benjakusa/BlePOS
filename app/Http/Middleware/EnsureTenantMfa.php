@@ -32,9 +32,10 @@ class EnsureTenantMfa
 
     private function requiresMfa(object $user): bool
     {
-        return $user->isTenantOwner() || collect([
+        return $user->isTenantOwner() || $user->hasRole('shop-manager') || $user->hasRole('pharmacist') || collect([
             'users.manage', 'catalog.products.manage', 'catalog.categories.manage',
             'inventory.adjust', 'accounting.view', 'tenant.billing.manage', 'shops.all.manage',
+            'sales.void', 'sales.refund', 'credit.limits.manage', 'cashier-shifts.reopen',
         ])->contains(fn (string $permission) => $user->hasPermission($permission));
     }
 }

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\MpesaCredentialResolver;
 use App\Services\MpesaEncryptionService;
+use App\Services\ProductionConfiguration;
 use App\Support\ResilientVite;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Vite;
@@ -30,30 +31,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if (app()->isProduction()) {
-            $problems = [];
-            if ((bool) config('app.debug')) {
-                $problems[] = 'APP_DEBUG must be false';
-            }
-            if (! config('app.key')) {
-                $problems[] = 'APP_KEY must be configured';
-            }
-            if (! config('session.secure')) {
-                $problems[] = 'SESSION_SECURE_COOKIE must be true';
-            }
-            if (config('database.default') === 'sqlite') {
-                $problems[] = 'SQLite is not supported for production';
-            }
-            $uploadDisk = (string) config('filesystems.default');
-            if (config('filesystems.disks.'.$uploadDisk.'.driver') !== 's3') {
-                $problems[] = 'production uploads require durable object storage';
-            }
-            $backupDisk = (string) config('platform.backup_disk');
-            if (config('filesystems.disks.'.$backupDisk.'.driver') !== 's3') {
-                $problems[] = 'production backups require off-host object storage';
-            }
-            if (config('trustedproxy.proxies') === []) {
-                $problems[] = 'TRUSTED_PROXIES must list the reverse proxy addresses';
-            }
+            $problems = app(ProductionConfiguration::class)->violations();
             $viteManifestPath = public_path('build/manifest.json');
             $viteManifest = is_file($viteManifestPath)
                 ? json_decode((string) file_get_contents($viteManifestPath), true)
@@ -101,6 +79,25 @@ class AppServiceProvider extends ServiceProvider
             return [
                 Limit::perMinute(30)->by('platform-step-up-ip:'.$request->ip()),
                 Limit::perMinute(5)->by('platform-step-up-user:'.$userId),
+            ];
+        });
+        RateLimiter::for('mpesa-callback', function (Request $request): array {
+            $token = (string) $request->route('token', 'missing');
+
+            return [
+                Limit::perMinute(30)->by('mpesa-callback-token:'.hash('sha256', $token)),
+                Limit::perMinute(120)->by('mpesa-callback-ip:'.$request->ip()),
+            ];
+        });
+        RateLimiter::for('mpesa-stk', function (Request $request): array {
+            $userId = $request->user()?->getAuthIdentifier() ?? 'anonymous';
+            $shopId = (string) ($request->input('shop_id') ?? $request->session()->get('active_shop_id', 'unknown'));
+            $phone = preg_replace('/\D+/', '', (string) $request->input('phone_number', ''));
+
+            return [
+                Limit::perMinute(5)->by('mpesa-stk-user:'.$userId),
+                Limit::perMinute(20)->by('mpesa-stk-shop:'.$shopId),
+                Limit::perMinute(3)->by('mpesa-stk-phone:'.hash('sha256', $phone)),
             ];
         });
     }

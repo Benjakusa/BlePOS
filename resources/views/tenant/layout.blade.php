@@ -105,6 +105,11 @@
                data-tooltip="Platform Announcements" aria-label="Platform Announcements">
                 <i class="bi bi-megaphone"></i><span class="nav-label">Announcements</span>
             </a>
+            <a href="{{ route('tenant.legal.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.legal.*') ? 'active' : '' }}"
+               data-tooltip="Legal & Compliance" aria-label="Legal & Compliance">
+                <i class="bi bi-shield-check"></i><span class="nav-label">Legal &amp; Privacy</span>
+            </a>
 
             {{-- Catalog --}}
             @if(auth()->user()->hasPermission('catalog.products.manage') || auth()->user()->hasPermission('catalog.categories.manage'))
@@ -309,6 +314,16 @@
                data-tooltip="Fleet & Car Hire" aria-label="Fleet & Car Hire">
                 <i class="bi bi-car-front"></i>
                 <span class="nav-label">Fleet &amp; Car Hire</span>
+            </a>
+            @endif
+
+            @if($currentTenant && auth()->user()->hasPermission('parcel.view') && ($moduleService->isModuleEnabled($currentTenant, 'parcel-delivery') || ($currentTenant->industry ?? '') === 'parcel-delivery'))
+            <span class="nav-section">Parcel Delivery</span>
+            <a href="{{ route('tenant.parcels.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.parcels.*') ? 'active' : '' }}"
+               data-tooltip="Parcel Desk" aria-label="Parcel Desk">
+                <i class="bi bi-box-seam"></i>
+                <span class="nav-label">Parcel Desk</span>
             </a>
             @endif
 

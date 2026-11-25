@@ -1,5 +1,7 @@
 # BlePOS — Production Deployment Specification
 
+Run `php artisan platform:production-check` against the deployment environment before release. Configure a production `APP_ENV`, disable debug, use secure session cookies and HTTPS, configure trusted proxy addresses, use a managed non-SQLite database, durable object storage for uploads and backups, and persistent queue/cache services. Backup workers require `mysqldump` or `pg_dump` for the corresponding database engine.
+
 ## 1. Environment & Infrastructure Requirements
 
 - **Operating System**: Linux (Ubuntu 22.04 LTS / 24.04 LTS or Debian 12).
