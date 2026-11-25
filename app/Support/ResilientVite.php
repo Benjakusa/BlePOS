@@ -13,6 +13,13 @@ class ResilientVite extends Vite
 {
     public function isRunningHot(): bool
     {
+        // A development server can be reachable from PHP while still being
+        // unreachable to browsers (for example, localhost inside a container).
+        // Production and staging must always render versioned build assets.
+        if (! app()->environment('local')) {
+            return false;
+        }
+
         $hotFile = $this->hotFile();
 
         if (! is_file($hotFile)) {

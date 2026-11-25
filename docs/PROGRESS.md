@@ -1,13 +1,13 @@
 # BlePOS Progress Ledger
 
 ## Session header
-- Last updated: 2026-11-25 11:23 UTC / 14:23 EAT
+- Last updated: 2026-11-25 11:45 UTC / 14:45 EAT
 - Last agent / session ID: codex-app-review-remediation-2026-11-25
 - Current tier / phase: App review remediation, excluding M-Pesa settlement/callback requirements (implemented; environment-dependent work listed below).
 - Build status: `npm run build` passed (2026-11-25).
-- Last full test run: `php artisan test --compact`, 242 tests and 2,490 assertions passed (2026-11-25).
-- Resume verification: `vendor/bin/pint --test` passed; browser acceptance passed (3 end-to-end tests); fresh SQLite migrations and seeding passed.
-- Git working branch / checkpoint: Existing worktree changes were present at session start; preserved and extended them. No commit created.
+- Last full test run: `php artisan test --compact`, 243 tests and 2,491 assertions passed (2026-11-25).
+- Resume verification: `vendor/bin/pint --test` passed; browser acceptance passed (4 end-to-end tests); fresh SQLite migrations and seeding passed.
+- Git working branch / checkpoint: `main`; platform restart fix and centered authentication card ready to commit.
 
 ## App review remediation — 2026-11-25
 
@@ -18,6 +18,14 @@
 - Product/test gaps: MySQL and PostgreSQL matrix runs are configured in CI but were not executed locally; production load/concurrency runs remain operational work. Live provider reconciliation and regulated pharmacist credential verification need provider/regulator credentials and are not represented as complete. Health probes detect queue backlog and stale backups/restore drills, but delivery to an external alert destination needs deployment credentials. Industry modules outside the generic POS/restaurant/pharmacy baseline are clearly marked planned in `docs/INDUSTRIES.md`.
 - Validation completed: `php artisan test --compact` — 242 passed, 2,490 assertions; `vendor/bin/pint --test` — passed; `npm run build` — passed; `npm run test:e2e` — 3 browser tests passed, including the stale-Vite restart case with an HTTP 200 for compiled CSS, tenant MFA login, cash POS sale, product image upload, pending bank-transfer billing attempt, support ticket, pharmacist MFA login, and medicine batch intake; fresh SQLite migration and browser fixture seeding — passed; `php artisan schedule:list` shows both daily backup tasks; JavaScript syntax checks and `git diff --check` — passed. No M-Pesa request or settlement flow was exercised.
 
+## Platform styling restart follow-up — 2026-11-25
+
+- User reported that the platform console still appeared unstyled after the earlier fix. Added a signed-in platform-console browser check, including computed layout/sidebar styling and a stale `public/hot` simulation. It passes when the hot file points to a stopped Vite server.
+- Tightened Vite selection: HMR is now local-environment-only; staging and production always use compiled assets. Production boot now fails with a direct deployment instruction if the Vite manifest or compiled CSS/JS entrypoints are missing.
+- Added a BrowserAcceptanceSeeder platform-admin fixture and a production-mode hot-file regression test. Updated deployment steps to require `npm run build` before each release/restart.
+- Authentication styling: changed the shared tenant/platform login, recovery, invitation, and MFA shell to a single centered card with a restrained background, clear border, and softer shadow. Removed the split image panel and kept the card responsive.
+- Verification in this follow-up: `php artisan test --compact` — 243 passed, 2,491 assertions; `vendor/bin/pint --test` — passed; `npm run build` — passed; browser acceptance — 4 passed, including centered-card positioning, hidden split panel, stale Vite fallback with HTTP 200 CSS, and computed platform shell/sidebar styles.
+
 ## RESUME POINT
 - Next action (exact): Run the configured CI matrix on MySQL and PostgreSQL, then configure real provider/regulatory credentials and external alert delivery before production use.
 - Preconditions / what must be true first: Preserve current worktree changes and use the status above as the source of truth for remediation progress.
@@ -27,8 +35,8 @@
 ## Latest session verification
 | Suite | Command | Date | Passed | Failed | Skipped | Notes |
 |---|---|---|---:|---:|---:|---|
-| App review full regression | `php artisan test --compact` | 2026-11-25 | 242 | 0 | 0 | 2,490 assertions; includes POS/tender security, pharmacy sale policy, tenant/shop isolation, MFA, billing attempts, backup behavior, backup retention, and stale Vite fallback. |
-| Browser acceptance | `npm run test:e2e` | 2026-11-25 | 3 | 0 | 0 | 21.9 seconds; stale Vite fallback returns compiled CSS, tenant POS/product/billing/support, and pharmacist MFA/batch intake. Fresh isolated SQLite database. |
+| App review full regression | `php artisan test --compact` | 2026-11-25 | 243 | 0 | 0 | 2,491 assertions; includes POS/tender security, pharmacy sale policy, tenant/shop isolation, MFA, billing attempts, backup behavior, backup retention, and Vite environment fallback. |
+| Browser acceptance | `npm run test:e2e` | 2026-11-25 | 4 | 0 | 0 | Stale Vite fallback returns compiled CSS; centered platform login card and authenticated platform shell styling; tenant POS/product/billing/support; pharmacist MFA/batch intake. Fresh isolated SQLite database. |
 | SQLite migration + E2E fixtures | `php artisan migrate --force`; `db:seed --class=RestaurantTenantSeeder`; `db:seed --class=BrowserAcceptanceSeeder` | 2026-11-25 | Passed | — | — | Fresh SQLite database; includes cashier shift number migration. |
 | PHP style | `vendor/bin/pint --test` | 2026-11-25 | Passed | — | — | Zero code style issues. |
 | Scheduler configuration | `php artisan schedule:list` | 2026-11-25 | Passed | — | — | Daily backup and backup-pruning tasks registered. |

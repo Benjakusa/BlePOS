@@ -56,6 +56,46 @@ test('stale Vite hot file serves the built stylesheet after a server restart', a
     }
 });
 
+test('authenticated platform console loads and applies the design system stylesheet', async ({ page }) => {
+    const hotFile = resolve('public/hot');
+    const previousHotFile = existsSync(hotFile) ? readFileSync(hotFile, 'utf8') : null;
+    writeFileSync(hotFile, 'http://127.0.0.1:1');
+
+    try {
+        await page.goto('/platform-console/login');
+        const authCard = page.locator('.ath-auth-card');
+        await expect(authCard).toBeVisible();
+        const authCardBounds = await authCard.boundingBox();
+        expect(Math.abs(authCardBounds.x + authCardBounds.width / 2 - page.viewportSize().width / 2)).toBeLessThan(2);
+        await expect.poll(() => page.locator('.ath-img-side').evaluate(element => getComputedStyle(element).display)).toBe('none');
+        await page.locator('#email').fill('platform.owner@blepos.test');
+        await page.locator('#password').fill('Platform@123456!');
+        await page.getByRole('button', { name: 'Sign In' }).click();
+
+        await expect(page).toHaveURL(/\/platform-console\/mfa\/setup$/);
+        const secret = (await page.locator('code').innerText()).trim();
+        await page.locator('input[name="code"]').fill(totp(secret));
+        await page.getByRole('button', { name: 'Confirm & Finish Setup' }).click();
+        await expect(page).toHaveURL(/\/platform-console\/?$/);
+
+        const stylesheet = page.locator('link[rel="stylesheet"]').first();
+        await expect(stylesheet).toHaveAttribute('href', /\/build\/assets\/app-.+\.css$/);
+        const response = await page.request.get(await stylesheet.getAttribute('href'));
+        expect(response.ok()).toBeTruthy();
+        expect(response.headers()['content-type']).toContain('text/css');
+        await expect(page.locator('.app-shell')).toBeVisible();
+        await expect(page.locator('.sidebar')).toBeVisible();
+        await expect.poll(() => page.locator('.app-shell').evaluate(element => getComputedStyle(element).display)).toBe('flex');
+        await expect.poll(() => page.locator('.sidebar').evaluate(element => element.getBoundingClientRect().width)).toBeGreaterThan(200);
+    } finally {
+        if (previousHotFile === null) {
+            if (existsSync(hotFile)) unlinkSync(hotFile);
+        } else {
+            writeFileSync(hotFile, previousHotFile);
+        }
+    }
+});
+
 test('tenant login, POS checkout, product image, billing attempt, and support ticket', async ({ page }) => {
     const runId = Date.now();
     await page.goto('/tenant/login');

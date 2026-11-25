@@ -2001,35 +2001,38 @@ body.auth-page {
   color: var(--clr-text);
 }
 .auth-page .ath-wrap {
-  display: grid;
-  grid-template-columns: minmax(360px, 1fr) minmax(0, 1fr);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: 100vh;
   min-height: 100svh;
   height: auto;
   width: 100%;
-  overflow: hidden;
-  gap: 24px;
-  padding: 24px;
-  background: var(--clr-bg);
+  padding: clamp(20px, 5vw, 56px);
+  background:
+    radial-gradient(ellipse at 12% 10%, rgba(22, 163, 74, .09), transparent 34%),
+    radial-gradient(ellipse at 90% 92%, rgba(37, 99, 235, .06), transparent 38%),
+    #F4F7F5;
 }
 .auth-page .ath-form-side {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: auto;
-  min-height: calc(100vh - 48px);
+  width: 100%;
+  min-height: 0;
   height: auto;
-  padding: 16px;
+  padding: 0;
   background: transparent;
-  overflow-y: auto;
+  overflow: visible;
 }
-.auth-page .ath-form-inner { display: flex; width: 100%; max-width: 460px; align-items: center; }
+.auth-page .ath-form-inner { display: flex; width: 100%; max-width: 440px; align-items: center; }
 .auth-page .ath-auth-card {
   width: 100%;
-  padding: 32px;
-  border-radius: 16px;
+  padding: clamp(28px, 5vw, 42px);
+  border: 1px solid rgba(203, 213, 225, .8);
+  border-radius: 20px;
   background: var(--clr-surface);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .10), 0 4px 12px rgba(15, 23, 42, .04);
 }
 .auth-page .ath-brand {
   display: inline-flex;
@@ -2133,14 +2136,7 @@ body.auth-page {
 .auth-page .ath-alert.success { background: var(--clr-grey-tint); color: var(--clr-green-hover); }
 .auth-page .ath-alert.danger { background: var(--clr-grey-tint); color: var(--clr-red); }
 .auth-page .ath-img-side {
-  position: relative;
-  display: block;
-  min-height: calc(100vh - 48px);
-  height: auto;
-  overflow: hidden;
-  background: var(--clr-grey-tint);
-  border-radius: 16px;
-  box-shadow: var(--shadow-md);
+  display: none;
 }
 .auth-page .ath-img-side::after {
   position: absolute;
@@ -2151,11 +2147,9 @@ body.auth-page {
 }
 .auth-page .ath-img-side img { display: block; width: 100%; height: 100%; object-fit: cover; }
 @media (max-width: 767px) {
-  .auth-page .ath-wrap { display: block; min-height: 100vh; padding: 16px; }
-  .auth-page .ath-form-side { min-height: calc(100vh - 32px); padding: 8px; }
-  .auth-page .ath-auth-card { padding: 24px; }
-  .auth-page .ath-form-inner { max-width: 400px; }
-  .auth-page .ath-img-side { display: none; }
+  .auth-page .ath-wrap { min-height: 100vh; min-height: 100svh; padding: 18px; }
+  .auth-page .ath-form-inner { max-width: 420px; }
+  .auth-page .ath-auth-card { padding: 28px 24px; border-radius: 18px; }
 }
 button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   outline: 2px solid var(--clr-green);

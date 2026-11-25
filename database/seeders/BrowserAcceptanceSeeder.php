@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\CashierShift;
+use App\Models\PlatformRole;
+use App\Models\PlatformUser;
 use App\Models\Register;
 use App\Models\Shop;
 use App\Models\Tenant;
@@ -14,6 +16,23 @@ class BrowserAcceptanceSeeder extends Seeder
     public function run(): void
     {
         $this->call(PharmacyDemoSeeder::class);
+        $this->call(PlatformRoleSeeder::class);
+
+        $platformAdmin = PlatformUser::query()->updateOrCreate(
+            ['email' => 'platform.owner@blepos.test'],
+            [
+                'name' => 'Browser Acceptance Admin',
+                'password' => 'Platform@123456!',
+                'status' => 'active',
+                'must_reset_password' => false,
+            ],
+        );
+        $platformAdmin->forceFill([
+            'totp_secret' => null,
+            'mfa_confirmed_at' => null,
+            'recovery_code_hashes' => null,
+        ])->save();
+        $platformAdmin->roles()->sync([PlatformRole::query()->where('slug', 'super-administrator')->value('id')]);
 
         $tenant = Tenant::query()->where('slug', 'savanna-bistro-grill')->firstOrFail();
         $user = User::withoutGlobalScopes()->where('tenant_id', $tenant->id)

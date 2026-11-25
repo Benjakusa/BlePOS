@@ -54,6 +54,18 @@ class AppServiceProvider extends ServiceProvider
             if (config('trustedproxy.proxies') === []) {
                 $problems[] = 'TRUSTED_PROXIES must list the reverse proxy addresses';
             }
+            $viteManifestPath = public_path('build/manifest.json');
+            $viteManifest = is_file($viteManifestPath)
+                ? json_decode((string) file_get_contents($viteManifestPath), true)
+                : null;
+            foreach (['resources/css/app.css', 'resources/js/app.js'] as $entrypoint) {
+                $compiledFile = is_array($viteManifest) ? data_get($viteManifest, $entrypoint.'.file') : null;
+
+                if (! is_string($compiledFile) || ! is_file(public_path('build/'.$compiledFile))) {
+                    $problems[] = 'the Vite production build is missing or incomplete; run npm run build before deployment';
+                    break;
+                }
+            }
             if ($problems !== []) {
                 throw new \RuntimeException('Unsafe production configuration: '.implode('; ', $problems).'.');
             }

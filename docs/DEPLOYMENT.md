@@ -85,7 +85,7 @@ php artisan queue:restart
 php artisan up
 ```
 
-The platform layout uses the Vite development server only while its `/@vite/client` endpoint responds. If a server is restarted after the dev server stopped unexpectedly, a stale `public/hot` file is ignored and Laravel serves the compiled manifest assets instead. `npm run dev` and `npm run build` also clear an old hot file before starting.
+The Vite development server is used only in the `local` environment and only while its `/@vite/client` endpoint responds. Staging and production always serve versioned assets from `public/build`, even if a stale `public/hot` file remains or the PHP container can reach a Vite server that a browser cannot. Production boot checks that the manifest and both compiled entrypoints exist; run `npm ci && npm run build` as part of every release before restarting the PHP service. `npm run dev` and `npm run build` also clear an old hot file before starting.
 
 ---
 
