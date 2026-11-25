@@ -17,7 +17,7 @@
         </div>
     </div>
 
-    <form action="{{ route('tenant.products.store') }}" method="POST" style="display: flex; flex-direction: column; gap: 16px;">
+    <form action="{{ route('tenant.products.store') }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 16px;">
         @csrf
         
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
@@ -47,6 +47,8 @@
         </div>
 
         <x-input type="textarea" name="description" label="Product Description (Optional)" rows="3" />
+
+        <x-input type="file" name="image" label="Product Image (Optional)" accept="image/*" helper="PNG, JPG, or WEBP up to 2MB. Shown on POS product cards." />
 
         <div style="display: flex; gap: 24px; margin-top: 4px;">
             <x-input type="toggle" name="track_stock" value="1" :checked="true" label="Track Inventory Stock" />

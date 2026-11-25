@@ -235,10 +235,10 @@
             <span class="top-bar-title">@yield('title', 'Platform Console')</span>
 
             <div class="top-bar-actions">
-                <button class="top-bar-btn" aria-label="Notifications" data-tooltip="Notifications">
+                <a href="{{ route('platform.notifications.index') }}" class="top-bar-btn" aria-label="Notifications" data-tooltip="Notifications" style="position:relative">
                     <i class="bi bi-bell" style="font-size:17px;"></i>
-                    <span class="notif-dot" aria-hidden="true"></span>
-                </button>
+                    @if(auth('platform')->user()->unreadNotifications()->count())<span class="notif-dot" aria-label="Unread notifications"></span>@endif
+                </a>
 
                 <form method="post" action="{{ route('platform.logout') }}" style="margin:0;">
                     @csrf

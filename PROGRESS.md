@@ -194,8 +194,14 @@ Multi-tenant POS SaaS built on Laravel 13. Single database, tenant-scoped models
   - Sandbox OAuth mock & audit log: PASS
   - Callback token mapping & rejection of invalid tokens: PASS
   - No-secrets-in-logs verification: PASS
-- Full suite (`php artisan test --compact`): **224/224 passed (2323 assertions)**
-- Pint (`./vendor/bin/pint --test`): **PASSED**
+- **Full suite (`php artisan test --compact`):** **230/230 passed (2354 assertions)**
+- **Pint (`./vendor/bin/pint --test`):** **PASSED**
+
+### Self-Service Tenant Subscription & POS Enhancements (2026-11-25)
+- **Product Images:** Added `image_path` migration, file upload `<x-input type="file">` on product create/edit, and `image_url` in `products.lookup`.
+- **POS Layout & STK Push:** Rebuilt `tenant/pos/checkout.blade.php` to fit in viewport with separate Barcode Scan + Manual Search, wrapped Category Filters (no sliders), downward product image grid with strict text containment, and `MpesaStkPushService` (`POST /tenant/pos/mpesa/stk-push`).
+- **Tenant Subscription Self-Service Payment:** Added `TenantSubscriptionController` (`GET /tenant/subscription`, `POST /tenant/subscription/pay`), dashboard Subscription & Billing card, sidebar link, and `tenant/subscription/index.blade.php`. Tenants can pay for a plan directly (via Platform M-Pesa STK Push, Paybill ref, Card, or Bank Transfer) even without a prior platform-sent invoice, or settle open invoices.
+- **Tests Added:** `PosProductImageAndStkPushTest` (2/2 passed) and `TenantSubscriptionPaymentTest` (4/4 passed).
 
 ### Notes / Next Steps
 - Add credential rotation reminder notifications

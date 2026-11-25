@@ -8,6 +8,7 @@ use App\Models\PlatformPayment;
 use App\Models\Tenant;
 use App\Services\PlatformAuditRecorder;
 use App\Services\PlatformBillingService;
+use App\Services\WorkspaceNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -16,7 +17,8 @@ class PlatformInvoiceController extends Controller
 {
     public function __construct(
         protected PlatformBillingService $billing,
-        protected PlatformAuditRecorder $audit
+        protected PlatformAuditRecorder $audit,
+        protected WorkspaceNotificationService $notifications
     ) {}
 
     public function index(Request $request): View
@@ -81,6 +83,7 @@ class PlatformInvoiceController extends Controller
             currency: $validated['currency'] ?? 'KES',
             notes: $validated['notes'] ?? null,
         );
+        $this->notifications->invoiceIssued($invoice);
 
         $this->audit->record(
             actorId: $request->user('platform')?->id,

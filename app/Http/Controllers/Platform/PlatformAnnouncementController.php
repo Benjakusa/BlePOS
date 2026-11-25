@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PlatformAnnouncement;
 use App\Services\PlatformAuditRecorder;
 use App\Services\SupportService;
+use App\Services\WorkspaceNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,7 +15,8 @@ class PlatformAnnouncementController extends Controller
 {
     public function __construct(
         protected SupportService $support,
-        protected PlatformAuditRecorder $audit
+        protected PlatformAuditRecorder $audit,
+        protected WorkspaceNotificationService $notifications
     ) {}
 
     public function index(Request $request): View
@@ -56,6 +58,7 @@ class PlatformAnnouncementController extends Controller
             data: $validated,
             creator: $request->user('platform'),
         );
+        $this->notifications->announcementPublished($announcement);
 
         $this->audit->record(
             actorId: $request->user('platform')?->id,

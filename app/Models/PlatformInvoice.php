@@ -98,6 +98,22 @@ class PlatformInvoice extends Model
             return false;
         }
 
-        return $this->due_date < now()->startOfDay();
+        return $this->due_date?->lt(now()->startOfDay()) ?? false;
+    }
+
+    public function dueCountdown(): string
+    {
+        if ($this->isPaid()) {
+            return 'Paid';
+        }
+        if (in_array($this->status, ['voided', 'cancelled'], true)) {
+            return ucfirst($this->status);
+        }
+        if (! $this->due_date) {
+            return 'No due date';
+        }
+        $days = now()->startOfDay()->diffInDays($this->due_date->startOfDay(), false);
+
+        return $days < 0 ? 'Overdue by '.abs($days).' day'.(abs($days) === 1 ? '' : 's') : ($days === 0 ? 'Due today' : 'Due in '.$days.' day'.($days === 1 ? '' : 's'));
     }
 }

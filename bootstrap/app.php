@@ -7,6 +7,7 @@ use App\Http\Middleware\EnforceTenantIsolation;
 use App\Http\Middleware\EnsurePlatformMfa;
 use App\Http\Middleware\EnsurePlatformPermission;
 use App\Http\Middleware\EnsurePlatformStepUp;
+use App\Http\Middleware\EnsureTenantIndustry;
 use App\Http\Middleware\EnsureTenantPermission;
 use App\Http\Middleware\PlatformSecurityHeaders;
 use App\Http\Middleware\ResolveTenantContext;
@@ -54,6 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.isolate' => EnforceTenantIsolation::class,
             'shop.isolate' => EnforceShopIsolation::class,
             'tenant.permission' => EnsureTenantPermission::class,
+            'tenant.industry' => EnsureTenantIndustry::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -53,4 +53,9 @@ class Product extends Model
 
         return (float) ($stock?->quantity ?? 0);
     }
+
+    public function imageUrl(): ?string
+    {
+        return $this->image_path ? asset('storage/'.$this->image_path) : null;
+    }
 }

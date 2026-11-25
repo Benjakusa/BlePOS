@@ -3,6 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
+        "prebuild": "node -e \"import('node:fs').then(fs => fs.rmSync('public/hot', { force: true }))\"",
         "build": "vite build",
         "dev": "vite"
     },

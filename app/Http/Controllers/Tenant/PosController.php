@@ -9,6 +9,7 @@ use App\Models\DiningTable;
 use App\Models\Register;
 use App\Models\Sale;
 use App\Models\Shop;
+use App\Services\MpesaStkPushService;
 use App\Services\SaleService;
 use App\Services\TenantContext;
 use Illuminate\Http\JsonResponse;
@@ -124,6 +125,44 @@ class PosController extends Controller
             'grand_total' => $sale->grand_total,
             'change_due' => $sale->change_due,
         ]);
+    }
+
+    /**
+     * Initiate an M-Pesa STK Push request for a POS checkout.
+     */
+    public function initiateMpesaStkPush(Request $request, MpesaStkPushService $stkPush): JsonResponse
+    {
+        $tenant = TenantContext::getTenant();
+        abort_if($tenant === null, 403);
+        abort_unless($request->user()?->hasPermission('pos.sale.create'), 403);
+
+        $validated = $request->validate([
+            'shop_id' => ['required', 'integer', 'exists:shops,id'],
+            'phone_number' => ['required', 'string', 'min:9', 'max:20'],
+            'amount' => ['required', 'numeric', 'min:1'],
+            'account_reference' => ['nullable', 'string', 'max:32'],
+        ]);
+
+        $shop = Shop::query()->findOrFail($validated['shop_id']);
+        abort_if((int) $shop->tenant_id !== (int) $tenant->id, 403);
+
+        try {
+            $result = $stkPush->initiate(
+                tenantId: $tenant->id,
+                branchId: $shop->id,
+                phoneNumber: $validated['phone_number'],
+                amount: (float) $validated['amount'],
+                accountReference: $validated['account_reference'] ?? $shop->code ?? 'BLEPOS',
+                description: 'POS Sale',
+            );
+
+            return response()->json($result, $result['success'] ? 200 : 422);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'customer_message' => $e->getMessage(),
+            ], 422);
+        }
     }
 
     /**

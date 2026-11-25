@@ -60,7 +60,8 @@
                 <span class="nav-label">POS Terminal</span>
             </a>
             @endif
-            @if(auth()->user()->hasPermission('pos.sale.create'))
+
+            @if(($tenant->industry ?? null) === 'restaurant' && auth()->user()->hasPermission('pos.sale.create'))
             <a href="{{ route('tenant.tables.index') }}"
                class="nav-link {{ request()->routeIs('tenant.tables.*') ? 'active' : '' }}"
                data-tooltip="Floor Plan & Tables"
@@ -88,6 +89,19 @@
             </a>
             @endif
             @endif
+
+            {{-- Support & Communication --}}
+            <span class="nav-section">Support &amp; Communication</span>
+            <a href="{{ route('tenant.support.cases.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.support.*') ? 'active' : '' }}"
+               data-tooltip="Support Tickets" aria-label="Support Tickets">
+                <i class="bi bi-life-preserver"></i><span class="nav-label">Support Tickets</span>
+            </a>
+            <a href="{{ route('tenant.announcements.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.announcements.*') ? 'active' : '' }}"
+               data-tooltip="Platform Announcements" aria-label="Platform Announcements">
+                <i class="bi bi-megaphone"></i><span class="nav-label">Announcements</span>
+            </a>
 
             {{-- Catalog --}}
             @if(auth()->user()->hasPermission('catalog.products.manage') || auth()->user()->hasPermission('catalog.categories.manage'))
@@ -220,6 +234,13 @@
                 <i class="bi bi-phone"></i>
                 <span class="nav-label">M-Pesa Settings</span>
             </a>
+            <a href="{{ route('tenant.subscription.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.subscription.*') ? 'active' : '' }}"
+               data-tooltip="Subscription & Billing"
+               aria-label="Subscription & Billing">
+                <i class="bi bi-credit-card-2-front"></i>
+                <span class="nav-label">Subscription &amp; Billing</span>
+            </a>
             @endif
 
         </nav>
@@ -262,9 +283,10 @@
                     <span class="nav-label">New Sale</span>
                 </a>
 
-                <button class="top-bar-btn" aria-label="Notifications" data-tooltip="Notifications">
+                <a href="{{ route('tenant.notifications.index') }}" class="top-bar-btn" aria-label="Notifications" data-tooltip="Notifications" style="position:relative">
                     <i class="bi bi-bell" style="font-size:17px;"></i>
-                </button>
+                    @if(auth()->user()->unreadNotifications()->count())<span class="notif-dot" aria-label="Unread notifications"></span>@endif
+                </a>
 
                 @if(Route::has('tenant.logout'))
                 <form method="post" action="{{ route('tenant.logout') }}" style="margin:0;">

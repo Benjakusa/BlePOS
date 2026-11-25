@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\CashierShift;
 use App\Models\InventoryStock;
+use App\Models\PlatformInvoice;
 use App\Models\Register;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -298,6 +299,11 @@ class TenantDashboardController extends Controller
                 ->count();
 
             $activeSubscription = $tenant->subscriptions()->with('plan')->latest('id')->first();
+            $openInvoices = PlatformInvoice::query()
+                ->where('tenant_id', $tenant->id)
+                ->whereIn('status', ['issued', 'partially_paid', 'overdue'])
+                ->where('amount_due', '>', 0)
+                ->get();
 
             $data['ownerData'] = [
                 'salesCount' => $salesCount,
@@ -314,6 +320,8 @@ class TenantDashboardController extends Controller
                 'lowStockCount' => $lowStockCount,
                 'outOfStockCount' => $outOfStockCount,
                 'subscription' => $activeSubscription,
+                'openInvoicesCount' => $openInvoices->count(),
+                'openInvoicesDue' => $openInvoices->sum('amount_due'),
             ];
         }
 

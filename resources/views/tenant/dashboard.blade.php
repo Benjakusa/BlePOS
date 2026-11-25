@@ -421,6 +421,42 @@
     <!-- ========================================== -->
     @php $o = $ownerData; @endphp
 
+    <!-- Subscription & Self-Service Billing Card -->
+    <div class="card" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 42px; height: 42px; border-radius: 10px; background: #eff6ff; color: #1d4ed8; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                <i class="bi bi-credit-card-2-front"></i>
+            </div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <strong style="font-size: 15px; color: #0f172a;">
+                        Subscription: {{ $o['subscription']?->plan?->name ?? 'Free Trial' }}
+                    </strong>
+                    <span class="badge {{ ($o['subscription']?->status ?? $tenant->status) === 'active' ? 'badge-success' : 'badge-warning' }}">
+                        {{ strtoupper($o['subscription']?->status ?? $tenant->status) }}
+                    </span>
+                </div>
+                <div class="muted" style="font-size: 12.5px; margin-top: 3px;">
+                    @if($o['openInvoicesCount'] > 0)
+                        <span style="color: #dc2626; font-weight: 600;">{{ $o['openInvoicesCount'] }} unpaid invoice(s) &bull; Total Due: KES {{ number_format((float) $o['openInvoicesDue'], 2) }}</span>
+                    @elseif($o['subscription']?->renews_at)
+                        Renews on {{ $o['subscription']->renews_at->format('M d, Y') }}
+                    @elseif($o['subscription']?->trial_ends_at)
+                        Trial ends on {{ $o['subscription']->trial_ends_at->format('M d, Y') }}
+                    @else
+                        Upgrade or pay your subscription anytime via M-Pesa STK Push, card, or bank transfer.
+                    @endif
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <a href="{{ route('tenant.subscription.index') }}" class="btn btn-primary" style="text-decoration: none;">
+                <i class="bi bi-wallet2"></i>
+                <span>{{ $o['openInvoicesCount'] > 0 ? 'Pay Invoice / Subscription' : 'Pay Subscription / Manage Plan' }}</span>
+            </a>
+        </div>
+    </div>
+
     <!-- Alerts Strip (Loss Prevention & Control Signals) -->
     @if($o['voidedSalesCount'] > 0 || $o['outOfStockCount'] > 0)
         <div style="display: grid; gap: 12px; margin-bottom: 24px;">

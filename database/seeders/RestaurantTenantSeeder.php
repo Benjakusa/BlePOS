@@ -45,6 +45,30 @@ class RestaurantTenantSeeder extends Seeder
             ]
         );
 
+        foreach ([
+            ['code' => 'starter', 'name' => 'Starter Plan', 'monthly_price' => 2500, 'annual_price' => 25000, 'max_shops' => 1, 'max_users' => 5, 'max_registers' => 2, 'max_warehouses' => 1],
+            ['code' => 'growth', 'name' => 'Growth Plan', 'monthly_price' => 6500, 'annual_price' => 65000, 'max_shops' => 5, 'max_users' => 25, 'max_registers' => 10, 'max_warehouses' => 3],
+            ['code' => 'enterprise', 'name' => 'Enterprise Plan', 'monthly_price' => 15000, 'annual_price' => 150000, 'max_shops' => 20, 'max_users' => 100, 'max_registers' => 40, 'max_warehouses' => 10],
+        ] as $paidPlan) {
+            Plan::firstOrCreate(
+                ['code' => $paidPlan['code']],
+                [
+                    'name' => $paidPlan['name'],
+                    'description' => "{$paidPlan['name']} for growing hospitality and retail businesses.",
+                    'currency' => 'KES',
+                    'monthly_price' => $paidPlan['monthly_price'],
+                    'annual_price' => $paidPlan['annual_price'],
+                    'trial_days' => 0,
+                    'max_shops' => $paidPlan['max_shops'],
+                    'max_users' => $paidPlan['max_users'],
+                    'max_registers' => $paidPlan['max_registers'],
+                    'max_warehouses' => $paidPlan['max_warehouses'],
+                    'is_active' => true,
+                    'features' => ['pos', 'inventory', 'accounting', 'reports', 'multi-branch', 'staff-management'],
+                ]
+            );
+        }
+
         // 2. Ensure all granular Tenant Permissions exist
         $permissionDefs = [
             // Point of Sale & Cashiering

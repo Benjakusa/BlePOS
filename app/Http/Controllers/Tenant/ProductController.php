@@ -10,6 +10,7 @@ use App\Services\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProductController extends Controller
@@ -81,7 +82,13 @@ class ProductController extends Controller
             'track_stock' => ['boolean'],
             'reorder_level' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
+            'image' => ['nullable', 'image', 'max:2048'],
         ]);
+
+        if ($request->hasFile('image')) {
+            $validated['image_path'] = $request->file('image')->store('products', 'public');
+        }
+        unset($validated['image']);
 
         $validated['tenant_id'] = $tenant->id;
         $validated['unit_of_measure'] = $validated['unit_of_measure'] ?? 'piece';
@@ -149,7 +156,16 @@ class ProductController extends Controller
             'track_stock' => ['boolean'],
             'reorder_level' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
+            'image' => ['nullable', 'image', 'max:2048'],
         ]);
+
+        if ($request->hasFile('image')) {
+            if ($product->image_path) {
+                Storage::disk('public')->delete($product->image_path);
+            }
+            $validated['image_path'] = $request->file('image')->store('products', 'public');
+        }
+        unset($validated['image']);
 
         $validated['track_stock'] = $request->boolean('track_stock', true);
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -207,6 +223,7 @@ class ProductController extends Controller
                     'tax_rate' => $product->tax_rate,
                     'unit_of_measure' => $product->unit_of_measure,
                     'track_stock' => $product->track_stock,
+                    'image_url' => $product->imageUrl(),
                 ],
             ]);
         }
@@ -226,6 +243,7 @@ class ProductController extends Controller
                 'unit_of_measure' => $p->unit_of_measure,
                 'track_stock' => $p->track_stock,
                 'category_name' => $p->category?->name ?? 'General',
+                'image_url' => $p->imageUrl(),
             ]),
         ]);
     }

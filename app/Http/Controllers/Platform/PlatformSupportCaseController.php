@@ -8,6 +8,7 @@ use App\Models\SupportCase;
 use App\Models\Tenant;
 use App\Services\PlatformAuditRecorder;
 use App\Services\SupportService;
+use App\Services\WorkspaceNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -16,7 +17,8 @@ class PlatformSupportCaseController extends Controller
 {
     public function __construct(
         protected SupportService $support,
-        protected PlatformAuditRecorder $audit
+        protected PlatformAuditRecorder $audit,
+        protected WorkspaceNotificationService $notifications
     ) {}
 
     public function index(Request $request): View
@@ -92,6 +94,12 @@ class PlatformSupportCaseController extends Controller
             data: $validated,
             assignedAgent: $assignedAgent,
         );
+        $this->notifications->tenantUsers($tenant->id, [
+            'title' => 'A support ticket was opened for your tenant',
+            'message' => "{$case->case_number}: {$case->subject}",
+            'url' => route('tenant.support.cases.show', $case),
+            'kind' => 'support',
+        ]);
 
         $this->audit->record(
             actorId: $request->user('platform')?->id,
@@ -165,6 +173,12 @@ class PlatformSupportCaseController extends Controller
             resolutionNotes: $validated['resolution_notes'] ?? null,
             actor: $request->user('platform'),
         );
+        $this->notifications->tenantUsers($case->tenant_id, [
+            'title' => 'Support ticket status updated',
+            'message' => "{$case->case_number} is now ".str_replace('_', ' ', $validated['status']).'.',
+            'url' => route('tenant.support.cases.show', $case),
+            'kind' => 'support',
+        ]);
 
         $this->audit->record(
             actorId: $request->user('platform')?->id,
@@ -196,6 +210,9 @@ class PlatformSupportCaseController extends Controller
             isInternal: (bool) $validated['is_internal'],
             author: $request->user('platform'),
         );
+        if (! (bool) $validated['is_internal']) {
+            $this->notifications->caseReply($case, false);
+        }
 
         $this->audit->record(
             actorId: $request->user('platform')?->id,

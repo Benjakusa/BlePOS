@@ -14,7 +14,7 @@
 </header>
 
 <div class="panel">
-    <form action="{{ route('tenant.products.update', $product) }}" method="POST" class="form" style="max-width: 650px; display: flex; flex-direction: column; gap: 14px;">
+    <form action="{{ route('tenant.products.update', $product) }}" method="POST" enctype="multipart/form-data" class="form" style="max-width: 650px; display: flex; flex-direction: column; gap: 14px;">
         @csrf
         @method('PUT')
 
@@ -45,6 +45,14 @@
         </div>
 
         <x-input type="textarea" name="description" label="Description" rows="3" :value="$product->description" />
+
+        @if($product->imageUrl())
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}" style="width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <span class="muted" style="font-size: 12px;">Current product image</span>
+            </div>
+        @endif
+        <x-input type="file" name="image" label="Product Image (Optional)" accept="image/*" helper="Upload a new image to replace the current one (PNG, JPG, WEBP up to 2MB)." />
 
         <div style="display: flex; gap: 20px;">
             <x-input type="toggle" name="track_stock" value="1" :checked="$product->track_stock" label="Track Inventory Stock" />

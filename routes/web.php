@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MpesaCallbackController;
+use App\Http\Controllers\NotificationCenterController;
 use App\Http\Controllers\Platform\AuthController;
 use App\Http\Controllers\Platform\DashboardController;
 use App\Http\Controllers\Platform\MfaController;
@@ -46,7 +47,10 @@ use App\Http\Controllers\Tenant\MpesaCredentialController;
 use App\Http\Controllers\Tenant\PosController;
 use App\Http\Controllers\Tenant\ProductController;
 use App\Http\Controllers\Tenant\TableController;
+use App\Http\Controllers\Tenant\TenantAnnouncementController;
 use App\Http\Controllers\Tenant\TenantDashboardController;
+use App\Http\Controllers\Tenant\TenantSubscriptionController;
+use App\Http\Controllers\Tenant\TenantSupportCaseController;
 use App\Http\Controllers\Tenant\TenantUserController;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
@@ -77,6 +81,9 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
         Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 
         Route::middleware(['platform.mfa', 'platform.session'])->group(function (): void {
+            Route::get('/notifications', [NotificationCenterController::class, 'index'])->name('notifications.index');
+            Route::post('/notifications/{notification}/read', [NotificationCenterController::class, 'read'])->name('notifications.read');
+            Route::post('/notifications/read-all', [NotificationCenterController::class, 'readAll'])->name('notifications.read-all');
             Route::get('/security/step-up', [StepUpController::class, 'create'])->name('step-up');
             Route::post('/security/step-up', [StepUpController::class, 'store'])->middleware('throttle:platform-step-up')->name('step-up.store');
             Route::get('/', DashboardController::class)
@@ -401,6 +408,18 @@ Route::middleware('web')->group(function (): void {
 
 Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.resolve', 'tenant.isolate', 'shop.isolate'])->group(function (): void {
     Route::get('/', TenantDashboardController::class)->name('dashboard');
+    Route::get('/notifications', [NotificationCenterController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{notification}/read', [NotificationCenterController::class, 'read'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationCenterController::class, 'readAll'])->name('notifications.read-all');
+
+    Route::get('/announcements', [TenantAnnouncementController::class, 'index'])->name('announcements.index');
+    Route::get('/announcements/{announcement}', [TenantAnnouncementController::class, 'show'])->name('announcements.show');
+
+    Route::get('/support/cases', [TenantSupportCaseController::class, 'index'])->name('support.cases.index');
+    Route::get('/support/cases/create', [TenantSupportCaseController::class, 'create'])->name('support.cases.create');
+    Route::post('/support/cases', [TenantSupportCaseController::class, 'store'])->middleware('throttle:10,1')->name('support.cases.store');
+    Route::get('/support/cases/{case}', [TenantSupportCaseController::class, 'show'])->whereNumber('case')->name('support.cases.show');
+    Route::post('/support/cases/{case}/replies', [TenantSupportCaseController::class, 'reply'])->middleware('throttle:20,1')->whereNumber('case')->name('support.cases.reply');
 
     // Staff & Team Management (Owner & Staff Manager)
     Route::resource('users', TenantUserController::class)
@@ -420,6 +439,7 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
     // Point of Sale & Checkout
     Route::get('/pos/checkout', [PosController::class, 'checkout'])->middleware('tenant.permission:pos.sale.create')->name('pos.checkout');
     Route::post('/pos/process', [PosController::class, 'processSale'])->middleware('tenant.permission:pos.sale.create')->name('pos.process');
+    Route::post('/pos/mpesa/stk-push', [PosController::class, 'initiateMpesaStkPush'])->middleware('tenant.permission:pos.sale.create')->name('pos.mpesa.stk-push');
     Route::get('/pos/receipt/{sale}', [PosController::class, 'receipt'])->middleware('tenant.permission:pos.sales.view')->name('pos.receipt');
     Route::get('/pos/sales', [PosController::class, 'sales'])->middleware('tenant.permission:pos.sales.view')->name('pos.sales');
     Route::post('/pos/sales/{sale}/void', [PosController::class, 'voidSale'])->middleware('tenant.permission:pos.sale.void')->name('pos.void');
@@ -452,10 +472,12 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
     });
 
     // Restaurant Dining Tables
-    Route::get('/tables', [TableController::class, 'index'])->middleware('tenant.permission:pos.sale.create')->name('tables.index');
-    Route::post('/tables', [TableController::class, 'store'])->middleware('tenant.permission:users.manage')->name('tables.store');
-    Route::patch('/tables/{table}/status', [TableController::class, 'updateStatus'])->middleware('tenant.permission:pos.sale.create')->name('tables.status');
-    Route::delete('/tables/{table}', [TableController::class, 'destroy'])->middleware('tenant.permission:users.manage')->name('tables.destroy');
+    Route::middleware('tenant.industry:restaurant')->group(function (): void {
+        Route::get('/tables', [TableController::class, 'index'])->middleware('tenant.permission:pos.sale.create')->name('tables.index');
+        Route::post('/tables', [TableController::class, 'store'])->middleware('tenant.permission:users.manage')->name('tables.store');
+        Route::patch('/tables/{table}/status', [TableController::class, 'updateStatus'])->middleware('tenant.permission:pos.sale.create')->name('tables.status');
+        Route::delete('/tables/{table}', [TableController::class, 'destroy'])->middleware('tenant.permission:users.manage')->name('tables.destroy');
+    });
 
     // M-Pesa Credential Vault
     Route::middleware('tenant.permission:users.manage')->group(function (): void {
@@ -466,5 +488,9 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
         Route::put('/mpesa/{mpesaCredential}', [MpesaCredentialController::class, 'update'])->name('mpesa.update');
         Route::delete('/mpesa/{mpesaCredential}', [MpesaCredentialController::class, 'destroy'])->name('mpesa.destroy');
         Route::post('/mpesa/{mpesaCredential}/test', [MpesaCredentialController::class, 'testConnection'])->name('mpesa.test')->middleware('throttle:5,1');
+
+        // Self-service Subscription & Billing
+        Route::get('/subscription', [TenantSubscriptionController::class, 'index'])->name('subscription.index');
+        Route::post('/subscription/pay', [TenantSubscriptionController::class, 'pay'])->name('subscription.pay');
     });
 });
