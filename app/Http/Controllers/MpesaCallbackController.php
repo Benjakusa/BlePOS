@@ -32,7 +32,11 @@ class MpesaCallbackController extends Controller
         }
 
         $credential = MpesaCredential::withoutGlobalScopes()
-            ->where('callback_token_hash', hash('sha256', $token))
+            ->where(function ($query) use ($token): void {
+                $tokenHash = hash('sha256', $token);
+                $query->where('callback_token_hash', $tokenHash)
+                    ->orWhere('legacy_callback_token_hash', $tokenHash);
+            })
             ->where('is_active', true)
             ->first();
 
@@ -83,7 +87,12 @@ class MpesaCallbackController extends Controller
                     return;
                 }
                 $locked->forceFill(['status' => 'failed', 'result_code' => (string) $resultCode])->save();
-                if ($locked->sale_id) {
+                $otherAttemptPending = $locked->sale_id !== null && MpesaTransaction::query()
+                    ->where('sale_id', $locked->sale_id)
+                    ->where('id', '!=', $locked->id)
+                    ->where('status', 'pending')
+                    ->exists();
+                if ($locked->sale_id && ! $otherAttemptPending) {
                     $sale = Sale::withoutGlobalScopes()->find($locked->sale_id);
                     if ($sale) {
                         $sales->releasePendingMpesaStock($sale);
@@ -164,7 +173,12 @@ class MpesaCallbackController extends Controller
                     if (! in_array($locked->status, ['pending', 'timed_out'], true)) {
                         throw new \DomainException('Paid callback cannot be assigned to refund review from the current transaction state.');
                     }
-                    if ($sale && $sale->status === 'pending_payment') {
+                    $otherAttemptPending = $sale !== null && MpesaTransaction::query()
+                        ->where('sale_id', $sale->id)
+                        ->where('id', '!=', $locked->id)
+                        ->where('status', 'pending')
+                        ->exists();
+                    if ($sale && $sale->status === 'pending_payment' && ! $otherAttemptPending) {
                         $sales->releasePendingMpesaStock($sale);
                     }
                     $locked->forceFill([
@@ -226,7 +240,7 @@ class MpesaCallbackController extends Controller
             ->each(fn (PlatformUser $user) => $user->notify(new WorkspaceAlert([
                 'title' => 'M-Pesa settlement requires refund review',
                 'message' => $message,
-                'url' => route('platform.billing.invoices.index'),
+                'url' => route('platform.mpesa.refunds.index'),
                 'kind' => 'payment',
             ])));
     }

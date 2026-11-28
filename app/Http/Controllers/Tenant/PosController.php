@@ -776,7 +776,13 @@ class PosController extends Controller
                 saleId: $sale->id,
             );
         } catch (\Throwable $exception) {
-            $this->saleService->releasePendingMpesaStock($sale);
+            $hasPendingAttempt = MpesaTransaction::query()->where('sale_id', $sale->id)->where('status', 'pending')->exists();
+            if (! $hasPendingAttempt) {
+                $this->saleService->releasePendingMpesaStock($sale);
+            }
+            if ($hasPendingAttempt) {
+                return response()->json(['success' => false, 'customer_message' => 'An M-Pesa prompt is already active for this checkout. Check its status before retrying.'], 409);
+            }
 
             return response()->json(['success' => false, 'customer_message' => 'M-Pesa request could not be started. You may retry this checkout.'], 422);
         }

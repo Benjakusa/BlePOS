@@ -29,6 +29,9 @@ class ProductionConfiguration
         if (strlen((string) config('services.mpesa.callback_secret', '')) < 32) {
             $problems[] = 'MPESA_CALLBACK_SECRET must contain at least 32 characters';
         }
+        if ((bool) config('services.mpesa.allow_platform_fallback_for_tenant_sales', false)) {
+            $problems[] = 'MPESA_ALLOW_PLATFORM_FALLBACK_FOR_TENANT_SALES must remain false until tenant remittance accounting is available';
+        }
         if (! config('session.secure')) {
             $problems[] = 'SESSION_SECURE_COOKIE must be true';
         }

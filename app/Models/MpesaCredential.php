@@ -20,6 +20,7 @@ class MpesaCredential extends Model
         'initiator_name',
         'security_credential',
         'callback_token_hash',
+        'legacy_callback_token_hash',
     ];
 
     protected $casts = [

@@ -14,6 +14,7 @@ class MpesaTransaction extends Model
         return [
             'amount' => 'decimal:2',
             'confirmed_at' => 'datetime',
+            'refund_recorded_at' => 'datetime',
         ];
     }
 

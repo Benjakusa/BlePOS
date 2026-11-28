@@ -45,6 +45,16 @@ class ReleaseHardeningTest extends TestCase
         $this->artisan('platform:production-check')->assertExitCode(1);
     }
 
+    public function test_production_check_rejects_platform_fallback_without_tenant_remittance_accounting(): void
+    {
+        config(['services.mpesa.allow_platform_fallback_for_tenant_sales' => true]);
+
+        $this->assertContains(
+            'MPESA_ALLOW_PLATFORM_FALLBACK_FOR_TENANT_SALES must remain false until tenant remittance accounting is available',
+            app(ProductionConfiguration::class)->violations()
+        );
+    }
+
     public function test_tenant_financial_audit_chain_verifies_and_detects_tampering(): void
     {
         $tenant = Tenant::factory()->create();

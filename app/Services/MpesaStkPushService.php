@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\MpesaTransaction;
 use App\Models\PlatformPayment;
+use App\Models\Sale;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
@@ -43,19 +45,28 @@ class MpesaStkPushService
         $env = $environment ?? (config('services.mpesa.sandbox_mode', true) ? 'sandbox' : 'production');
         $cred = $this->resolver->resolve($tenantId, $branchId, $env);
         $formattedPhone = $this->normalizePhone($phoneNumber);
-        $transaction = MpesaTransaction::query()->create([
-            'tenant_id' => $tenantId,
-            'shop_id' => $branchId,
-            'mpesa_credential_id' => $cred['credential_id'],
-            'platform_payment_id' => $paymentAttempt?->id,
-            'sale_id' => $saleId,
-            'account_reference' => substr($accountReference, 0, 64),
-            'phone_hash' => hash_hmac('sha256', $formattedPhone, (string) config('app.key')),
-            // Daraja STK Push accepts whole shillings; persist the exact provider amount
-            // so callback amount validation compares against what Safaricom was asked to charge.
-            'amount' => number_format((float) ceil($amount), 2, '.', ''),
-            'status' => 'pending',
-        ]);
+        $transaction = DB::transaction(function () use ($tenantId, $branchId, $cred, $paymentAttempt, $saleId, $accountReference, $formattedPhone, $amount): MpesaTransaction {
+            if ($saleId !== null) {
+                $sale = Sale::withoutGlobalScopes()->lockForUpdate()->findOrFail($saleId);
+                abort_unless((int) $sale->tenant_id === (int) $tenantId && (int) $sale->shop_id === (int) $branchId
+                    && $sale->status === 'pending_payment', 409, 'This POS checkout is no longer awaiting payment.');
+                abort_if(MpesaTransaction::query()->where('sale_id', $sale->id)->where('status', 'pending')->exists(), 409, 'An STK request is already pending for this checkout.');
+            }
+
+            return MpesaTransaction::query()->create([
+                'tenant_id' => $tenantId,
+                'shop_id' => $branchId,
+                'mpesa_credential_id' => $cred['credential_id'],
+                'platform_payment_id' => $paymentAttempt?->id,
+                'sale_id' => $saleId,
+                'account_reference' => substr($accountReference, 0, 64),
+                'phone_hash' => hash_hmac('sha256', $formattedPhone, (string) config('app.key')),
+                // Daraja STK Push accepts whole shillings; persist the exact provider amount
+                // so callback amount validation compares against what Safaricom was asked to charge.
+                'amount' => number_format((float) ceil($amount), 2, '.', ''),
+                'status' => 'pending',
+            ]);
+        });
 
         $baseUrl = $cred['environment'] === 'sandbox'
             ? config('services.mpesa.sandbox_base_url')

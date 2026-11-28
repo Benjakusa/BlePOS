@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Plan;
+use App\Models\MpesaCredential;
+use App\Models\MpesaCredentialAudit;
+use App\Models\MpesaTransaction;
 use App\Models\PlatformDunningEvent;
 use App\Models\PlatformInvoice;
 use App\Models\PlatformPayment;
@@ -88,6 +91,45 @@ class PlatformBillingAndDunningTest extends TestCase
         $response->assertSee('Platform Invoices');
         $response->assertSee('INV-TEST-001');
         $response->assertSee('11,600.00');
+    }
+
+    public function test_billing_admin_can_record_external_pos_refund_evidence_with_step_up(): void
+    {
+        [$user, $sessionId] = $this->createPlatformAdmin();
+        $tenant = Tenant::factory()->create();
+        $credential = MpesaCredential::query()->create([
+            'owner_type' => 'platform', 'owner_id' => null, 'tenant_id' => null, 'branch_id' => null,
+            'environment' => 'sandbox', 'shortcode' => '600999', 'passkey' => 'encrypted-passkey',
+            'consumer_key' => 'encrypted-key', 'consumer_secret' => 'encrypted-secret',
+            'callback_url' => 'https://example.test/callback', 'is_active' => true, 'is_default' => true,
+        ]);
+        $transaction = MpesaTransaction::query()->create([
+            'tenant_id' => $tenant->id,
+            'shop_id' => null,
+            'mpesa_credential_id' => $credential->id,
+            'sale_id' => 12345,
+            'account_reference' => 'SALE-REFUND',
+            'phone_hash' => str_repeat('a', 64),
+            'amount' => '500.00',
+            'status' => 'refund_required',
+            'provider_receipt' => 'QWE12345678',
+        ]);
+
+        $this->platformRequest($user, $sessionId)
+            ->post(route('platform.mpesa.refunds.record', $transaction), [
+                'refund_reference' => 'REVERSAL-556677',
+                'refund_notes' => 'Safaricom reversal confirmed with customer.',
+            ])
+            ->assertRedirect(route('platform.mpesa.refunds.index'));
+
+        $this->assertSame('refunded', $transaction->fresh()->status);
+        $this->assertSame('REVERSAL-556677', $transaction->fresh()->refund_reference);
+        $this->assertSame($user->id, $transaction->fresh()->refund_recorded_by);
+        $this->assertDatabaseHas('mpesa_credential_audits', [
+            'mpesa_credential_id' => $credential->id,
+            'actor_id' => $user->id,
+            'action' => 'pos_refund_recorded',
+        ]);
     }
 
     public function test_billing_admin_can_issue_invoice_with_items_vat_and_audit(): void

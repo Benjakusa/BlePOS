@@ -4,14 +4,17 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
+use App\Models\MpesaTransaction;
 use App\Models\PlatformInvoice;
 use App\Models\PlatformPayment;
 use App\Models\Subscription;
+use App\Models\Tenant;
 use App\Services\MpesaStkPushService;
 use App\Services\PlatformBillingService;
 use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -86,52 +89,68 @@ class TenantSubscriptionController extends Controller
             abort_unless((int) $invoice->tenant_id === (int) $tenant->id, 403);
             abort_if($invoice->isPaid(), 422, 'This invoice is already paid.');
         } else {
-            $selectedPlan = Plan::query()->findOrFail($validated['plan_id']);
-            abort_unless($selectedPlan->is_active, 422, 'This subscription plan is no longer available.');
-            $price = $cycle === 'annual' ? (float) $selectedPlan->annual_price : (float) $selectedPlan->monthly_price;
-            abort_if($price <= 0, 422, 'Please select a paid subscription plan.');
+            [$subscription, $invoice] = DB::transaction(function () use ($tenant, $validated, $cycle, $billing): array {
+                // Serialize plan-invoice creation per tenant, including the first subscription.
+                Tenant::query()->lockForUpdate()->findOrFail($tenant->id);
+                $subscription = Subscription::withoutGlobalScopes()
+                    ->where('tenant_id', $tenant->id)
+                    ->latest('id')
+                    ->lockForUpdate()
+                    ->first();
+                $plan = Plan::query()->lockForUpdate()->findOrFail($validated['plan_id']);
+                abort_unless($plan->is_active, 422, 'This subscription plan is no longer available.');
+                $price = $cycle === 'annual' ? (float) $plan->annual_price : (float) $plan->monthly_price;
+                abort_if($price <= 0, 422, 'Please select a paid subscription plan.');
+                abort_if($subscription !== null && PlatformInvoice::query()
+                    ->where('subscription_id', $subscription->id)
+                    ->whereNotNull('subscription_plan_name')
+                    ->whereNotIn('status', ['paid', 'voided', 'cancelled'])
+                    ->exists(), 409, 'A subscription plan invoice is already awaiting payment. Pay or cancel it before requesting another plan change.');
 
-            abort_if($subscription !== null && PlatformInvoice::query()
-                ->where('subscription_id', $subscription->id)
-                ->whereNotNull('subscription_plan_name')
-                ->whereNotIn('status', ['paid', 'voided', 'cancelled'])
-                ->exists(), 409, 'A subscription plan invoice is already awaiting payment. Pay or cancel it before requesting another plan change.');
+                if ($subscription === null) {
+                    $subscription = Subscription::create([
+                        'tenant_id' => $tenant->id,
+                        'plan_id' => $plan->id,
+                        'status' => 'awaiting_payment',
+                        'billing_cycle' => $cycle,
+                        'starts_at' => now(),
+                    ]);
+                } else {
+                    $subscription->forceFill([
+                        'pending_plan_id' => $plan->id,
+                        'pending_billing_cycle' => $cycle,
+                    ])->save();
+                }
 
-            if ($subscription === null) {
-                $subscription = Subscription::create([
-                    'tenant_id' => $tenant->id,
-                    'plan_id' => $selectedPlan->id,
-                    'status' => 'awaiting_payment',
-                    'billing_cycle' => $cycle,
-                    'starts_at' => now(),
-                ]);
-            } else {
-                $subscription->forceFill([
-                    'pending_plan_id' => $selectedPlan->id,
-                    'pending_billing_cycle' => $cycle,
+                $invoice = $billing->generateInvoice(
+                    tenant: $tenant,
+                    subscription: $subscription,
+                    items: [[
+                        'description' => "{$plan->name} ({$cycle} subscription)",
+                        'quantity' => 1,
+                        'unit_price' => $price,
+                    ]],
+                    dueDate: now()->addDays(7),
+                    currency: $plan->currency ?? $tenant->currency ?? 'KES',
+                    notes: 'Self-service subscription payment from tenant dashboard.',
+                );
+                $invoice->forceFill([
+                    'subscription_plan_id' => $plan->id,
+                    'subscription_plan_name' => $plan->name,
+                    'subscription_billing_cycle' => $cycle,
                 ])->save();
-            }
 
-            $invoice = $billing->generateInvoice(
-                tenant: $tenant,
-                subscription: $subscription,
-                items: [[
-                    'description' => "{$selectedPlan->name} ({$cycle} subscription)",
-                    'quantity' => 1,
-                    'unit_price' => $price,
-                ]],
-                dueDate: now()->addDays(7),
-                currency: $selectedPlan->currency ?? $tenant->currency ?? 'KES',
-                notes: 'Self-service subscription payment from tenant dashboard.',
-            );
-            $invoice->forceFill([
-                'subscription_plan_id' => $selectedPlan->id,
-                'subscription_plan_name' => $selectedPlan->name,
-                'subscription_billing_cycle' => $cycle,
-            ])->save();
+                return [$subscription, $invoice];
+            });
         }
 
         $amountDue = (string) $invoice->amount_due;
+        if ($validated['payment_method'] === 'mpesa_stk') {
+            abort_if(MpesaTransaction::query()
+                ->where('status', 'pending')
+                ->whereHas('platformPayment', fn ($query) => $query->where('platform_invoice_id', $invoice->id))
+                ->exists(), 409, 'An M-Pesa prompt is already pending for this invoice. Check its status before retrying.');
+        }
         $methodForRecord = $validated['payment_method'] === 'mpesa_stk'
             ? 'mpesa'
             : $validated['payment_method'];

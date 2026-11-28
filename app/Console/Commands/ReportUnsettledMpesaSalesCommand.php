@@ -22,7 +22,9 @@ class ReportUnsettledMpesaSalesCommand extends Command
                 $query->where('status', 'refund_required')
                     ->orWhere(function ($confirmed): void {
                         $confirmed->where('status', 'confirmed')
-                            ->whereHas('sale', fn ($sale) => $sale->where('status', '!=', 'completed'));
+                            ->where(fn ($saleQuery) => $saleQuery
+                                ->whereHas('sale', fn ($sale) => $sale->where('status', '!=', 'completed'))
+                                ->orWhereDoesntHave('sale'));
                     });
             })
             ->orderBy('id')
@@ -53,7 +55,7 @@ class ReportUnsettledMpesaSalesCommand extends Command
                 ->each(fn (PlatformUser $user) => $user->notify(new WorkspaceAlert([
                     'title' => 'M-Pesa POS reconciliation required',
                     'message' => "{$transactions->count()} successful M-Pesa POS transaction(s) do not have a completed sale. Review the unsettled payment report.",
-                    'url' => route('platform.billing.invoices.index'),
+                    'url' => route('platform.mpesa.refunds.index'),
                     'kind' => 'payment',
                 ])));
         }

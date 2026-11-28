@@ -8,9 +8,14 @@
         <h1 style="font-size: 22px; font-weight: 600; margin: 0;">Platform M-Pesa Credential Vault</h1>
         <p style="font-size: 13px; color: #64748b; margin: 4px 0 0 0;">Manage platform-level M-Pesa credentials and view tenant configuration summary.</p>
     </div>
-    <a href="{{ route('platform.mpesa.create') }}" class="btn" style="text-decoration: none;">
-        <i class="bi bi-plus-lg"></i> Add Platform Credential
-    </a>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="{{ route('platform.mpesa.refunds.index') }}" class="btn btn-secondary" style="text-decoration: none;">
+            <i class="bi bi-arrow-counterclockwise"></i> Refund review ({{ $pendingRefundCount }})
+        </a>
+        <a href="{{ route('platform.mpesa.create') }}" class="btn" style="text-decoration: none;">
+            <i class="bi bi-plus-lg"></i> Add Platform Credential
+        </a>
+    </div>
 </div>
 
 @if(session('success'))

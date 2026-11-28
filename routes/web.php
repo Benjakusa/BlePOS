@@ -125,6 +125,10 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
 
             Route::prefix('mpesa')->name('mpesa.')->middleware('platform.permission:platform.tenants.view')->group(function (): void {
                 Route::get('/', [PlatformMpesaController::class, 'index'])->name('index');
+                Route::get('/refund-review', [PlatformMpesaController::class, 'refundReviewIndex'])
+                    ->middleware('platform.permission:platform.billing.view')->name('refunds.index');
+                Route::post('/refund-review/{transaction}', [PlatformMpesaController::class, 'recordRefundReview'])
+                    ->middleware(['platform.permission:platform.billing.subscriptions.manage', 'platform.step-up'])->name('refunds.record');
                 Route::get('/create', [PlatformMpesaController::class, 'create'])->name('create');
                 Route::post('/', [PlatformMpesaController::class, 'store'])->name('store');
                 Route::get('/{credential}/edit', [PlatformMpesaController::class, 'edit'])->name('edit');

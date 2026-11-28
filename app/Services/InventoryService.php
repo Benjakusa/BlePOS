@@ -201,9 +201,28 @@ class InventoryService
                 if (bccomp((string) $stock->reserved_quantity, (string) $reservation->quantity, 4) < 0) {
                     throw new \DomainException('Pending sale stock reservation is inconsistent.');
                 }
+                $product = Product::withoutGlobalScopes()->findOrFail($reservation->product_id);
                 $stock->reserved_quantity = bcsub((string) $stock->reserved_quantity, (string) $reservation->quantity, 4);
                 $stock->save();
                 $reservation->update(['status' => $outcome, 'expires_at' => null]);
+                $movement = StockMovement::query()->create([
+                    'tenant_id' => $sale->tenant_id,
+                    'shop_id' => $sale->shop_id,
+                    'product_id' => $reservation->product_id,
+                    'type' => $outcome === 'consumed' ? 'reserve_consume' : 'reserve_release',
+                    'quantity' => '0.0000',
+                    'balance_before' => $stock->quantity,
+                    'balance_after' => $stock->quantity,
+                    'unit_cost' => $product->cost_price,
+                    'reference_type' => Sale::class,
+                    'reference_id' => (string) $sale->id,
+                    'reason' => ucfirst($outcome).' reservation of {$reservation->quantity} for POS sale {$sale->sale_number}',
+                ]);
+                app(TenantFinancialAuditRecorder::class)->record(
+                    (int) $sale->tenant_id, (int) $sale->shop_id, null,
+                    StockMovement::class, $movement->id, 'stock.reservation_'.$outcome, null,
+                    ['quantity' => $reservation->quantity, 'sale_id' => $sale->id]
+                );
             }
         });
     }
