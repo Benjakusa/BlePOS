@@ -23,7 +23,7 @@ class MpesaSandboxSeeder extends Seeder
                 'passkey' => $enc->encrypt('bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'),
                 'consumer_key' => $enc->encrypt('GKEJKlFHRRMgRRpX7i8GG0YpNqRJ9fXN'),
                 'consumer_secret' => $enc->encrypt('MpXqXrL2VVnB3kqDR0M8e1JU7fXrQhKD'),
-                'callback_url' => 'https://blepos.co.ke/api/mpesa/callback/platform',
+                'callback_url' => 'https://blepos.co.ke/api/mpesa/callback',
                 'is_active' => true,
                 'is_default' => true,
             ]
@@ -40,7 +40,7 @@ class MpesaSandboxSeeder extends Seeder
                     'passkey' => $enc->encrypt('bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'),
                     'consumer_key' => $enc->encrypt('RstGKEJKlFHRRMgRRpX7i8GG0YpNqRJ9fXN'),
                     'consumer_secret' => $enc->encrypt('RstMpXqXrL2VVnB3kqDR0M8e1JU7fXrQhKD'),
-                    'callback_url' => 'https://blepos.co.ke/api/mpesa/callback/tenant/'.$restaurantTenant->id,
+                    'callback_url' => 'https://blepos.co.ke/api/mpesa/callback',
                     'is_active' => true,
                     'is_default' => true,
                 ]
@@ -56,7 +56,7 @@ class MpesaSandboxSeeder extends Seeder
                         'passkey' => $enc->encrypt('bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'),
                         'consumer_key' => $enc->encrypt('BranchRstGKEJKlFHRR123'),
                         'consumer_secret' => $enc->encrypt('BranchRstMpXqXrL2VVnB3k456'),
-                        'callback_url' => 'https://blepos.co.ke/api/mpesa/callback/branch/'.$shop->id,
+                        'callback_url' => 'https://blepos.co.ke/api/mpesa/callback',
                         'is_active' => true,
                         'is_default' => true,
                     ]
@@ -75,7 +75,7 @@ class MpesaSandboxSeeder extends Seeder
                     'passkey' => $enc->encrypt('bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'),
                     'consumer_key' => $enc->encrypt('HtlGKEJKlFHRRMgRRpX7i8GG0YpNqRJ9fXN'),
                     'consumer_secret' => $enc->encrypt('HtlMpXqXrL2VVnB3kqDR0M8e1JU7fXrQhKD'),
-                    'callback_url' => 'https://blepos.co.ke/api/mpesa/callback/tenant/'.$hotelTenant->id,
+                    'callback_url' => 'https://blepos.co.ke/api/mpesa/callback',
                     'is_active' => true,
                     'is_default' => true,
                 ]
@@ -91,7 +91,7 @@ class MpesaSandboxSeeder extends Seeder
                         'passkey' => $enc->encrypt('bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'),
                         'consumer_key' => $enc->encrypt('BranchHtlGKEJKlFHRR789'),
                         'consumer_secret' => $enc->encrypt('BranchHtlMpXqXrL2VVnB3k012'),
-                        'callback_url' => 'https://blepos.co.ke/api/mpesa/callback/branch/'.$hotelShop->id,
+                        'callback_url' => 'https://blepos.co.ke/api/mpesa/callback',
                         'is_active' => true,
                         'is_default' => true,
                     ]

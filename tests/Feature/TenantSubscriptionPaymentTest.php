@@ -144,4 +144,85 @@ class TenantSubscriptionPaymentTest extends TestCase
         $cashier = User::where('email', 'restaurant.cashier@blepos.co.ke')->firstOrFail();
         $this->actingAs($cashier, 'web')->get(route('tenant.subscription.index'))->assertStatus(403);
     }
+
+    public function test_disabled_plan_paid_after_invoice_is_flagged_and_not_applied(): void
+    {
+        $owner = User::where('email', 'restaurant.owner@blepos.co.ke')->firstOrFail();
+        $tenant = Tenant::findOrFail($owner->tenant_id);
+        $currentPlan = Plan::where('code', 'trial')->firstOrFail();
+        $paidPlan = Plan::where('code', 'growth')->firstOrFail();
+        $subscription = Subscription::query()->create([
+            'tenant_id' => $tenant->id,
+            'plan_id' => $currentPlan->id,
+            'pending_plan_id' => $paidPlan->id,
+            'status' => 'awaiting_payment',
+            'billing_cycle' => 'monthly',
+            'pending_billing_cycle' => 'monthly',
+            'starts_at' => now(),
+        ]);
+        $invoice = app(PlatformBillingService::class)->generateInvoice(
+            $tenant,
+            $subscription,
+            [['description' => 'Growth plan', 'quantity' => 1, 'unit_price' => 6500]],
+            now()->addDays(5)
+        );
+        $invoice->forceFill([
+            'subscription_plan_id' => $paidPlan->id,
+            'subscription_plan_name' => $paidPlan->name,
+            'subscription_billing_cycle' => 'monthly',
+        ])->save();
+        $payment = app(PlatformBillingService::class)->createPaymentAttempt($invoice, (string) $invoice->amount_due, 'mpesa');
+        $credential = MpesaCredential::query()->where('owner_type', 'platform')->firstOrFail();
+        $transaction = MpesaTransaction::query()->create([
+            'mpesa_credential_id' => $credential->id,
+            'platform_payment_id' => $payment->id,
+            'account_reference' => $invoice->invoice_number,
+            'phone_hash' => str_repeat('a', 64),
+            'amount' => $payment->amount,
+            'status' => 'confirmed',
+            'provider_receipt' => 'SUBPLAN12345',
+        ]);
+        $paidPlan->update(['is_active' => false]);
+
+        app(PlatformBillingService::class)->confirmVerifiedProviderPayment($payment, $transaction, 'SUBPLAN12345');
+
+        $this->assertSame('completed', $payment->fresh()->status);
+        $this->assertSame('needs_staff_action', $invoice->fresh()->status);
+        $this->assertEquals($currentPlan->id, $subscription->fresh()->plan_id);
+        $this->assertDatabaseHas('notifications', ['notifiable_id' => $owner->id]);
+    }
+
+    public function test_second_plan_invoice_is_blocked_while_previous_plan_invoice_is_unpaid(): void
+    {
+        $owner = User::where('email', 'restaurant.owner@blepos.co.ke')->firstOrFail();
+        $tenant = Tenant::findOrFail($owner->tenant_id);
+        $subscription = Subscription::withoutGlobalScopes()->where('tenant_id', $tenant->id)->latest('id')->first();
+        if (! $subscription) {
+            $subscription = Subscription::query()->create([
+                'tenant_id' => $tenant->id,
+                'plan_id' => Plan::where('code', 'trial')->value('id'),
+                'status' => 'active',
+                'billing_cycle' => 'monthly',
+                'starts_at' => now(),
+            ]);
+        }
+        $openInvoice = app(PlatformBillingService::class)->generateInvoice(
+            $tenant,
+            $subscription,
+            [['description' => 'Existing plan invoice', 'quantity' => 1, 'unit_price' => 6500]],
+            now()->addDays(5)
+        );
+        $openInvoice->forceFill([
+            'subscription_plan_id' => Plan::where('code', 'growth')->value('id'),
+            'subscription_plan_name' => 'Growth Plan',
+            'subscription_billing_cycle' => 'monthly',
+        ])->save();
+
+        $this->actingAs($owner, 'web')->post(route('tenant.subscription.pay'), [
+            'plan_id' => Plan::where('code', 'enterprise')->value('id'),
+            'billing_cycle' => 'monthly',
+            'payment_method' => 'mpesa_stk',
+            'phone_number' => '0712345678',
+        ])->assertStatus(409);
+    }
 }

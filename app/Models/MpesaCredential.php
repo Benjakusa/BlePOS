@@ -19,6 +19,7 @@ class MpesaCredential extends Model
         'consumer_secret',
         'initiator_name',
         'security_credential',
+        'callback_token_hash',
     ];
 
     protected $casts = [
@@ -36,8 +37,9 @@ class MpesaCredential extends Model
 
         static::creating(function (self $model): void {
             $model->uuid = $model->uuid ?? (string) Str::uuid();
-            $model->callback_token = $model->callback_token
-                ?? hash_hmac('sha256', (string) Str::uuid(), config('services.mpesa.callback_secret', ''));
+            $rawToken = $model->deriveCallbackToken();
+            $model->callback_token_hash = hash('sha256', $rawToken);
+            $model->callback_token = null;
         });
     }
 
@@ -64,6 +66,18 @@ class MpesaCredential extends Model
         return app(MpesaEncryptionService::class)->mask(
             app(MpesaEncryptionService::class)->decrypt($this->passkey)
         );
+    }
+
+    public function getCallbackTokenAttribute(): string
+    {
+        return $this->deriveCallbackToken();
+    }
+
+    private function deriveCallbackToken(): string
+    {
+        $secret = (string) config('services.mpesa.callback_secret', '');
+
+        return hash_hmac('sha256', 'mpesa-callback:'.(string) $this->uuid, $secret);
     }
 
     // -------------------------------------------------------------------------

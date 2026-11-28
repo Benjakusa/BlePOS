@@ -48,8 +48,9 @@ class MpesaCredentialResolver
             }
         }
 
-        // 3. Platform-level
-        if ($credential === null) {
+        // Tenant sales may not silently collect into the platform's shortcode.
+        // Platform billing passes null tenant/branch IDs and still resolves its own credential.
+        if ($credential === null && ($tenantId === null || (bool) config('services.mpesa.allow_platform_fallback_for_tenant_sales', false))) {
             $credential = MpesaCredential::withoutGlobalScopes()
                 ->where('owner_type', 'platform')
                 ->where('environment', $environment)
@@ -86,7 +87,6 @@ class MpesaCredentialResolver
             'consumer_secret' => $this->encryption->decrypt($credential->consumer_secret),
             'initiator_name' => $credential->initiator_name ? $this->encryption->decrypt($credential->initiator_name) : null,
             'security_credential' => $credential->security_credential ? $this->encryption->decrypt($credential->security_credential) : null,
-            'callback_url' => $credential->callback_url,
             'callback_token' => $credential->callback_token,
             'environment' => $credential->environment,
             'resolved_via' => $resolvedVia,

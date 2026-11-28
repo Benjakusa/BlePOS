@@ -13,3 +13,5 @@ Schedule::command('platform:backup')->dailyAt('01:00')->withoutOverlapping();
 Schedule::command('platform:backup-prune')->dailyAt('02:00')->withoutOverlapping();
 
 Schedule::command('inventory:release-reusable-products')->everyMinute()->withoutOverlapping();
+Schedule::command('mpesa:expire-pending-transactions')->everyMinute()->withoutOverlapping();
+Schedule::command('mpesa:report-unsettled-sales')->everyFiveMinutes()->withoutOverlapping();

@@ -202,4 +202,51 @@ class CashierShiftController extends Controller
         return redirect()->route('tenant.shifts.show', $shift)
             ->with('success', "Shift {$shift->shift_number} closed with variance of KES {$varianceStr}.");
     }
+
+    /**
+     * Display current user's active shift or redirect to creation.
+     */
+    public function myShift(Request $request): RedirectResponse
+    {
+        $tenant = TenantContext::getTenant();
+        abort_if($tenant === null, 403, 'Tenant context not established.');
+
+        $shift = CashierShift::query()
+            ->where('user_id', $request->user()?->id)
+            ->latest('opened_at')
+            ->first();
+
+        if (! $shift) {
+            return redirect()->route('tenant.shifts.create')
+                ->with('info', 'No active or past shifts found. Open a new shift to begin.');
+        }
+
+        return redirect()->route('tenant.shifts.show', $shift);
+    }
+
+    /**
+     * Printable Cashier Shift Z-Report settlement slip.
+     */
+    public function printZReport(CashierShift $shift): View
+    {
+        $tenant = TenantContext::getTenant();
+        abort_if($tenant === null, 403, 'Tenant context not established.');
+        abort_if((int) $shift->tenant_id !== (int) $tenant->id, 403);
+
+        $shift->load(['shop', 'register', 'user', 'sales.payments']);
+
+        $totalSalesCount = $shift->sales->count();
+        $totalGross = (float) $shift->sales->sum('total_amount');
+        $totalVat = (float) $shift->sales->sum('tax_amount');
+        $totalDiscount = (float) $shift->sales->sum('discount_amount');
+
+        return view('tenant.shifts.z-report', [
+            'tenant' => $tenant,
+            'shift' => $shift,
+            'totalSalesCount' => $totalSalesCount,
+            'totalGross' => $totalGross,
+            'totalVat' => $totalVat,
+            'totalDiscount' => $totalDiscount,
+        ]);
+    }
 }

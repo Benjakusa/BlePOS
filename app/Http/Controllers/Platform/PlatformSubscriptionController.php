@@ -47,6 +47,8 @@ class PlatformSubscriptionController extends Controller
                 'renews_at' => $renewsAt,
                 'trial_ends_at' => $trialEndsAt,
                 'cancelled_at' => null,
+                'pending_plan_id' => null,
+                'pending_billing_cycle' => null,
             ]);
             $subscription = $currentSub;
             $action = 'subscription.change_plan';
@@ -59,6 +61,8 @@ class PlatformSubscriptionController extends Controller
                 'starts_at' => now(),
                 'trial_ends_at' => $trialEndsAt,
                 'renews_at' => $renewsAt,
+                'pending_plan_id' => null,
+                'pending_billing_cycle' => null,
             ]);
             $action = 'subscription.create';
         }

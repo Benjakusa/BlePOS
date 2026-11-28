@@ -17,6 +17,18 @@ class ProductionConfiguration
         if (! config('app.key')) {
             $problems[] = 'APP_KEY must be configured';
         }
+        try {
+            app(MpesaEncryptionService::class);
+        } catch (\Throwable) {
+            $problems[] = 'a valid 32-byte M-Pesa encryption key must be configured';
+        }
+        $callbackIps = (array) config('services.mpesa.callback_allowed_ips', []);
+        if (! collect($callbackIps)->contains(fn ($rule): bool => is_string($rule) && $this->isValidIpRule($rule))) {
+            $problems[] = 'MPESA_CALLBACK_ALLOWED_IPS must contain at least one valid Safaricom callback IP/CIDR';
+        }
+        if (strlen((string) config('services.mpesa.callback_secret', '')) < 32) {
+            $problems[] = 'MPESA_CALLBACK_SECRET must contain at least 32 characters';
+        }
         if (! config('session.secure')) {
             $problems[] = 'SESSION_SECURE_COOKIE must be true';
         }
@@ -45,5 +57,20 @@ class ProductionConfiguration
         }
 
         return $problems;
+    }
+
+    private function isValidIpRule(string $rule): bool
+    {
+        [$address, $prefix] = array_pad(explode('/', $rule, 2), 2, null);
+        $packed = inet_pton($address);
+        if ($packed === false) {
+            return false;
+        }
+        if ($prefix === null) {
+            return true;
+        }
+        $bits = filter_var($prefix, FILTER_VALIDATE_INT);
+
+        return $bits !== false && $bits >= 0 && $bits <= strlen($packed) * 8;
     }
 }

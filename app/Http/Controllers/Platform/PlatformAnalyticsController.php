@@ -49,7 +49,7 @@ class PlatformAnalyticsController extends Controller
         $authorizer->ensure($request->user('platform'), 'platform.dashboard.view');
 
         $validated = $request->validate([
-            'report_type' => ['required', 'string', 'in:revenue,tenants,modules,growth'],
+            'report_type' => ['required', 'string', 'in:revenue,tenants,modules,growth,tenants-comprehensive,billing-invoices,industry-adoption,audit-trail'],
         ]);
 
         $csv = $analyticsService->exportReport($validated['report_type'], $request->user('platform'));

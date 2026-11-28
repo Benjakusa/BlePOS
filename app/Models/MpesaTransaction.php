@@ -26,4 +26,9 @@ class MpesaTransaction extends Model
     {
         return $this->belongsTo(PlatformPayment::class);
     }
+
+    public function sale(): BelongsTo
+    {
+        return $this->belongsTo(Sale::class);
+    }
 }

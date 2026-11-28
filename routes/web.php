@@ -56,6 +56,7 @@ use App\Http\Controllers\Tenant\Printing\PrintingController;
 use App\Http\Controllers\Tenant\ProductController;
 use App\Http\Controllers\Tenant\TableController;
 use App\Http\Controllers\Tenant\TenantActivityController;
+use App\Http\Controllers\Tenant\TenantAnalyticsController;
 use App\Http\Controllers\Tenant\TenantAnnouncementController;
 use App\Http\Controllers\Tenant\TenantDashboardController;
 use App\Http\Controllers\Tenant\TenantLegalDocumentController;
@@ -169,6 +170,8 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
                 ->middleware('platform.permission:platform.billing.view')->name('invoices.show');
             Route::post('/invoices/{invoice}/payments', [PlatformInvoiceController::class, 'recordPayment'])
                 ->middleware(['platform.permission:platform.billing.subscriptions.manage', 'platform.step-up'])->name('invoices.payment');
+            Route::post('/invoices/{invoice}/payments/{payment}/reconcile', [PlatformInvoiceController::class, 'reconcilePendingPayment'])
+                ->middleware(['platform.permission:platform.billing.subscriptions.manage', 'platform.step-up'])->name('invoices.payment.reconcile');
             Route::post('/invoices/{invoice}/payments/{payment}/refund', [PlatformInvoiceController::class, 'recordRefund'])
                 ->middleware(['platform.permission:platform.billing.subscriptions.manage', 'platform.step-up'])->name('invoices.refund');
             Route::post('/invoices/{invoice}/void', [PlatformInvoiceController::class, 'void'])
@@ -449,6 +452,13 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
         Route::get('/{slug}', [TenantLegalDocumentController::class, 'show'])->name('show');
     });
 
+    // Business Analytics & Data Export Center
+    Route::prefix('analytics')->name('analytics.')->group(function (): void {
+        Route::get('/', [TenantAnalyticsController::class, 'index'])->name('index');
+        Route::get('/export', [TenantAnalyticsController::class, 'exportCenter'])->name('export-center');
+        Route::post('/export', [TenantAnalyticsController::class, 'export'])->name('export');
+    });
+
     // Staff & Team Management (Owner & Staff Manager)
     Route::resource('users', TenantUserController::class)
         ->middleware('tenant.permission:users.manage')
@@ -477,15 +487,28 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
     Route::get('/pos/checkout', [PosController::class, 'checkout'])->middleware('tenant.permission:pos.sale.create')->name('pos.checkout');
     Route::post('/pos/process', [PosController::class, 'processSale'])->middleware('tenant.permission:pos.sale.create')->name('pos.process');
     Route::post('/pos/mpesa/stk-push', [PosController::class, 'initiateMpesaStkPush'])->middleware(['tenant.permission:pos.sale.create', 'throttle:mpesa-stk'])->name('pos.mpesa.stk-push');
+    Route::get('/pos/mpesa/transactions/{transaction}/status', [PosController::class, 'mpesaStkStatus'])->middleware('tenant.permission:pos.sale.create')->name('pos.mpesa.status');
     Route::get('/pos/receipt/{sale}', [PosController::class, 'receipt'])->middleware('tenant.permission:pos.sales.view')->name('pos.receipt');
     Route::get('/pos/sales', [PosController::class, 'sales'])->middleware('tenant.permission:pos.sales.view')->name('pos.sales');
     Route::post('/pos/sales/{sale}/void', [PosController::class, 'voidSale'])->middleware('tenant.permission:pos.sale.void')->name('pos.void');
 
+    // Industry-Specific POS Terminal Operations
+    Route::post('/pos/parcels/intake', [PosController::class, 'processParcelIntake'])->middleware('tenant.permission:pos.sale.create')->name('pos.parcels.intake');
+    Route::get('/pos/parcels/{parcel}/waybill', [PosController::class, 'waybill'])->middleware('tenant.permission:pos.sales.view')->name('pos.waybill');
+    Route::post('/pos/gym/action', [PosController::class, 'processGymAction'])->middleware('tenant.permission:pos.sale.create')->name('pos.gym.action');
+    Route::get('/pos/gym/slip/{payment}', [PosController::class, 'gymSlip'])->middleware('tenant.permission:pos.sales.view')->name('pos.gym-slip');
+    Route::post('/pos/fleet/dispatch', [PosController::class, 'processFleetDispatch'])->middleware('tenant.permission:pos.sale.create')->name('pos.fleet.dispatch');
+    Route::get('/pos/fleet/slip/{booking}', [PosController::class, 'fleetSlip'])->middleware('tenant.permission:pos.sales.view')->name('pos.fleet-slip');
+    Route::post('/pos/garage/intake', [PosController::class, 'processGarageIntake'])->middleware('tenant.permission:pos.sale.create')->name('pos.garage.intake');
+    Route::get('/pos/garage/slip/{jobCard}', [PosController::class, 'garageSlip'])->middleware('tenant.permission:pos.sales.view')->name('pos.garage-slip');
+
     // Cashier Shifts
     Route::get('/shifts', [CashierShiftController::class, 'index'])->middleware('tenant.permission:shifts.view')->name('shifts.index');
+    Route::get('/shifts/my-shift', [CashierShiftController::class, 'myShift'])->name('shifts.my-shift');
     Route::get('/shifts/create', [CashierShiftController::class, 'create'])->middleware('tenant.permission:shifts.manage')->name('shifts.create');
     Route::post('/shifts', [CashierShiftController::class, 'store'])->middleware('tenant.permission:shifts.manage')->name('shifts.store');
     Route::get('/shifts/{shift}', [CashierShiftController::class, 'show'])->middleware('tenant.permission:shifts.view')->name('shifts.show');
+    Route::get('/shifts/{shift}/z-report', [CashierShiftController::class, 'printZReport'])->middleware('tenant.permission:shifts.view')->name('shifts.z-report');
     Route::post('/shifts/{shift}/cash-movement', [CashierShiftController::class, 'cashMovement'])->middleware('tenant.permission:shifts.manage')->name('shifts.cash-movement');
     Route::post('/shifts/{shift}/close', [CashierShiftController::class, 'close'])->middleware('tenant.permission:shifts.manage')->name('shifts.close');
 

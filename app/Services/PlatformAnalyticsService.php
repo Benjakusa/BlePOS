@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Module;
+use App\Models\MpesaCredential;
 use App\Models\Plan;
+use App\Models\PlatformAuditLog;
 use App\Models\PlatformEtimsCertification;
 use App\Models\PlatformInvoice;
 use App\Models\PlatformIpRule;
@@ -11,6 +13,7 @@ use App\Models\PlatformPayment;
 use App\Models\PlatformSecurityIncident;
 use App\Models\PlatformUser;
 use App\Models\Register;
+use App\Models\Sale;
 use App\Models\Shop;
 use App\Models\Subscription;
 use App\Models\SupportCase;
@@ -295,6 +298,76 @@ class PlatformAnalyticsService
                         $m['is_core'] ? 'Yes' : 'No',
                         $m['enabled_tenants_count'],
                         $m['adoption_rate'],
+                    ];
+                }
+                break;
+
+            case 'tenants-comprehensive':
+                $tenants = Tenant::with(['shops', 'users', 'subscriptions.plan'])->get();
+                $rows[] = ['Tenant ID', 'Tenant Name', 'Code', 'Status', 'Industry Template', 'Shop Count', 'Staff Count', 'Active Plan', 'Total Gross Sales (KES)', 'M-Pesa Vault Configured', 'Created At'];
+                foreach ($tenants as $t) {
+                    $grossSales = (float) Sale::where('tenant_id', $t->id)->where('status', 'completed')->sum('total_amount');
+                    $activeSub = $t->subscriptions->firstWhere('status', 'active') ?? $t->subscriptions->first();
+                    $hasMpesa = MpesaCredential::where('tenant_id', $t->id)->exists();
+
+                    $rows[] = [
+                        $t->id,
+                        $this->sanitizeCsvValue($t->name),
+                        $this->sanitizeCsvValue($t->code ?? '—'),
+                        ucfirst($t->status),
+                        $this->sanitizeCsvValue($t->industry ?? 'general'),
+                        $t->shops->count(),
+                        $t->users->count(),
+                        $this->sanitizeCsvValue($activeSub?->plan?->name ?? 'None'),
+                        number_format($grossSales, 2, '.', ''),
+                        $hasMpesa ? 'Configured' : 'Not Configured',
+                        $t->created_at?->format('Y-m-d H:i:s'),
+                    ];
+                }
+                break;
+
+            case 'billing-invoices':
+                $invoices = PlatformInvoice::with('tenant')->orderByDesc('created_at')->get();
+                $rows[] = ['Invoice Number', 'Tenant Name', 'Tenant Code', 'Subtotal (KES)', '16% VAT (KES)', 'Total Amount (KES)', 'Amount Paid (KES)', 'Status', 'Due Date', 'Paid At', 'Created At'];
+                foreach ($invoices as $inv) {
+                    $rows[] = [
+                        $this->sanitizeCsvValue($inv->invoice_number),
+                        $this->sanitizeCsvValue($inv->tenant?->name ?? 'Unknown'),
+                        $this->sanitizeCsvValue($inv->tenant?->code ?? '—'),
+                        number_format((float) $inv->subtotal, 2, '.', ''),
+                        number_format((float) $inv->tax_amount, 2, '.', ''),
+                        number_format((float) $inv->total_amount, 2, '.', ''),
+                        number_format((float) $inv->amount_paid, 2, '.', ''),
+                        ucfirst($inv->status),
+                        $inv->due_date?->format('Y-m-d'),
+                        $inv->paid_at?->format('Y-m-d H:i:s') ?? 'Unpaid',
+                        $inv->created_at?->format('Y-m-d H:i:s'),
+                    ];
+                }
+                break;
+
+            case 'industry-adoption':
+                $industries = $this->getIndustryDistribution();
+                $rows[] = ['Industry Template', 'Total Tenants'];
+                foreach ($industries as $ind => $count) {
+                    $rows[] = [
+                        $this->sanitizeCsvValue(ucfirst($ind)),
+                        $count,
+                    ];
+                }
+                break;
+
+            case 'audit-trail':
+                $logs = PlatformAuditLog::with('actor')->orderByDesc('occurred_at')->limit(500)->get();
+                $rows[] = ['Timestamp', 'Actor ID', 'Actor Name', 'Action', 'Target Type', 'Target ID'];
+                foreach ($logs as $log) {
+                    $rows[] = [
+                        $log->occurred_at?->format('Y-m-d H:i:s'),
+                        $log->actor_id ?? 'System',
+                        $this->sanitizeCsvValue($log->actor?->name ?? 'System'),
+                        $this->sanitizeCsvValue($log->action),
+                        $this->sanitizeCsvValue($log->target_type),
+                        $this->sanitizeCsvValue($log->target_id),
                     ];
                 }
                 break;

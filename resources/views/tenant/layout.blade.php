@@ -93,6 +93,23 @@
             @endif
             @endif
 
+            {{-- Analytics & Reports --}}
+            <span class="nav-section">Analytics &amp; Reports</span>
+            <a href="{{ route('tenant.analytics.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.analytics.index') ? 'active' : '' }}"
+               data-tooltip="Business Analytics"
+               aria-label="Business Analytics">
+                <i class="bi bi-graph-up"></i>
+                <span class="nav-label">Business Analytics</span>
+            </a>
+            <a href="{{ route('tenant.analytics.export-center') }}"
+               class="nav-link {{ request()->routeIs('tenant.analytics.export*') ? 'active' : '' }}"
+               data-tooltip="Data Export Center"
+               aria-label="Data Export Center">
+                <i class="bi bi-file-earmark-spreadsheet"></i>
+                <span class="nav-label">Data Export Center</span>
+            </a>
+
             {{-- Support & Communication --}}
             <span class="nav-section">Support &amp; Communication</span>
             <a href="{{ route('tenant.support.cases.index') }}"

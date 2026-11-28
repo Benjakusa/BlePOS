@@ -5,8 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\MpesaCredential;
 use App\Models\MpesaTransaction;
 use App\Models\PlatformPayment;
+use App\Models\PlatformUser;
+use App\Models\Sale;
 use App\Models\UnmatchedMpesaCallback;
+use App\Models\User;
+use App\Notifications\WorkspaceAlert;
 use App\Services\PlatformBillingService;
+use App\Services\SaleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,15 +19,28 @@ use Illuminate\Support\Facades\Log;
 
 class MpesaCallbackController extends Controller
 {
-    public function handle(Request $request, string $token, PlatformBillingService $billing): JsonResponse
+    public function handle(Request $request, string $token, PlatformBillingService $billing, SaleService $sales): JsonResponse
     {
+        $allowedIps = (array) config('services.mpesa.callback_allowed_ips', []);
+        if ($allowedIps !== [] && ! $this->ipAllowed((string) $request->ip(), $allowedIps)) {
+            Log::warning('M-Pesa callback rejected: source IP is not allowlisted.', [
+                'ip' => $request->ip(),
+                'token_hash' => hash('sha256', $token),
+            ]);
+
+            return response()->json(['ResultCode' => 1, 'ResultDesc' => 'Callback source rejected.'], 403);
+        }
+
         $credential = MpesaCredential::withoutGlobalScopes()
-            ->where('callback_token', $token)
+            ->where('callback_token_hash', hash('sha256', $token))
             ->where('is_active', true)
             ->first();
 
         if ($credential === null) {
-            Log::warning('M-Pesa callback rejected: invalid or inactive token.');
+            Log::warning('M-Pesa callback rejected: invalid or inactive token.', [
+                'ip' => $request->ip(),
+                'token_hash' => hash('sha256', $token),
+            ]);
 
             return response()->json(['ResultCode' => 1, 'ResultDesc' => 'Invalid or inactive callback token.'], 403);
         }
@@ -47,16 +65,31 @@ class MpesaCallbackController extends Controller
         if (! $transaction) {
             return $this->storeUnmatched($request, $credential, 'no_matching_pending_transaction', (string) $resultCode);
         }
+        if ($credential->owner_type !== 'platform' && (int) $transaction->tenant_id !== (int) $credential->tenant_id) {
+            return $this->storeUnmatched($request, $credential, 'tenant_scope_mismatch', (string) $resultCode);
+        }
 
-        if ($transaction->status === 'confirmed') {
+        if (in_array($transaction->status, ['confirmed', 'refund_required'], true)) {
             return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Duplicate callback acknowledged.']);
         }
-        if ($transaction->status !== 'pending') {
+        if (! in_array($transaction->status, ['pending', 'timed_out'], true)) {
             return response()->json(['ResultCode' => 1, 'ResultDesc' => 'Transaction is not pending.'], 409);
         }
 
         if ((string) $resultCode !== '0') {
-            $transaction->forceFill(['status' => 'failed', 'result_code' => (string) $resultCode])->save();
+            DB::transaction(function () use ($transaction, $resultCode, $sales): void {
+                $locked = MpesaTransaction::query()->lockForUpdate()->findOrFail($transaction->id);
+                if (! in_array($locked->status, ['pending', 'timed_out'], true)) {
+                    return;
+                }
+                $locked->forceFill(['status' => 'failed', 'result_code' => (string) $resultCode])->save();
+                if ($locked->sale_id) {
+                    $sale = Sale::withoutGlobalScopes()->find($locked->sale_id);
+                    if ($sale) {
+                        $sales->releasePendingMpesaStock($sale);
+                    }
+                }
+            });
 
             return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Failed payment recorded.']);
         }
@@ -77,7 +110,9 @@ class MpesaCallbackController extends Controller
 
         $receivedAmount = number_format((float) $amount, 2, '.', '');
         $expectedAmount = (string) $transaction->amount;
-        $tolerance = number_format((float) config('services.mpesa.callback_amount_tolerance', 0), 2, '.', '');
+        $tolerance = $transaction->sale_id !== null
+            ? '0.00'
+            : number_format((float) config('services.mpesa.callback_amount_tolerance', 0), 2, '.', '');
         $difference = bccomp($receivedAmount, $expectedAmount, 2) >= 0
             ? bcsub($receivedAmount, $expectedAmount, 2)
             : bcsub($expectedAmount, $receivedAmount, 2);
@@ -86,12 +121,12 @@ class MpesaCallbackController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($transaction, $credential, $receipt, $resultCode, $billing): void {
+            DB::transaction(function () use ($transaction, $credential, $receipt, $resultCode, $billing, $sales): void {
                 $locked = MpesaTransaction::query()->lockForUpdate()->findOrFail($transaction->id);
                 if ($locked->status === 'confirmed') {
                     return;
                 }
-                if ($locked->status !== 'pending' || (int) $locked->mpesa_credential_id !== (int) $credential->id) {
+                if (! in_array($locked->status, ['pending', 'timed_out'], true) || (int) $locked->mpesa_credential_id !== (int) $credential->id) {
                     throw new \DomainException('M-Pesa transaction is no longer eligible for confirmation.');
                 }
 
@@ -105,6 +140,8 @@ class MpesaCallbackController extends Controller
                 if ($locked->platform_payment_id) {
                     $payment = PlatformPayment::query()->findOrFail($locked->platform_payment_id);
                     $billing->confirmVerifiedProviderPayment($payment, $locked, $receipt);
+                } elseif ($locked->sale_id) {
+                    $sales->finalizeVerifiedMpesaSale($locked);
                 }
             });
         } catch (\Throwable $exception) {
@@ -113,6 +150,46 @@ class MpesaCallbackController extends Controller
                 'transaction_id' => $transaction->id,
                 'error_class' => $exception::class,
             ]);
+
+            try {
+                $sale = $transaction->sale_id ? Sale::withoutGlobalScopes()->find($transaction->sale_id) : null;
+                $flagged = DB::transaction(function () use ($transaction, $receipt, $sales, $sale): string {
+                    $locked = MpesaTransaction::query()->lockForUpdate()->findOrFail($transaction->id);
+                    if ($locked->status === 'confirmed') {
+                        return 'confirmed';
+                    }
+                    if ($locked->status === 'refund_required') {
+                        return 'refund_required';
+                    }
+                    if (! in_array($locked->status, ['pending', 'timed_out'], true)) {
+                        throw new \DomainException('Paid callback cannot be assigned to refund review from the current transaction state.');
+                    }
+                    if ($sale && $sale->status === 'pending_payment') {
+                        $sales->releasePendingMpesaStock($sale);
+                    }
+                    $locked->forceFill([
+                        'status' => 'refund_required',
+                        'provider_receipt' => $receipt,
+                        'result_code' => 'settlement_failed',
+                    ])->save();
+
+                    return 'refund_required';
+                });
+                if ($flagged === 'confirmed') {
+                    return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Duplicate callback acknowledged.']);
+                }
+                $this->notifyRefundRequired($transaction, $sale, $receipt);
+
+                return response()->json([
+                    'ResultCode' => 0,
+                    'ResultDesc' => 'Payment received; settlement requires refund review.',
+                ]);
+            } catch (\Throwable $flagException) {
+                Log::critical('Paid M-Pesa callback could not be flagged for refund review.', [
+                    'transaction_id' => $transaction->id,
+                    'error_class' => $flagException::class,
+                ]);
+            }
 
             return $this->storeUnmatched($request, $credential, 'settlement_failed', (string) $resultCode);
         }
@@ -125,6 +202,72 @@ class MpesaCallbackController extends Controller
         ]);
 
         return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Payment confirmed.']);
+    }
+
+    private function notifyRefundRequired(MpesaTransaction $transaction, ?Sale $sale, string $receipt): void
+    {
+        $message = sprintf(
+            'M-Pesa payment %s (%s) was received but could not complete sale %s. Refund or settlement review is required.',
+            $receipt,
+            number_format((float) $transaction->amount, 2),
+            $sale?->sale_number ?? 'unknown'
+        );
+        if ($sale) {
+            $cashier = User::withoutGlobalScopes()->find($sale->user_id);
+            $cashier?->notify(new WorkspaceAlert([
+                'title' => 'Paid M-Pesa checkout needs review',
+                'message' => $message,
+                'url' => route('tenant.pos.sales'),
+                'kind' => 'payment',
+            ]));
+        }
+        PlatformUser::query()->where('status', 'active')->get()
+            ->filter(fn (PlatformUser $user): bool => $user->hasPermission('platform.billing.subscriptions.manage'))
+            ->each(fn (PlatformUser $user) => $user->notify(new WorkspaceAlert([
+                'title' => 'M-Pesa settlement requires refund review',
+                'message' => $message,
+                'url' => route('platform.billing.invoices.index'),
+                'kind' => 'payment',
+            ])));
+    }
+
+    /** @param list<string> $allowedIps */
+    private function ipAllowed(string $ip, array $allowedIps): bool
+    {
+        $address = inet_pton($ip);
+        if ($address === false) {
+            return false;
+        }
+
+        foreach ($allowedIps as $rule) {
+            if (! is_string($rule) || $rule === '') {
+                continue;
+            }
+            [$network, $prefix] = array_pad(explode('/', $rule, 2), 2, null);
+            $packedNetwork = inet_pton($network);
+            if ($packedNetwork === false || strlen($packedNetwork) !== strlen($address)) {
+                continue;
+            }
+            $bits = $prefix === null ? strlen($address) * 8 : filter_var($prefix, FILTER_VALIDATE_INT);
+            if ($bits === false || $bits < 0 || $bits > strlen($address) * 8) {
+                continue;
+            }
+
+            $wholeBytes = intdiv($bits, 8);
+            $remainingBits = $bits % 8;
+            if (substr($address, 0, $wholeBytes) !== substr($packedNetwork, 0, $wholeBytes)) {
+                continue;
+            }
+            if ($remainingBits === 0 || $wholeBytes >= strlen($address)) {
+                return true;
+            }
+            $mask = (0xFF << (8 - $remainingBits)) & 0xFF;
+            if ((ord($address[$wholeBytes]) & $mask) === (ord($packedNetwork[$wholeBytes]) & $mask)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function storeUnmatched(

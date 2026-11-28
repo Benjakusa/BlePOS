@@ -87,8 +87,30 @@ class TenantSubscriptionController extends Controller
             abort_if($invoice->isPaid(), 422, 'This invoice is already paid.');
         } else {
             $selectedPlan = Plan::query()->findOrFail($validated['plan_id']);
+            abort_unless($selectedPlan->is_active, 422, 'This subscription plan is no longer available.');
             $price = $cycle === 'annual' ? (float) $selectedPlan->annual_price : (float) $selectedPlan->monthly_price;
             abort_if($price <= 0, 422, 'Please select a paid subscription plan.');
+
+            abort_if($subscription !== null && PlatformInvoice::query()
+                ->where('subscription_id', $subscription->id)
+                ->whereNotNull('subscription_plan_name')
+                ->whereNotIn('status', ['paid', 'voided', 'cancelled'])
+                ->exists(), 409, 'A subscription plan invoice is already awaiting payment. Pay or cancel it before requesting another plan change.');
+
+            if ($subscription === null) {
+                $subscription = Subscription::create([
+                    'tenant_id' => $tenant->id,
+                    'plan_id' => $selectedPlan->id,
+                    'status' => 'awaiting_payment',
+                    'billing_cycle' => $cycle,
+                    'starts_at' => now(),
+                ]);
+            } else {
+                $subscription->forceFill([
+                    'pending_plan_id' => $selectedPlan->id,
+                    'pending_billing_cycle' => $cycle,
+                ])->save();
+            }
 
             $invoice = $billing->generateInvoice(
                 tenant: $tenant,
@@ -102,10 +124,15 @@ class TenantSubscriptionController extends Controller
                 currency: $selectedPlan->currency ?? $tenant->currency ?? 'KES',
                 notes: 'Self-service subscription payment from tenant dashboard.',
             );
+            $invoice->forceFill([
+                'subscription_plan_id' => $selectedPlan->id,
+                'subscription_plan_name' => $selectedPlan->name,
+                'subscription_billing_cycle' => $cycle,
+            ])->save();
         }
 
         $amountDue = (string) $invoice->amount_due;
-        $methodForRecord = $validated['payment_method'] === 'mpesa_stk' || $validated['payment_method'] === 'mpesa_paybill'
+        $methodForRecord = $validated['payment_method'] === 'mpesa_stk'
             ? 'mpesa'
             : $validated['payment_method'];
         $gatewayRef = $validated['gateway_reference'] ?? null;

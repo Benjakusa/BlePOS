@@ -82,7 +82,7 @@
             </div>
 
             <button type="submit" class="btn btn-primary">
-                <i class="bi bi-shield-check"></i> Pay &amp; Activate Subscription
+                <i class="bi bi-shield-check"></i> Continue to Payment
             </button>
         </form>
     </div>
@@ -151,6 +151,7 @@
                     <th>Method</th>
                     <th>Amount</th>
                     <th>Gateway Ref</th>
+                    <th>Settlement</th>
                     <th>Paid At</th>
                 </tr>
             </thead>
@@ -162,6 +163,7 @@
                         <td>{{ strtoupper($pay->payment_method) }}</td>
                         <td>{{ $pay->currency }} {{ number_format((float) $pay->amount, 2) }}</td>
                         <td><code>{{ $pay->gateway_reference ?? '—' }}</code></td>
+                        <td>{{ strtoupper($pay->status) }}{{ $pay->status === 'pending' && $pay->payment_method !== 'mpesa' ? ' — awaiting platform reconciliation' : '' }}</td>
                         <td>{{ $pay->paid_at?->format('M d, Y H:i') }}</td>
                     </tr>
                 @endforeach

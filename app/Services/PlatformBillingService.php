@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\MpesaTransaction;
+use App\Models\Plan;
 use App\Models\PlatformDunningEvent;
 use App\Models\PlatformInvoice;
 use App\Models\PlatformPayment;
@@ -10,6 +11,8 @@ use App\Models\PlatformRefund;
 use App\Models\PlatformUser;
 use App\Models\Subscription;
 use App\Models\Tenant;
+use App\Models\User;
+use App\Notifications\WorkspaceAlert;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -184,6 +187,29 @@ class PlatformBillingService
         return $this->confirmPayment($payment);
     }
 
+    public function reconcilePendingPayment(PlatformPayment $payment, string $evidenceReference, PlatformUser $reconciler): PlatformPayment
+    {
+        if (! $reconciler->hasPermission('platform.billing.subscriptions.manage') || trim($evidenceReference) === '') {
+            throw new \DomainException('A privileged reconciliation with evidence is required.');
+        }
+
+        return DB::transaction(function () use ($payment, $evidenceReference, $reconciler): PlatformPayment {
+            $locked = PlatformPayment::query()->lockForUpdate()->findOrFail($payment->id);
+            if (! in_array($locked->payment_method, ['mpesa_paybill', 'bank_transfer', 'card'], true)) {
+                throw new \DomainException('This payment method must be confirmed by its provider callback.');
+            }
+            if ($locked->status !== 'pending') {
+                throw new \DomainException('Only a pending payment attempt can be reconciled.');
+            }
+            $locked->forceFill([
+                'gateway_reference' => trim($evidenceReference),
+                'notes' => trim(($locked->notes ?? '').' [source=platform_reconciliation; reconciler='.$reconciler->id.']'),
+            ])->save();
+
+            return $this->confirmPayment($locked);
+        });
+    }
+
     private function confirmPayment(PlatformPayment $payment): PlatformPayment
     {
         return DB::transaction(function () use ($payment): PlatformPayment {
@@ -214,21 +240,78 @@ class PlatformBillingService
             ]);
 
             if ($isPaid && $invoice->subscription_id) {
-                $sub = $invoice->subscription;
-                if ($sub && in_array($sub->status, ['awaiting_payment', 'past_due', 'suspended'], true)) {
-                    $sub->update(['status' => 'active']);
-                    if ($invoice->tenant->status === 'suspended') {
-                        $invoice->tenant->update([
-                            'status' => 'active',
-                            'suspended_at' => null,
-                            'suspension_reason' => null,
-                        ]);
+                $plan = $invoice->subscription_plan_id
+                    ? Plan::query()->find($invoice->subscription_plan_id)
+                    : null;
+                $planUnavailable = $invoice->subscription_plan_name !== null
+                    && (! $plan || ! $plan->is_active);
+                if ($planUnavailable) {
+                    $invoice->update([
+                        'status' => 'needs_staff_action',
+                        'notes' => trim(($invoice->notes ?? '').' [paid_plan_unavailable_at_settlement]'),
+                    ]);
+                    $this->notifyUnavailableSubscriptionPlan($invoice);
+                } else {
+                    $sub = $invoice->subscription;
+                    if ($sub) {
+                        $changes = ['pending_plan_id' => null, 'pending_billing_cycle' => null];
+                        if ($invoice->subscription_plan_id !== null) {
+                            $changes['plan_id'] = $invoice->subscription_plan_id;
+                        }
+                        if ($invoice->subscription_billing_cycle !== null) {
+                            $changes['billing_cycle'] = $invoice->subscription_billing_cycle;
+                        }
+                        if ($sub->pending_plan_id !== null && (int) $sub->pending_plan_id !== (int) $invoice->subscription_plan_id) {
+                            $changes['pending_plan_id'] = $sub->pending_plan_id;
+                        }
+                        if ($sub->pending_billing_cycle !== null && $sub->pending_billing_cycle !== $invoice->subscription_billing_cycle) {
+                            $changes['pending_billing_cycle'] = $sub->pending_billing_cycle;
+                        }
+                        $shouldActivate = in_array($sub->status, ['awaiting_payment', 'past_due', 'suspended'], true);
+                        if ($shouldActivate) {
+                            $changes['status'] = 'active';
+                        }
+                        $sub->update($changes);
+                        if ($shouldActivate && $invoice->tenant->status === 'suspended') {
+                            $invoice->tenant->update([
+                                'status' => 'active',
+                                'suspended_at' => null,
+                                'suspension_reason' => null,
+                            ]);
+                        }
                     }
                 }
             }
 
             return $lockedPayment;
         });
+    }
+
+    private function notifyUnavailableSubscriptionPlan(PlatformInvoice $invoice): void
+    {
+        $message = "Invoice {$invoice->invoice_number} was paid, but its subscription plan '{$invoice->subscription_plan_name}' is unavailable. Staff action is required; the paid amount remains on the invoice for resolution.";
+        $tenantUsers = User::withoutGlobalScopes()
+            ->where('tenant_id', $invoice->tenant_id)
+            ->where('status', 'active')
+            ->get();
+        $tenantAdmins = $tenantUsers->filter(fn ($user): bool => $user->isTenantOwner());
+        ($tenantAdmins->isNotEmpty() ? $tenantAdmins : $tenantUsers->take(1))->each(
+            fn ($user) => $user->notify(new WorkspaceAlert([
+                'title' => 'Paid subscription needs staff action',
+                'message' => $message,
+                'url' => route('tenant.subscription.index'),
+                'kind' => 'billing',
+            ]))
+        );
+
+        PlatformUser::query()->where('status', 'active')->get()
+            ->filter(fn (PlatformUser $user): bool => $user->hasPermission('platform.billing.subscriptions.manage'))
+            ->each(fn (PlatformUser $user) => $user->notify(new WorkspaceAlert([
+                'title' => 'Paid subscription plan needs review',
+                'message' => $message,
+                'url' => route('platform.billing.invoices.show', $invoice),
+                'kind' => 'billing',
+            ])));
     }
 
     /**

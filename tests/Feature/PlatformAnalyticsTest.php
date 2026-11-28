@@ -201,4 +201,30 @@ class PlatformAnalyticsTest extends TestCase
         // Formula must be prepended with single quote to prevent execution in spreadsheet software
         $this->assertStringContainsString("'=SUM(A1:A10)", $content);
     }
+
+    public function test_export_new_super_admin_reports_generate_formula_safe_csv_and_audit(): void
+    {
+        [$admin, $sessionId] = $this->createAdmin();
+
+        Tenant::factory()->create([
+            'name' => 'Safari Courier',
+            'industry' => 'parcel-delivery',
+            'status' => 'active',
+        ]);
+
+        foreach (['tenants-comprehensive', 'billing-invoices', 'industry-adoption', 'audit-trail'] as $type) {
+            $response = $this->platformRequest($admin, $sessionId)
+                ->post(route('platform.analytics.export'), [
+                    'report_type' => $type,
+                ]);
+
+            $response->assertOk();
+            $this->assertStringStartsWith('text/csv', (string) $response->headers->get('Content-Type'));
+            $this->assertDatabaseHas('platform_audit_log', [
+                'action' => 'platform.analytics.report_exported',
+                'target_type' => 'PlatformAnalytics',
+                'target_id' => $type,
+            ]);
+        }
+    }
 }

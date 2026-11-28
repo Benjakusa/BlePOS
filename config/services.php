@@ -37,10 +37,14 @@ return [
 
     'mpesa' => [
         'encryption_key' => env('MPESA_ENCRYPTION_KEY'),
+        'encryption_keys' => json_decode((string) env('MPESA_ENCRYPTION_KEYS', '{}'), true) ?: [],
+        'active_encryption_key_version' => (string) env('MPESA_ENCRYPTION_ACTIVE_KEY_VERSION', 'v1'),
         'sandbox_base_url' => env('MPESA_SANDBOX_BASE_URL', 'https://sandbox.safaricom.co.ke'),
         'production_base_url' => env('MPESA_PRODUCTION_BASE_URL', 'https://api.safaricom.co.ke'),
         'sandbox_mode' => env('MPESA_SANDBOX_MODE', true),
         'callback_secret' => env('MPESA_CALLBACK_SECRET', ''),
+        'callback_allowed_ips' => array_values(array_filter(array_map('trim', explode(',', (string) env('MPESA_CALLBACK_ALLOWED_IPS', ''))))),
+        'allow_platform_fallback_for_tenant_sales' => (bool) env('MPESA_ALLOW_PLATFORM_FALLBACK_FOR_TENANT_SALES', false),
     ],
 
 ];

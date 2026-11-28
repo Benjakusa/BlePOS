@@ -52,7 +52,6 @@ class PlatformMpesaController extends Controller
             'consumer_secret' => ['required', 'string', 'max:500'],
             'initiator_name' => ['nullable', 'string', 'max:200'],
             'security_credential' => ['nullable', 'string'],
-            'callback_url' => ['required', 'url', 'max:500'],
             'is_active' => ['boolean'],
             'is_default' => ['boolean'],
         ]);
@@ -69,7 +68,7 @@ class PlatformMpesaController extends Controller
             'consumer_secret' => $this->encryption->encrypt($validated['consumer_secret']),
             'initiator_name' => ! empty($validated['initiator_name']) ? $this->encryption->encrypt($validated['initiator_name']) : null,
             'security_credential' => ! empty($validated['security_credential']) ? $this->encryption->encrypt($validated['security_credential']) : null,
-            'callback_url' => $validated['callback_url'],
+            'callback_url' => url('/api/mpesa/callback'), // Legacy base URL; STK uses the generated tokenized route.
             'is_active' => $request->boolean('is_active', true),
             'is_default' => $request->boolean('is_default', false),
             'created_by' => auth('platform')->id(),
@@ -116,7 +115,6 @@ class PlatformMpesaController extends Controller
             'consumer_secret' => ['nullable', 'string', 'max:500'],
             'initiator_name' => ['nullable', 'string', 'max:200'],
             'security_credential' => ['nullable', 'string'],
-            'callback_url' => ['required', 'url', 'max:500'],
             'is_active' => ['boolean'],
             'is_default' => ['boolean'],
         ]);
@@ -124,12 +122,10 @@ class PlatformMpesaController extends Controller
         $updateData = [
             'environment' => $validated['environment'],
             'shortcode' => $validated['shortcode'],
-            'callback_url' => $validated['callback_url'],
             'is_active' => $request->boolean('is_active', true),
             'is_default' => $request->boolean('is_default', false),
             'updated_by' => auth('platform')->id(),
         ];
-        $changedFields = ['shortcode', 'environment', 'callback_url', 'is_active', 'is_default'];
 
         if (! empty($validated['passkey'])) {
             $updateData['passkey'] = $this->encryption->encrypt($validated['passkey']);

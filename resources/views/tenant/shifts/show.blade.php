@@ -14,6 +14,9 @@
         </div>
     </div>
     <div style="display: flex; gap: 8px;">
+        <a href="{{ route('tenant.shifts.z-report', $shift) }}" target="_blank" class="btn btn-secondary">
+            <i class="bi bi-printer"></i> Print Z-Report
+        </a>
         @if($shift->isOpen())
             <a href="{{ route('tenant.pos.checkout') }}" class="btn">Go to POS</a>
         @endif

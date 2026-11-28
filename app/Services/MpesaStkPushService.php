@@ -51,7 +51,9 @@ class MpesaStkPushService
             'sale_id' => $saleId,
             'account_reference' => substr($accountReference, 0, 64),
             'phone_hash' => hash_hmac('sha256', $formattedPhone, (string) config('app.key')),
-            'amount' => number_format($amount, 2, '.', ''),
+            // Daraja STK Push accepts whole shillings; persist the exact provider amount
+            // so callback amount validation compares against what Safaricom was asked to charge.
+            'amount' => number_format((float) ceil($amount), 2, '.', ''),
             'status' => 'pending',
         ]);
 

@@ -194,6 +194,32 @@
 @endpush
 
 @section('content')
+{{-- POS Terminal Mode Switcher Toolbar --}}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; flex-wrap: wrap;">
+    <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px;">
+        @foreach($availableModes as $mKey => $mConfig)
+            <a href="{{ route('tenant.pos.checkout', ['mode' => $mKey]) }}"
+               class="btn btn-sm {{ $mode === $mKey ? 'btn-primary' : 'btn-outline' }}"
+               style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 0.825rem;">
+                <i class="bi {{ $mConfig['icon'] }}"></i>
+                <span>{{ $mConfig['label'] }}</span>
+            </a>
+        @endforeach
+    </div>
+    <div class="muted" style="font-size: 0.75rem;">
+        Shift: <strong>{{ $openShift->shift_number }}</strong> &bull; Cashier: <strong>{{ auth()->user()->name }}</strong>
+    </div>
+</div>
+
+@if($mode === 'parcels')
+    @include('tenant.pos.modes.parcels')
+@elseif($mode === 'gym')
+    @include('tenant.pos.modes.gym')
+@elseif($mode === 'fleet')
+    @include('tenant.pos.modes.fleet')
+@elseif($mode === 'garage')
+    @include('tenant.pos.modes.garage')
+@else
 <div class="pos-grid">
     <div class="pos-main">
         {{-- Compact Header Bar --}}
@@ -372,6 +398,7 @@
                         <i class="bi bi-phone"></i> Send STK Push
                     </button>
                 </div>
+                <div style="font-size: 12px; color: #92400e;">If a previous attempt timed out, its prompt may still be live. Ask the customer to check M-Pesa status and enter their PIN only once before retrying.</div>
                 <div id="stk-status" style="display: none; font-size: 12px; padding: 8px 10px; border-radius: 8px;"></div>
             </div>
 
@@ -394,15 +421,19 @@
         </div>
     </div>
 </div>
+@endif
 @endsection
 
 @push('scripts')
+@if($mode === 'retail')
 <script nonce="{{ request()->attributes->get('csp_nonce') }}">
     const shiftId = {{ $openShift->id }};
     const shopId = {{ $openShift->shop_id }};
     let cart = [];
     let activeCategoryId = '';
     let searchQuery = '';
+    let mpesaIdempotencyKey = null;
+    let mpesaPolling = false;
 
     const barcodeInput = document.getElementById('barcode-scan-input');
     const searchInput = barcodeInput;
@@ -495,6 +526,7 @@
     }
 
     function addToCart(product) {
+        mpesaIdempotencyKey = null;
         const prescriptionId = product.requires_prescription ? prompt('Enter the active prescription ID for ' + product.name + ':') : null;
         if (product.requires_prescription && !prescriptionId) return;
         const pharmacistUserId = product.is_controlled_substance ? prompt('Enter the verifying pharmacist user ID:') : null;
@@ -520,6 +552,7 @@
     window.addToCart = addToCart;
 
     window.updateQty = function(id, delta) {
+        mpesaIdempotencyKey = null;
         const item = cart.find(i => i.id === id);
         if (!item) return;
         item.qty += delta;
@@ -528,6 +561,7 @@
     };
 
     window.removeItem = function(id) {
+        mpesaIdempotencyKey = null;
         cart = cart.filter(i => i.id !== id);
         renderCart();
     };
@@ -619,6 +653,58 @@
         document.getElementById('summary-grand').textContent = `KES ${totals.grand.toFixed(2)}`;
     }
 
+    function buildMpesaCheckoutPayload(phone) {
+        return {
+            shift_id: shiftId,
+            shop_id: shopId,
+            register_id: parseInt(document.getElementById('register-select').value, 10),
+            dining_table_id: tableSelect?.value ? parseInt(tableSelect.value, 10) : null,
+            items: cart.map(item => ({
+                product_id: item.id,
+                quantity: item.qty,
+                batch_id: item.batch_id ?? null,
+                prescription_id: item.prescription_id,
+                pharmacist_user_id: item.pharmacist_user_id,
+                discount: item.discount || 0
+            })),
+            phone_number: phone
+        };
+    }
+
+    async function watchMpesaSale(transactionId) {
+        if (mpesaPolling) return;
+        mpesaPolling = true;
+        const statusUrl = @json(route('tenant.pos.mpesa.status', ['transaction' => '__TRANSACTION__']));
+        const startedAt = Date.now();
+        try {
+            while (Date.now() - startedAt < 11 * 60 * 1000) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                const response = await fetch(statusUrl.replace('__TRANSACTION__', String(transactionId)), {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!response.ok) continue;
+                const result = await response.json();
+                if (result.sale_status === 'completed' && result.receipt_url) {
+                    window.location.href = result.receipt_url;
+                    return;
+                }
+                if (['failed', 'timed_out'].includes(result.transaction_status)) {
+                    stkStatus.style.background = '#fef3c7';
+                    stkStatus.style.color = '#92400e';
+                    stkStatus.textContent = result.transaction_status === 'timed_out'
+                        ? 'No confirmation arrived. Check M-Pesa before retrying; this checkout remains open.'
+                        : 'M-Pesa did not complete this payment. You can retry this checkout.';
+                    sendStkBtn.disabled = false;
+                    return;
+                }
+            }
+            stkStatus.textContent = 'Still waiting for Safaricom confirmation. Check M-Pesa status before retrying.';
+            sendStkBtn.disabled = false;
+        } finally {
+            mpesaPolling = false;
+        }
+    }
+
     searchInput.addEventListener('ui:search', function (event) {
         searchQuery = String(event.detail?.value ?? '').trim();
         fetchCatalog();
@@ -667,7 +753,7 @@
 
     clearBtn.addEventListener('click', function () {
         window.BleMotion.confirm('Clear all items in the cart?').then(function (confirmed) {
-            if (confirmed) { cart = []; renderCart(); }
+            if (confirmed) { cart = []; mpesaIdempotencyKey = null; renderCart(); }
         });
     });
 
@@ -697,6 +783,7 @@
         const isCard = this.value === 'card';
         refField.style.display = (isMpesa || isCard) ? 'block' : 'none';
         mpesaStkBox.style.display = isMpesa ? 'flex' : 'none';
+        submitSaleBtn.disabled = isMpesa;
     });
 
     sendStkBtn.addEventListener('click', async function () {
@@ -707,6 +794,7 @@
             return;
         }
         sendStkBtn.disabled = true;
+        if (!mpesaIdempotencyKey) mpesaIdempotencyKey = crypto.randomUUID();
         stkStatus.style.display = 'block';
         stkStatus.style.background = '#f1f5f9';
         stkStatus.style.color = '#334155';
@@ -718,28 +806,27 @@
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'Idempotency-Key': mpesaIdempotencyKey
                 },
-                body: JSON.stringify({
-                    shop_id: shopId,
-                    phone_number: phone,
-                    amount: totals.grand,
-                    account_reference: 'POS-' + shiftId
-                })
+                body: JSON.stringify(buildMpesaCheckoutPayload(phone))
             });
             const data = await res.json();
             stkStatus.style.background = data.success ? '#dcfce7' : '#fee2e2';
             stkStatus.style.color = data.success ? '#166534' : '#991b1b';
             stkStatus.textContent = data.customer_message || (data.success ? 'STK Push sent!' : 'STK Push failed.');
-            if (data.success && data.checkout_request_id) {
-                document.getElementById('payment-ref').value = data.checkout_request_id;
+            if (data.success && data.transaction_id) {
+                stkStatus.textContent = 'STK Push sent. Waiting for the customer to complete payment...';
+                watchMpesaSale(data.transaction_id);
+            } else {
+                sendStkBtn.disabled = false;
             }
         } catch (e) {
             stkStatus.style.background = '#fee2e2';
             stkStatus.style.color = '#991b1b';
             stkStatus.textContent = 'Network error sending STK Push.';
         } finally {
-            sendStkBtn.disabled = false;
+            if (!mpesaPolling) sendStkBtn.disabled = false;
         }
     });
 
@@ -802,4 +889,5 @@
 
     fetchCatalog();
 </script>
+@endif
 @endpush

@@ -41,7 +41,7 @@ class ReleaseHardeningTest extends TestCase
             'cache.default' => 'array', 'trustedproxy.proxies' => [],
         ]);
         $violations = app(ProductionConfiguration::class)->violations();
-        $this->assertCount(11, $violations);
+        $this->assertCount(13, $violations);
         $this->artisan('platform:production-check')->assertExitCode(1);
     }
 

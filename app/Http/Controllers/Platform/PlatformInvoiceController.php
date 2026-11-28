@@ -158,6 +158,30 @@ class PlatformInvoiceController extends Controller
             ->with('notice', "Payment of {$invoice->currency} {$payment->amount} recorded ({$payment->payment_reference}).");
     }
 
+    public function reconcilePendingPayment(Request $request, PlatformInvoice $invoice, PlatformPayment $payment): RedirectResponse
+    {
+        abort_unless($request->user('platform')?->hasPermission('platform.billing.subscriptions.manage'), 403);
+        abort_unless((int) $payment->platform_invoice_id === (int) $invoice->id, 404);
+
+        $validated = $request->validate([
+            'evidence_reference' => ['required', 'string', 'min:4', 'max:128'],
+        ]);
+        $reconciled = $this->billing->reconcilePendingPayment(
+            $payment,
+            $validated['evidence_reference'],
+            $request->user('platform'),
+        );
+        $this->audit->record(
+            actorId: $request->user('platform')?->id,
+            action: 'platform.payment.reconcile',
+            targetType: PlatformPayment::class,
+            targetId: (string) $reconciled->id,
+            details: ['invoice_id' => $invoice->id, 'payment_reference' => $reconciled->payment_reference],
+        );
+
+        return redirect()->route('platform.invoices.show', $invoice)->with('notice', 'Pending payment reconciled successfully.');
+    }
+
     public function recordRefund(Request $request, PlatformInvoice $invoice, PlatformPayment $payment): RedirectResponse
     {
         abort_unless($request->user('platform')?->hasPermission('platform.billing.subscriptions.manage'), 403);

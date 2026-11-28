@@ -59,7 +59,7 @@ class PosProductImageAndStkPushTest extends TestCase
             ->assertJsonPath('products.0.image_url', asset('storage/'.$product->image_path));
     }
 
-    public function test_pos_mpesa_stk_push_uses_resolved_credential_and_sends_stk_request(): void
+    public function test_pos_mpesa_stk_push_requires_a_server_priced_checkout_payload(): void
     {
         $owner = User::where('email', 'restaurant.owner@blepos.co.ke')->firstOrFail();
         $shop = Shop::withoutGlobalScopes()->where('tenant_id', $owner->tenant_id)->firstOrFail();
@@ -84,9 +84,9 @@ class PosProductImageAndStkPushTest extends TestCase
             'phone_number' => '0712345678',
             'amount' => 1250,
             'account_reference' => 'POS-1',
-        ]);
+        ], ['Idempotency-Key' => 'incomplete-stk-checkout']);
 
-        $response->assertStatus(422)->assertJsonValidationErrors('pending_checkout_id');
+        $response->assertStatus(422)->assertJsonValidationErrors('shift_id');
         Http::assertNothingSent();
     }
 }

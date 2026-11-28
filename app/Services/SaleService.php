@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CashierShift;
+use App\Models\MpesaTransaction;
 use App\Models\PharmacyBatch;
 use App\Models\Product;
 use App\Models\Register;
@@ -38,7 +39,8 @@ class SaleService
         ?CashierShift $shift = null,
         ?string $notes = null,
         ?int $diningTableId = null,
-        string $idempotencyKey = ''
+        string $idempotencyKey = '',
+        ?MpesaTransaction $verifiedMpesaTransaction = null
     ): Sale {
         abort_if(trim($idempotencyKey) === '' || strlen($idempotencyKey) > 100, 422, 'A valid idempotency key is required for every sale.');
 
@@ -64,7 +66,8 @@ class SaleService
                 $notes,
                 $diningTableId,
                 $idempotencyKey,
-                $idempotencyFingerprint
+                $idempotencyFingerprint,
+                $verifiedMpesaTransaction
             ): Sale {
                 $existing = Sale::withoutGlobalScopes()->where('tenant_id', $shop->tenant_id)
                     ->where('idempotency_key', $idempotencyKey)->first();
@@ -75,7 +78,10 @@ class SaleService
                         'This idempotency key was already used for a different checkout.'
                     );
 
-                    return $existing;
+                    if ($existing->status === 'completed') {
+                        return $existing;
+                    }
+                    abort_unless($existing->status === 'pending_payment', 409, 'This checkout is not awaiting M-Pesa settlement.');
                 }
                 abort_if(empty($items), 422, 'Sale must contain at least one item.');
                 abort_if(empty($payments), 422, 'Sale must contain at least one payment.');
@@ -88,7 +94,20 @@ class SaleService
 
                 $saleNumber = 'SL-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));
 
-                $sale = Sale::query()->create([
+                $hasMpesa = collect($payments)->contains(fn ($payment) => ($payment['method'] ?? null) === 'mpesa');
+                if ($hasMpesa) {
+                    abort_unless(
+                        $existing !== null
+                        && $verifiedMpesaTransaction?->status === 'confirmed'
+                        && (int) $verifiedMpesaTransaction->sale_id === (int) $existing->id
+                        && (int) $verifiedMpesaTransaction->tenant_id === (int) $shop->tenant_id
+                        && (int) $verifiedMpesaTransaction->shop_id === (int) $shop->id,
+                        403,
+                        'M-Pesa sales can only be completed from their verified callback.'
+                    );
+                }
+
+                $sale = $existing ?? Sale::query()->create([
                     'tenant_id' => $shop->tenant_id,
                     'shop_id' => $shop->id,
                     'register_id' => $register->id,
@@ -243,15 +262,20 @@ class SaleService
 
                         continue;
                     }
-                    abort_if(in_array($method, ['mpesa', 'card', 'cheque'], true), 422, 'This payment method requires a verified provider settlement before checkout. Cash or authorized credit is available.');
+                    abort_if(in_array($method, ['card', 'cheque'], true), 422, 'This payment method requires a verified provider settlement before checkout.');
+                    abort_if($method === 'mpesa' && ! $hasMpesa, 422, 'M-Pesa settlement is not verified.');
                     abort_if(bccomp($amount, '0.00', 2) <= 0, 422, 'Payment amount must be positive.');
 
                     SalePayment::query()->create([
                         'sale_id' => $sale->id,
                         'payment_method' => $method,
                         'amount' => $amount,
-                        'reference' => $paymentData['reference'] ?? null,
-                        'metadata' => $paymentData['metadata'] ?? null,
+                        'reference' => $method === 'mpesa'
+                            ? $verifiedMpesaTransaction?->provider_receipt
+                            : ($paymentData['reference'] ?? null),
+                        'metadata' => $method === 'mpesa'
+                            ? ['mpesa_transaction_id' => $verifiedMpesaTransaction?->id]
+                            : ($paymentData['metadata'] ?? null),
                     ]);
 
                     $paidTotal = bcadd($paidTotal, $amount, 2);
@@ -280,6 +304,7 @@ class SaleService
                 $netCash = bccomp($cashAmount, $changeDue, 2) >= 0 ? bcsub($cashAmount, $changeDue, 2) : $cashAmount;
 
                 $sale->update([
+                    'status' => 'completed',
                     'subtotal' => $subtotal,
                     'discount_total' => $discountTotal,
                     'tax_total' => $taxTotal,
@@ -287,10 +312,11 @@ class SaleService
                     'paid_total' => $paidTotalAfterChange,
                     'change_due' => $changeDue,
                     'payment_status' => bccomp($creditTotal, '0.00', 2) > 0 ? 'credit' : 'paid',
+                    'pending_checkout_data' => null,
                 ]);
 
                 // Update Cashier Shift if attached
-                if ($shift && $shift->isOpen()) {
+                if ($shift) {
                     $shift->update([
                         'cash_sales' => bcadd((string) $shift->cash_sales, $netCash, 2),
                         'mpesa_sales' => bcadd((string) $shift->mpesa_sales, $mpesaAmount, 2),
@@ -320,6 +346,182 @@ class SaleService
 
             throw $exception;
         }
+    }
+
+    /** Create a server-priced pending sale before sending the customer's STK prompt. */
+    public function createPendingMpesaSale(
+        Shop $shop,
+        Register $register,
+        User $user,
+        array $items,
+        CashierShift $shift,
+        ?string $notes,
+        ?int $diningTableId,
+        string $idempotencyKey
+    ): Sale {
+        abort_if(trim($idempotencyKey) === '' || strlen($idempotencyKey) > 100, 422, 'A valid idempotency key is required for every sale.');
+        abort_if(empty($items), 422, 'Sale must contain at least one item.');
+        $totals = $this->previewMpesaTotal($shop, $user, $items);
+        $grandTotal = $totals['grand_total'];
+        abort_if(bccomp($grandTotal, number_format((float) ceil((float) $grandTotal), 2, '.', ''), 2) !== 0, 422, 'M-Pesa STK sales must total a whole shilling. Adjust the cart or use another payment method.');
+
+        $payments = [['method' => 'mpesa', 'amount' => $grandTotal, 'reference' => null]];
+        $fingerprint = hash('sha256', json_encode([
+            'shop_id' => $shop->id,
+            'register_id' => $register->id,
+            'user_id' => $user->id,
+            'shift_id' => $shift->id,
+            'dining_table_id' => $diningTableId,
+            'items' => $items,
+            'payments' => $payments,
+            'notes' => $notes,
+        ], JSON_THROW_ON_ERROR));
+        $payload = [
+            'items' => $items,
+            'payments' => $payments,
+            'notes' => $notes,
+            'dining_table_id' => $diningTableId,
+        ];
+
+        return DB::transaction(function () use ($shop, $register, $user, $shift, $items, $notes, $diningTableId, $idempotencyKey, $fingerprint, $payload, $totals): Sale {
+            $existing = Sale::withoutGlobalScopes()->where('tenant_id', $shop->tenant_id)->where('idempotency_key', $idempotencyKey)->lockForUpdate()->first();
+            if ($existing) {
+                abort_unless(hash_equals((string) $existing->idempotency_fingerprint, $fingerprint), 409, 'This idempotency key was already used for a different checkout.');
+                abort_unless($existing->status === 'pending_payment', 409, 'This checkout has already been completed or cancelled.');
+                $sale = $existing;
+            } else {
+                $sale = Sale::query()->create([
+                    'tenant_id' => $shop->tenant_id,
+                    'shop_id' => $shop->id,
+                    'register_id' => $register->id,
+                    'cashier_shift_id' => $shift->id,
+                    'dining_table_id' => $diningTableId,
+                    'user_id' => $user->id,
+                    'sale_number' => 'SL-'.now()->format('Ymd').'-'.strtoupper(Str::random(6)),
+                    'status' => 'pending_payment',
+                    'subtotal' => $totals['subtotal'],
+                    'discount_total' => $totals['discount_total'],
+                    'tax_total' => $totals['tax_total'],
+                    'grand_total' => $totals['grand_total'],
+                    'paid_total' => '0.00',
+                    'change_due' => '0.00',
+                    'payment_status' => 'pending',
+                    'idempotency_key' => $idempotencyKey,
+                    'idempotency_fingerprint' => $fingerprint,
+                    'pending_checkout_data' => $payload,
+                    'notes' => $notes,
+                ]);
+            }
+
+            $this->inventory->reserveForPendingSale($sale, $items, $user);
+
+            return $sale;
+        });
+    }
+
+    public function releasePendingMpesaStock(Sale $sale): void
+    {
+        $this->inventory->settlePendingSaleReservation($sale, 'released');
+    }
+
+    /** Finalize a pending sale only from its persisted, confirmed M-Pesa transaction. */
+    public function finalizeVerifiedMpesaSale(MpesaTransaction $transaction): Sale
+    {
+        return DB::transaction(function () use ($transaction): Sale {
+            $lockedTransaction = MpesaTransaction::query()->lockForUpdate()->findOrFail($transaction->id);
+            abort_unless($lockedTransaction->status === 'confirmed' && $lockedTransaction->sale_id, 409, 'Confirmed POS M-Pesa transaction is required.');
+            $sale = Sale::withoutGlobalScopes()->lockForUpdate()->findOrFail($lockedTransaction->sale_id);
+            if ($sale->status === 'completed') {
+                $sameSettlement = $sale->payments->contains(fn (SalePayment $payment): bool => $payment->payment_method === 'mpesa'
+                    && (int) data_get($payment->metadata, 'mpesa_transaction_id') === (int) $lockedTransaction->id
+                );
+                abort_unless($sameSettlement, 409, 'Another M-Pesa attempt already completed this sale.');
+
+                return $sale;
+            }
+            abort_unless($sale->status === 'pending_payment', 409, 'Sale is no longer awaiting payment.');
+            abort_unless((int) $sale->tenant_id === (int) $lockedTransaction->tenant_id
+                && (int) $sale->shop_id === (int) $lockedTransaction->shop_id
+                && bccomp((string) $sale->grand_total, (string) $lockedTransaction->amount, 2) === 0,
+                422,
+                'Verified M-Pesa amount or tenant scope does not match the pending sale.');
+
+            $payload = $sale->pending_checkout_data;
+            abort_unless(is_array($payload) && isset($payload['items'], $payload['payments']), 409, 'Pending checkout details are unavailable.');
+            $previousTenant = TenantContext::getTenant();
+            TenantContext::setTenant($sale->tenant);
+            try {
+                $user = User::query()->findOrFail($sale->user_id);
+                // A callback may arrive after the timeout job released the reservation.
+                // Reacquire atomically; if unavailable the paid attempt is flagged for refund.
+                $this->inventory->reserveForPendingSale($sale, $payload['items'], $user);
+                $this->inventory->settlePendingSaleReservation($sale, 'consumed');
+
+                return $this->createSale(
+                    shop: Shop::query()->findOrFail($sale->shop_id),
+                    register: Register::query()->findOrFail($sale->register_id),
+                    user: $user,
+                    items: $payload['items'],
+                    payments: $payload['payments'],
+                    shift: $sale->cashierShift,
+                    notes: $payload['notes'] ?? $sale->notes,
+                    diningTableId: $sale->dining_table_id ? (int) $sale->dining_table_id : null,
+                    idempotencyKey: (string) $sale->idempotency_key,
+                    verifiedMpesaTransaction: $lockedTransaction,
+                );
+            } finally {
+                TenantContext::setTenant($previousTenant);
+            }
+        });
+    }
+
+    /** @param array<int, array<string, mixed>> $items @return array{subtotal: string, discount_total: string, tax_total: string, grand_total: string} */
+    private function previewMpesaTotal(Shop $shop, User $user, array $items): array
+    {
+        $subtotal = $discountTotal = $taxTotal = $grandTotal = '0.00';
+        foreach ($items as $itemData) {
+            $product = Product::query()->where('tenant_id', $shop->tenant_id)->where('is_active', true)->findOrFail($itemData['product_id']);
+            $qty = number_format((float) ($itemData['quantity'] ?? 1), 4, '.', '');
+            if ($shop->tenant?->industry === 'pharmacy') {
+                $pharmacist = ! empty($itemData['pharmacist_user_id']) ? User::query()->findOrFail((int) $itemData['pharmacist_user_id']) : null;
+                $this->pharmacy->validateItemForSale(
+                    shop: $shop,
+                    product: $product,
+                    batchId: isset($itemData['batch_id']) ? (int) $itemData['batch_id'] : null,
+                    authorizingPharmacist: $pharmacist,
+                    quantity: (float) $qty,
+                    prescriptionId: isset($itemData['prescription_id']) ? (int) $itemData['prescription_id'] : null,
+                );
+            }
+            $discount = (string) ($itemData['discount'] ?? '0.00');
+            $discountAllowed = $user->hasPermission('pos.discount.apply') || $user->hasPermission('pos.sale.discount') || $user->hasPermission('pos.discount.override');
+            abort_if(bccomp($discount, '0.00', 2) > 0 && ! $discountAllowed, 403, 'Discount permission required.');
+            $gross = bcmul((string) $product->selling_price, $qty, 2);
+            abort_if(bccomp($discount, $gross, 2) > 0, 422, 'Discount cannot exceed item price.');
+            if (bccomp($discount, '0.00', 2) > 0 && ! $user->hasPermission('pos.discount.override')) {
+                $cap = bcdiv(bcmul($gross, number_format((float) config('pos.max_discount_percent', 10), 2, '.', ''), 4), '100.00', 2);
+                abort_if(bccomp($discount, $cap, 2) > 0, 422, 'Discount exceeds the cashier discount limit.');
+            }
+            $lineSubtotal = bcsub(bcmul((string) $product->selling_price, $qty, 4), $discount, 2);
+            $rate = (string) $product->tax_rate;
+            if ($product->tax_type === 'inclusive' && (float) $rate > 0) {
+                $divisor = bcadd('1', bcdiv($rate, '100', 4), 4);
+                $lineTax = bcsub($lineSubtotal, bcdiv($lineSubtotal, $divisor, 2), 2);
+                $lineTotal = $lineSubtotal;
+            } elseif ($product->tax_type === 'exclusive' && (float) $rate > 0) {
+                $lineTax = bcmul($lineSubtotal, bcdiv($rate, '100', 4), 2);
+                $lineTotal = bcadd($lineSubtotal, $lineTax, 2);
+            } else {
+                $lineTax = '0.00';
+                $lineTotal = $lineSubtotal;
+            }
+            $subtotal = bcadd($subtotal, $lineSubtotal, 2);
+            $discountTotal = bcadd($discountTotal, $discount, 2);
+            $taxTotal = bcadd($taxTotal, $lineTax, 2);
+            $grandTotal = bcadd($grandTotal, $lineTotal, 2);
+        }
+
+        return ['subtotal' => $subtotal, 'discount_total' => $discountTotal, 'tax_total' => $taxTotal, 'grand_total' => $grandTotal];
     }
 
     /**

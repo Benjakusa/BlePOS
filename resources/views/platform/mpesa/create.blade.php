@@ -21,7 +21,7 @@
         <x-input type="password" name="consumer_secret" label="Consumer Secret" required />
         <x-input name="initiator_name" label="Initiator Name (optional)" value="{{ old('initiator_name') }}" />
         <x-input type="textarea" name="security_credential" label="Security Credential (optional)" rows="2" />
-        <x-input name="callback_url" label="Callback URL" value="{{ old('callback_url', url('/api/mpesa/callback')) }}" required />
+        <p class="muted">BlePOS generates a private callback endpoint for this credential.</p>
         <x-input type="toggle" name="is_active" label="Active" value="1" :checked="true" />
         <x-input type="toggle" name="is_default" label="Default for Environment" value="1" :checked="old('is_default', false)" />
         <div style="display: flex; gap: 10px;">

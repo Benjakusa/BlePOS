@@ -19,6 +19,17 @@
     </div>
 @endif
 
+@if(config('services.mpesa.allow_platform_fallback_for_tenant_sales'))
+    <div class="panel" style="margin-bottom: 16px; border-left: 4px solid #b45309;">
+        <strong>Platform collection fallback is enabled.</strong>
+        Branches or tenants without an active default credential can collect POS payments through the platform shortcode. Confirm the settlement and remittance arrangement before using this in production.
+    </div>
+@else
+    <div class="panel" style="margin-bottom: 16px; border-left: 4px solid #2563eb;">
+        POS payments require an active default credential for this branch or tenant. Platform subscription payments use a separate platform credential.
+    </div>
+@endif
+
 @if($credentials->isEmpty())
     <div class="panel" style="text-align: center; padding: 48px 24px;">
         <i class="bi bi-shield-lock" style="font-size: 36px; color: #94a3b8;"></i>
@@ -65,7 +76,6 @@
                                 <div><strong>Consumer Key:</strong> <code>{{ $cred->maskedConsumerKey() }}</code></div>
                                 <div><strong>Consumer Secret:</strong> <code>{{ $cred->maskedConsumerSecret() }}</code></div>
                                 <div><strong>Passkey:</strong> <code>{{ $cred->maskedPasskey() }}</code></div>
-                                <div style="word-break: break-all;"><strong>Callback Route:</strong> <code>{{ route('mpesa.callback', $cred->callback_token) }}</code></div>
                             </div>
 
                             <div id="test-result-{{ $cred->id }}" style="display: none; font-size: 12px; padding: 8px 10px; border-radius: 8px;"></div>

@@ -29,6 +29,7 @@ class Sale extends Model
             'grand_total' => 'decimal:2',
             'paid_total' => 'decimal:2',
             'change_due' => 'decimal:2',
+            'pending_checkout_data' => 'array',
         ];
     }
 

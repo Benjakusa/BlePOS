@@ -24,6 +24,10 @@
                 <x-input type="select" name="report_type" label="Report Type">
                     <option value="revenue">Export Revenue Report</option>
                     <option value="tenants">Export Tenant Registry</option>
+                    <option value="tenants-comprehensive">Master Tenant &amp; Sales Audit</option>
+                    <option value="billing-invoices">Platform Billing Invoices</option>
+                    <option value="industry-adoption">Industry Vertical Adoption</option>
+                    <option value="audit-trail">System Security Audit Trail</option>
                     <option value="modules">Export Module Adoption</option>
                     <option value="growth">Export Growth Metrics</option>
                 </x-input>

@@ -102,9 +102,16 @@
                             <td style="padding: 8px;"><code>{{ $payment->payment_reference }}</code></td>
                             <td style="padding: 8px;">{{ strtoupper($payment->payment_method) }}</td>
                             <td style="text-align: right; padding: 8px; font-weight: 600;">{{ $payment->currency }} {{ number_format((float) $payment->amount, 2) }}</td>
-                            <td style="padding: 8px;">{{ $payment->paid_at->format('Y-m-d H:i') }}</td>
+                            <td style="padding: 8px;">{{ $payment->paid_at?->format('Y-m-d H:i') ?? '—' }}</td>
                             <td style="text-align: center; padding: 8px;"><span class="badge">{{ strtoupper($payment->status) }}</span></td>
                             <td style="text-align: right; padding: 8px;">
+                                @if($payment->status === 'pending' && in_array($payment->payment_method, ['mpesa_paybill', 'bank_transfer', 'card'], true) && auth('platform')->user()->hasPermission('platform.billing.subscriptions.manage'))
+                                    <form method="POST" action="{{ route('platform.invoices.payment.reconcile', [$invoice, $payment]) }}" style="display: inline-flex; gap: 6px; align-items: center;">
+                                        @csrf
+                                        <input name="evidence_reference" placeholder="Verified receipt / ref" required minlength="4" maxlength="128">
+                                        <button type="submit" class="btn secondary" style="padding: 4px 8px; font-size: 12px;">Reconcile</button>
+                                    </form>
+                                @endif
                                 @if(bccomp((string) $payment->refundableBalance(), '0.00', 2) > 0 && auth('platform')->user()->hasPermission('platform.billing.subscriptions.manage'))
                                     <form method="POST" action="{{ route('platform.invoices.refund', [$invoice, $payment]) }}" style="display: inline;" data-motion-confirm="Process refund of {{ $payment->currency }} {{ $payment->refundableBalance() }}?">
                                         @csrf

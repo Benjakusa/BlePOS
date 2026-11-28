@@ -58,6 +58,10 @@ ETIMS_SERVER_URL=https://etims.kra.go.ke
 
 The application refuses to boot in production when debug is enabled, `APP_KEY` is missing, secure session cookies are disabled, SQLite is selected, or upload/backup storage defaults to local disks. Store secrets in the host's secret manager. Configure the `s3` disk credentials, private bucket policies, lifecycle retention, encryption at rest, Redis, trusted proxy addresses, and TLS termination before deployment. `.env.example` uses non-debug defaults; its local database and storage values are for development only.
 
+M-Pesa production configuration also requires `MPESA_ENCRYPTION_KEY` to decode to exactly 32 bytes, `MPESA_CALLBACK_SECRET` to contain at least 32 characters, and `MPESA_CALLBACK_ALLOWED_IPS` to contain callback source IPs/CIDRs supplied for your Daraja account. Production boot fails when either callback control is missing. Callback source checks use Laravel's resolved client IP, so configure trusted proxies correctly. Callback bearer tokens are derived from the callback secret and credential UUID; only their SHA-256 hashes are stored. Do not publish callback URLs. Tenant POS collection will not fall back to the platform shortcode unless `MPESA_ALLOW_PLATFORM_FALLBACK_FOR_TENANT_SALES=true` is explicitly enabled.
+
+For encryption key rotation, keep the current key available for unversioned legacy ciphertext, configure a versioned JSON keyring in `MPESA_ENCRYPTION_KEYS` (for example `{"v1":"base64:...old...","v2":"base64:...new..."}`), and set `MPESA_ENCRYPTION_ACTIVE_KEY_VERSION=v2`. Run `php artisan mpesa:reencrypt-credentials`; keep prior keys configured until the command finishes and backups using the old ciphertext have expired. Unversioned legacy ciphertext uses `MPESA_ENCRYPTION_KEY`.
+
 ---
 
 ## 3. Deployment Procedure
@@ -98,7 +102,7 @@ Crontab configuration for scheduled tasks:
 * * * * * cd /var/www/blepos && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-The scheduler runs the encrypted platform database backup daily at 01:00 and expires backup artifacts at 02:00 using `PLATFORM_BACKUP_RETENTION_DAYS` (30 days by default). Monitor both scheduled commands and verify restore drills on the selected production database engine; only SQLite sandbox restores are currently executable in-app.
+The scheduler runs pending M-Pesa timeout handling every minute, reports paid POS attempts without completed sales every five minutes, the encrypted platform database backup daily at 01:00, and expires backup artifacts at 02:00 using `PLATFORM_BACKUP_RETENTION_DAYS` (30 days by default). Keep the scheduler running so cashiers receive timeout notifications and can retry unconfirmed POS checkouts. Pending STK checkouts reserve tracked inventory until timeout or settlement; a late successful callback reacquires stock and completes if available. If stock is unavailable or a second attempt is paid, the transaction is marked `refund_required`, the cashier and platform billing staff are notified, and external refund processing must be handled and recorded by staff. Monitor scheduled commands and verify restore drills on the selected production database engine; only SQLite sandbox restores are currently executable in-app.
 
 Supervisor configuration (`/etc/supervisor/conf.d/blepos-worker.conf`):
 ```ini
