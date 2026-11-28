@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PlatformRoleSeeder::class,
             ModuleCatalogueSeeder::class,
+            DemoBusinessesSeeder::class,
         ]);
     }
 }

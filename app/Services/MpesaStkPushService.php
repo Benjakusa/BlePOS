@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Models\MpesaTransaction;
 use App\Models\PlatformPayment;
 use App\Models\Sale;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 

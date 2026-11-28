@@ -578,7 +578,15 @@ a:hover {
   padding: 24px;
   transition: box-shadow var(--dur-base) var(--ease-smooth), transform var(--dur-base) var(--ease-smooth);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+}
+.card:has(.is-open), .panel:has(.is-open),
+.card:has(.dropdown.show), .panel:has(.dropdown.show),
+.card:has([aria-expanded="true"]), .panel:has([aria-expanded="true"]),
+.table-container:has(.is-open), .table-container:has([aria-expanded="true"]),
+.modal-box:has(.is-open) {
+  overflow: visible !important;
+  z-index: 100;
 }
 .card:hover, .panel:hover {
   box-shadow: var(--shadow-md);
@@ -1305,31 +1313,56 @@ button:active, .btn:active {
   color: var(--clr-muted);
 }
 
+.ui-field.is-select {
+  position: relative;
+}
+
+.ui-field.is-select.is-open {
+  z-index: 9999 !important;
+}
+
+.ui-field.is-select.is-open .ui-control {
+  z-index: 10000 !important;
+}
+
 .ui-select-menu {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background-color: var(--clr-surface);
-  border-radius: 8px;
-  box-shadow: var(--shadow-md);
-  z-index: 60;
-  padding: 4px;
-  max-height: 260px;
+  background-color: var(--clr-surface) !important;
+  border: 1px solid var(--clr-border) !important;
+  border-radius: 10px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  z-index: 99999 !important;
+  padding: 6px;
+  max-height: 280px;
   display: flex;
   flex-direction: column;
   opacity: 0;
+  visibility: hidden;
   transform: translateY(-4px);
-  transition: opacity var(--dur-fast) var(--ease-smooth), transform var(--dur-fast) var(--ease-smooth);
+  transition: opacity var(--dur-fast) var(--ease-smooth), transform var(--dur-fast) var(--ease-smooth), visibility var(--dur-fast);
+  pointer-events: none;
+}
+
+.ui-field.is-select.opens-up .ui-select-menu {
+  top: auto;
+  bottom: calc(100% + 4px);
+  transform: translateY(4px);
 }
 
 .ui-field.is-select.is-open .ui-select-menu {
-  opacity: 1;
-  transform: translateY(0);
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
 }
 
 .ui-select-menu[hidden] {
   display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .ui-select-search-wrap {
@@ -1359,7 +1392,8 @@ button:active, .btn:active {
 
 .ui-select-options {
   overflow-y: auto;
-  max-height: 200px;
+  max-height: 220px;
+  overscroll-behavior: contain;
 }
 
 .ui-select-option {
@@ -1368,7 +1402,7 @@ button:active, .btn:active {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 10px !important;
+  padding: 8px 12px !important;
   font-size: 13px !important;
   font-weight: 400 !important;
   color: var(--clr-text) !important;
@@ -1378,24 +1412,137 @@ button:active, .btn:active {
   cursor: pointer;
   text-align: left;
   box-shadow: none !important;
-  transition: background-color var(--dur-fast) var(--ease-smooth);
+  min-height: 34px !important;
+  line-height: 1.4 !important;
+  transition: background-color var(--dur-fast) var(--ease-smooth), color var(--dur-fast);
 }
 
 .ui-select-option:hover,
 .ui-select-option.is-active {
   background-color: var(--clr-grey-tint) !important;
+  color: var(--clr-text) !important;
 }
 
 .ui-select-option.is-selected {
+  background-color: rgba(22, 163, 74, 0.08) !important;
   color: var(--clr-green) !important;
-  font-weight: 500 !important;
+  font-weight: 600 !important;
 }
 
 .ui-select-empty {
-  padding: 10px;
-  font-size: 12px;
+  padding: 12px;
+  font-size: 13px;
   color: var(--clr-muted);
   text-align: center;
+}
+
+/* ─── Universal Native Select & Form Control Dropdowns ─── */
+select,
+select.form-control,
+.form-control {
+  font-family: var(--font-input) !important;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--clr-text) !important;
+  background-color: var(--clr-surface) !important;
+  border: 1px solid var(--clr-border) !important;
+  border-radius: 10px;
+  height: 38px;
+  padding: 6px 36px 6px 12px;
+  outline: none !important;
+  box-shadow: none !important;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px 14px;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-smooth), box-shadow var(--dur-fast) var(--ease-smooth);
+}
+
+select:hover,
+select.form-control:hover {
+  border-color: #94A3B8 !important;
+}
+
+select:focus,
+select.form-control:focus {
+  border-color: var(--clr-green) !important;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15) !important;
+}
+
+/* Ensure native options are always fully visible in all themes */
+select option {
+  background-color: var(--clr-surface) !important;
+  color: var(--clr-text) !important;
+  padding: 8px 12px;
+}
+
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] select.form-control {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+}
+
+:root[data-theme="dark"] select option {
+  background-color: #111A2E !important;
+  color: #F8FAFC !important;
+}
+
+/* ─── Universal Dropdown Menu System ─── */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown.is-open,
+.dropdown.show {
+  z-index: 1000 !important;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 99999 !important;
+  min-width: 160px;
+  padding: 6px;
+  background-color: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: 10px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: none;
+}
+
+.dropdown.is-open > .dropdown-menu,
+.dropdown.show > .dropdown-menu,
+.dropdown-menu.show,
+.dropdown-menu.is-open {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--clr-text);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur-fast);
+}
+
+.dropdown-item:hover {
+  background-color: var(--clr-grey-tint);
+  color: var(--clr-text);
 }
 
 /* File Dropzone */
@@ -2295,7 +2442,7 @@ tbody tr:hover { background-color: var(--clr-grey-tint); }
 .bar-group:nth-child(6) .bar { animation-delay: calc(var(--delay-chart) + 5 * var(--stagger-chart)); }
 .bar-group:nth-child(7) .bar { animation-delay: calc(var(--delay-chart) + 6 * var(--stagger-chart)); }
 [data-count-up] { font-variant-numeric: tabular-nums; }
-[role="menu"], .dropdown-menu, .ui-select-menu { animation: motionDropIn var(--dur-fast) var(--ease-smooth) both; }
+.motion-dropdown, .dropdown.is-open > .dropdown-menu, .dropdown.show > .dropdown-menu, [role="menu"].is-open { animation: motionDropIn var(--dur-fast) var(--ease-smooth) both; }
 [data-tooltip]::after { transition: opacity var(--dur-fast) var(--ease-smooth), transform var(--dur-fast) var(--ease-smooth); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; }

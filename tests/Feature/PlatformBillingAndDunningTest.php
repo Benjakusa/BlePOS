@@ -2,10 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Plan;
 use App\Models\MpesaCredential;
-use App\Models\MpesaCredentialAudit;
 use App\Models\MpesaTransaction;
+use App\Models\Plan;
 use App\Models\PlatformDunningEvent;
 use App\Models\PlatformInvoice;
 use App\Models\PlatformPayment;
