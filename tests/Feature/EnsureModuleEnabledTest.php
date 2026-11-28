@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Module;
 use App\Models\Shop;
 use App\Models\Tenant;
+use App\Models\TenantPermission;
+use App\Models\TenantRole;
 use App\Models\TenantModuleEntitlement;
 use App\Models\User;
 use App\Services\ShopContext;
@@ -40,6 +42,21 @@ class EnsureModuleEnabledTest extends TestCase
         return [$tenant, $shop, $user];
     }
 
+    private function grantGymView(User $user): void
+    {
+        $role = TenantRole::create([
+            'tenant_id' => $user->tenant_id,
+            'name' => 'Gym Operator',
+            'slug' => 'gym-operator',
+        ]);
+        $permission = TenantPermission::firstOrCreate(
+            ['name' => 'gym.view'],
+            ['group' => 'Gym', 'description' => 'Open gym workspace.'],
+        );
+        $role->permissions()->attach($permission->id);
+        $user->roles()->attach($role->id);
+    }
+
     public function test_access_denied_when_module_is_not_enabled(): void
     {
         [$tenant, $shop, $user] = $this->createTenantUser('retail');
@@ -66,6 +83,7 @@ class EnsureModuleEnabledTest extends TestCase
             'status' => 'enabled',
             'enabled_at' => now(),
         ]);
+        $this->grantGymView($user);
 
         $response = $this->actingAs($user, 'web')
             ->withSession(['active_shop_id' => $shop->id, 'tenant_id' => $tenant->id])
@@ -77,6 +95,7 @@ class EnsureModuleEnabledTest extends TestCase
     public function test_access_allowed_when_industry_matches(): void
     {
         [$tenant, $shop, $user] = $this->createTenantUser('gym-fitness');
+        $this->grantGymView($user);
 
         $response = $this->actingAs($user, 'web')
             ->withSession(['active_shop_id' => $shop->id, 'tenant_id' => $tenant->id])

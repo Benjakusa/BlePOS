@@ -25,20 +25,20 @@ class ResolveTenantContext
         // identity once by its server-side session id so this middleware can
         // establish the tenant before route model binding runs.
         $webGuard = Auth::guard('web');
-        if (! $request->user() && $request->hasSession()) {
-            $sessionUserId = $request->session()->get($webGuard->getName());
-            if (is_numeric($sessionUserId)) {
-                $sessionUser = User::withoutGlobalScopes()->find($sessionUserId);
-                if ($sessionUser) {
-                    $webGuard->setUser($sessionUser);
-                    $request->setUserResolver(fn () => $sessionUser);
-                }
+        $sessionUserId = $request->hasSession()
+            ? $request->session()->get($webGuard->getName())
+            : null;
+        if (is_numeric($sessionUserId)) {
+            $sessionUser = User::withoutGlobalScopes()->find($sessionUserId);
+            if ($sessionUser) {
+                $webGuard->setUser($sessionUser);
             }
         }
 
         // 1. Resolve from authenticated user
-        if ($request->user() && $request->user()->tenant_id) {
-            $tenant = Tenant::withoutGlobalScopes()->find($request->user()->tenant_id);
+        $authenticatedUser = $webGuard->getUser();
+        if ($authenticatedUser && $authenticatedUser->tenant_id) {
+            $tenant = Tenant::withoutGlobalScopes()->find($authenticatedUser->tenant_id);
         }
 
         // 2. Resolve from custom domain or subdomain

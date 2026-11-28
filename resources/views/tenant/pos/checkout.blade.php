@@ -208,12 +208,19 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; flex-wrap: wrap;">
     <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px;">
         @foreach($availableModes as $mKey => $mConfig)
-            <a href="{{ route('tenant.pos.checkout', ['mode' => $mKey]) }}"
-               class="btn btn-sm {{ $mode === $mKey ? 'btn-primary' : 'btn-outline' }}"
-               style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 0.825rem;">
-                <i class="bi {{ $mConfig['icon'] }}"></i>
-                <span>{{ $mConfig['label'] }}</span>
-            </a>
+            @if(count($availableModes) > 1)
+                <a href="{{ route('tenant.pos.checkout', ['mode' => $mKey]) }}"
+                   class="btn btn-sm {{ $mode === $mKey ? 'btn-primary' : 'btn-outline' }}"
+                   style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 0.825rem;">
+                    <i class="bi {{ $mConfig['icon'] }}"></i>
+                    <span>{{ $mConfig['label'] }}</span>
+                </a>
+            @else
+                <span class="badge badge-primary" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 0.825rem;">
+                    <i class="bi {{ $mConfig['icon'] }}"></i>
+                    <span>{{ $mConfig['label'] }}</span>
+                </span>
+            @endif
         @endforeach
     </div>
     <div class="muted" style="font-size: 0.75rem;">

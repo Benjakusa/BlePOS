@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Models\Shop;
+use App\Models\Tenant;
+use App\Models\User;
 use App\Services\TenantAnalyticsService;
 use App\Services\TenantContext;
 use Illuminate\Http\Request;
@@ -27,16 +29,10 @@ class TenantAnalyticsController extends Controller
             $period = '30d';
         }
 
-        $shopId = $request->query('shop_id') ? (int) $request->query('shop_id') : null;
-        if ($shopId) {
-            $shopBelongs = Shop::where('tenant_id', $tenant->id)->where('id', $shopId)->exists();
-            if (! $shopBelongs) {
-                $shopId = null;
-            }
-        }
+        $shopId = $this->resolveShopId($request, $tenant);
 
-        $metrics = $this->analyticsService->getBusinessMetrics($tenant, $period, $shopId);
-        $shops = Shop::where('tenant_id', $tenant->id)->get();
+        $metrics = $this->analyticsService->getBusinessMetrics($tenant, $period, $shopId, $request->user());
+        $shops = $this->visibleShops($request, $tenant);
 
         return view('tenant.analytics.index', [
             'tenant' => $tenant,
@@ -55,11 +51,19 @@ class TenantAnalyticsController extends Controller
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403, 'Tenant context not established.');
 
-        $shops = Shop::where('tenant_id', $tenant->id)->get();
+        $shops = $this->visibleShops($request, $tenant);
+        $modules = app(\App\Services\ModuleService::class);
 
         return view('tenant.analytics.export', [
             'tenant' => $tenant,
             'shops' => $shops,
+            'canExportShifts' => $request->user()->hasPermission('shifts.view'),
+            'canExportInventory' => $request->user()->hasPermission('inventory.view'),
+            'canExportProducts' => $request->user()->hasPermission('catalog.products.manage') && $request->user()->hasPermission('accounting.view'),
+            'canExportParcels' => $request->user()->hasPermission('parcel.view') && $modules->isModuleAccessible($tenant, 'parcel-delivery'),
+            'canExportGym' => $request->user()->hasPermission('gym.view') && $modules->isModuleAccessible($tenant, 'gym'),
+            'canExportFleet' => $request->user()->hasPermission('fleet.view') && $modules->isModuleAccessible($tenant, 'fleet'),
+            'canExportGarage' => $request->user()->hasPermission('garage.view') && $modules->isModuleAccessible($tenant, 'garage'),
         ]);
     }
 
@@ -78,12 +82,22 @@ class TenantAnalyticsController extends Controller
             'shop_id' => ['nullable', 'integer'],
         ]);
 
-        $shopId = ! empty($validated['shop_id']) ? (int) $validated['shop_id'] : null;
-        if ($shopId) {
-            $shopBelongs = Shop::where('tenant_id', $tenant->id)->where('id', $shopId)->exists();
-            if (! $shopBelongs) {
-                $shopId = null;
-            }
+        $shopId = $this->resolveShopId($request, $tenant, $validated['shop_id'] ?? null);
+        $user = $request->user();
+        if ($validated['export_type'] === 'shifts') {
+            abort_unless($user->hasPermission('shifts.view'), 403);
+        } elseif ($validated['export_type'] === 'inventory') {
+            abort_unless($user->hasPermission('inventory.view'), 403);
+        } elseif ($validated['export_type'] === 'products') {
+            abort_unless($user->hasPermission('catalog.products.manage') && $user->hasPermission('accounting.view'), 403);
+        } elseif ($validated['export_type'] === 'parcels') {
+            abort_unless($user->hasPermission('parcel.view'), 403);
+        } elseif ($validated['export_type'] === 'gym') {
+            abort_unless($user->hasPermission('gym.view'), 403);
+        } elseif ($validated['export_type'] === 'fleet') {
+            abort_unless($user->hasPermission('fleet.view'), 403);
+        } elseif ($validated['export_type'] === 'garage') {
+            abort_unless($user->hasPermission('garage.view'), 403);
         }
 
         $csv = $this->analyticsService->exportData(
@@ -101,5 +115,39 @@ class TenantAnalyticsController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
             'Cache-Control' => 'no-store, no-cache, must-revalidate',
         ]);
+    }
+
+    private function resolveShopId(Request $request, Tenant $tenant, mixed $requestedShopId = null): ?int
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
+
+        if ($user->isTenantOwner() || $user->hasPermission('shops.all.manage')) {
+            if ($requestedShopId && ! Shop::query()->where('tenant_id', $tenant->id)->whereKey($requestedShopId)->exists()) {
+                abort(404);
+            }
+
+            return $requestedShopId ? (int) $requestedShopId : null;
+        }
+
+        $shopIds = $user->shops()->where('shops.tenant_id', $tenant->id)->pluck('shops.id');
+        abort_if($shopIds->isEmpty(), 403, 'No branch is assigned to this account.');
+        if ($requestedShopId !== null && ! $shopIds->contains((int) $requestedShopId)) {
+            abort(403, 'You cannot view reports for that branch.');
+        }
+
+        return $requestedShopId ? (int) $requestedShopId : (int) $shopIds->first();
+    }
+
+    private function visibleShops(Request $request, Tenant $tenant): \Illuminate\Support\Collection
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
+
+        if ($user->isTenantOwner() || $user->hasPermission('shops.all.manage')) {
+            return Shop::query()->where('tenant_id', $tenant->id)->orderBy('name')->get();
+        }
+
+        return $user->shops()->where('shops.tenant_id', $tenant->id)->orderBy('name')->get();
     }
 }

@@ -146,6 +146,8 @@ class TenantRoleDashboardTest extends TestCase
         ]);
         $perm = TenantPermission::firstOrCreate(['name' => 'inventory.manage'], ['group' => 'inventory', 'description' => 'Inventory Manage']);
         $managerRole->permissions()->attach($perm->id);
+        $reportPermission = TenantPermission::firstOrCreate(['name' => 'reports.sales.view'], ['group' => 'reports', 'description' => 'View sales analytics']);
+        $managerRole->permissions()->attach($reportPermission->id);
 
         $manager = User::factory()->forTenant($tenant)->create([
             'email' => 'manager@example.com',
@@ -212,8 +214,11 @@ class TenantRoleDashboardTest extends TestCase
             'name' => 'Cashier',
             'slug' => 'cashier',
         ]);
-        $perm = TenantPermission::firstOrCreate(['name' => 'pos.checkout'], ['group' => 'pos', 'description' => 'POS Checkout']);
-        $cashierRole->permissions()->attach($perm->id);
+        $cashierPermissions = collect([
+            ['name' => 'pos.sale.create', 'group' => 'pos', 'description' => 'Create sales'],
+            ['name' => 'shifts.view', 'group' => 'shifts', 'description' => 'View own shifts'],
+        ])->map(fn (array $definition) => TenantPermission::firstOrCreate(['name' => $definition['name']], $definition));
+        $cashierRole->permissions()->attach($cashierPermissions->pluck('id')->all());
 
         $cashier = User::factory()->forTenant($tenant)->create([
             'email' => 'cashier@example.com',
@@ -277,6 +282,11 @@ class TenantRoleDashboardTest extends TestCase
             'name' => 'Cashier',
             'slug' => 'cashier',
         ]);
+        $cashierPermissions = collect([
+            ['name' => 'pos.sale.create', 'group' => 'pos', 'description' => 'Create sales'],
+            ['name' => 'shifts.view', 'group' => 'shifts', 'description' => 'View own shifts'],
+        ])->map(fn (array $definition) => TenantPermission::firstOrCreate(['name' => $definition['name']], $definition));
+        $cashierRole->permissions()->attach($cashierPermissions->pluck('id')->all());
 
         $cashier = User::factory()->forTenant($tenant)->create([
             'email' => 'cashier2@example.com',

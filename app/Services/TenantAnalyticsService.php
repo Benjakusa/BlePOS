@@ -20,14 +20,21 @@ use App\Models\SalePayment;
 use App\Models\Shop;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\ModuleService;
 use Carbon\Carbon;
 
 class TenantAnalyticsService
 {
+    public function __construct(private readonly ?ModuleService $moduleService = null) {}
+
+    protected function getModuleService(): ModuleService
+    {
+        return $this->moduleService ?? app(ModuleService::class);
+    }
     /**
      * Compute comprehensive business metrics for a tenant within a given period.
      */
-    public function getBusinessMetrics(Tenant $tenant, string $period = '30d', ?int $shopId = null): array
+    public function getBusinessMetrics(Tenant $tenant, string $period = '30d', ?int $shopId = null, ?User $user = null): array
     {
         $startDate = $this->resolveStartDate($period);
 
@@ -130,7 +137,7 @@ class TenantAnalyticsService
             });
 
         // Industry Highlights
-        $industryStats = $this->getIndustrySpecificMetrics($tenant);
+        $industryStats = $this->getIndustrySpecificMetrics($tenant, $user);
 
         return [
             'period' => $period,
@@ -153,12 +160,13 @@ class TenantAnalyticsService
     /**
      * Compute operational metrics tailored to tenant's active industry vertical.
      */
-    public function getIndustrySpecificMetrics(Tenant $tenant): array
+    public function getIndustrySpecificMetrics(Tenant $tenant, ?User $user = null): array
     {
         $metrics = [];
+        $modules = $this->getModuleService();
 
         // Parcels
-        if (Parcel::where('tenant_id', $tenant->id)->exists() || $tenant->industry === 'parcel-delivery') {
+        if ($modules->isModuleAccessible($tenant, 'parcel-delivery') && (! $user || $user->hasPermission('parcel.view'))) {
             $metrics['parcels'] = [
                 'total_received' => Parcel::where('tenant_id', $tenant->id)->count(),
                 'in_transit' => Parcel::where('tenant_id', $tenant->id)->where('status', 'in_transit')->count(),
@@ -169,7 +177,7 @@ class TenantAnalyticsService
         }
 
         // Gym
-        if (GymMember::where('tenant_id', $tenant->id)->exists() || $tenant->industry === 'gym-fitness') {
+        if ($modules->isModuleAccessible($tenant, 'gym') && (! $user || $user->hasPermission('gym.view'))) {
             $metrics['gym'] = [
                 'total_members' => GymMember::where('tenant_id', $tenant->id)->count(),
                 'active_subscriptions' => GymSubscription::where('tenant_id', $tenant->id)->where('status', 'active')->count(),
@@ -179,7 +187,7 @@ class TenantAnalyticsService
         }
 
         // Fleet
-        if (FleetVehicle::where('tenant_id', $tenant->id)->exists() || $tenant->industry === 'car-hire-fleet') {
+        if ($modules->isModuleAccessible($tenant, 'fleet') && (! $user || $user->hasPermission('fleet.view'))) {
             $metrics['fleet'] = [
                 'total_vehicles' => FleetVehicle::where('tenant_id', $tenant->id)->count(),
                 'available' => FleetVehicle::where('tenant_id', $tenant->id)->where('status', 'available')->count(),
@@ -189,7 +197,7 @@ class TenantAnalyticsService
         }
 
         // Garage
-        if (GarageJobCard::where('tenant_id', $tenant->id)->exists() || $tenant->industry === 'auto-garage') {
+        if ($modules->isModuleAccessible($tenant, 'garage') && (! $user || $user->hasPermission('garage.view'))) {
             $metrics['garage'] = [
                 'total_jobs' => GarageJobCard::where('tenant_id', $tenant->id)->count(),
                 'in_progress' => GarageJobCard::where('tenant_id', $tenant->id)->where('status', 'in_progress')->count(),
@@ -198,7 +206,7 @@ class TenantAnalyticsService
         }
 
         // Agrovet
-        if (AgrovetCustomer::where('tenant_id', $tenant->id)->exists() || $tenant->industry === 'agrovet') {
+        if ($modules->isModuleAccessible($tenant, 'agrovet') && (! $user || $user->hasPermission('agrovet.view'))) {
             $metrics['agrovet'] = [
                 'total_customers' => AgrovetCustomer::where('tenant_id', $tenant->id)->count(),
                 'outstanding_credit' => (float) AgrovetCustomer::where('tenant_id', $tenant->id)->sum('credit_balance'),
@@ -215,6 +223,7 @@ class TenantAnalyticsService
     public function exportData(Tenant $tenant, string $type, ?string $fromDate = null, ?string $toDate = null, ?int $shopId = null): string
     {
         $rows = [];
+        $modules = $this->getModuleService();
 
         switch ($type) {
             case 'sales':
@@ -327,6 +336,7 @@ class TenantAnalyticsService
                 break;
 
             case 'parcels':
+                abort_unless($modules->isModuleAccessible($tenant, 'parcel-delivery'), 403, 'Unauthorized export for your industry.');
                 $query = Parcel::query()
                     ->where('tenant_id', $tenant->id)
                     ->when($fromDate, fn ($q) => $q->whereDate('created_at', '>=', $fromDate))
@@ -355,6 +365,7 @@ class TenantAnalyticsService
                 break;
 
             case 'gym':
+                abort_unless($modules->isModuleAccessible($tenant, 'gym'), 403, 'Unauthorized export for your industry.');
                 $query = GymSubscription::query()
                     ->where('tenant_id', $tenant->id)
                     ->with(['member', 'plan'])
@@ -376,6 +387,7 @@ class TenantAnalyticsService
                 break;
 
             case 'fleet':
+                abort_unless($modules->isModuleAccessible($tenant, 'fleet'), 403, 'Unauthorized export for your industry.');
                 $query = FleetBooking::query()
                     ->where('tenant_id', $tenant->id)
                     ->with(['vehicle', 'customer'])
@@ -403,6 +415,7 @@ class TenantAnalyticsService
                 break;
 
             case 'garage':
+                abort_unless($modules->isModuleAccessible($tenant, 'garage'), 403, 'Unauthorized export for your industry.');
                 $query = GarageJobCard::query()
                     ->where('tenant_id', $tenant->id)
                     ->with(['vehicle', 'customer', 'estimate'])

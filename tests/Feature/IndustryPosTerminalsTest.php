@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Services\ShopContext;
 use App\Services\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class IndustryPosTerminalsTest extends TestCase
@@ -85,7 +86,7 @@ class IndustryPosTerminalsTest extends TestCase
             'shop_id' => $shop->id,
             'register_id' => $register->id,
             'user_id' => $user->id,
-            'shift_number' => 'SH-INIT',
+            'shift_number' => 'SH-'.strtoupper(Str::random(8)),
             'status' => 'open',
             'opening_float' => 2000,
             'cash_sales' => 0,
@@ -99,42 +100,94 @@ class IndustryPosTerminalsTest extends TestCase
 
     public function test_pos_terminal_mode_switching(): void
     {
-        [$tenant, $shop, $destShop, $user, $shift] = $this->setupTerminalEnvironment();
+        // 1. Retail Tenant: Can access retail mode, cannot access parcels, gym, fleet, or garage
+        [$retailTenant, , , $retailUser] = $this->setupTerminalEnvironment('retail');
 
-        // Retail Mode
-        $response = $this->actingAs($user)
-            ->withSession(['tenant_id' => $tenant->id])
+        $response = $this->actingAs($retailUser)
+            ->withSession(['tenant_id' => $retailTenant->id])
             ->get(route('tenant.pos.checkout', ['mode' => 'retail']));
         $response->assertOk();
         $response->assertSee('Retail Checkout');
 
-        // Parcels Mode
-        $response = $this->actingAs($user)
-            ->withSession(['tenant_id' => $tenant->id])
-            ->get(route('tenant.pos.checkout', ['mode' => 'parcels']));
-        $response->assertOk();
-        $response->assertSee('Parcel Counter Intake');
+        $forbiddenModes = ['parcels', 'gym', 'fleet', 'garage'];
+        foreach ($forbiddenModes as $fMode) {
+            $fResponse = $this->actingAs($retailUser)
+                ->withSession(['tenant_id' => $retailTenant->id])
+                ->get(route('tenant.pos.checkout', ['mode' => $fMode]));
+            $fResponse->assertForbidden();
+        }
 
-        // Gym Mode
-        $response = $this->actingAs($user)
-            ->withSession(['tenant_id' => $tenant->id])
+        // 2. Gym Tenant: Can access gym mode, cannot access parcels, fleet, or garage
+        [$gymTenant, , , $gymUser] = $this->setupTerminalEnvironment('gym-fitness');
+
+        $gymResponse = $this->actingAs($gymUser)
+            ->withSession(['tenant_id' => $gymTenant->id])
             ->get(route('tenant.pos.checkout', ['mode' => 'gym']));
-        $response->assertOk();
-        $response->assertSee('Gym Front Desk Terminal');
+        $gymResponse->assertOk();
+        $gymResponse->assertSee('Gym Front Desk Terminal');
+        $gymResponse->assertDontSee('Parcel Logistics');
+        $gymResponse->assertDontSee('Fleet Dispatch');
+        $gymResponse->assertDontSee('Auto Garage Service');
 
-        // Fleet Mode
-        $response = $this->actingAs($user)
-            ->withSession(['tenant_id' => $tenant->id])
+        $this->actingAs($gymUser)
+            ->withSession(['tenant_id' => $gymTenant->id])
+            ->get(route('tenant.pos.checkout', ['mode' => 'parcels']))
+            ->assertForbidden();
+
+        $this->actingAs($gymUser)
+            ->withSession(['tenant_id' => $gymTenant->id])
+            ->get(route('tenant.pos.checkout', ['mode' => 'fleet']))
+            ->assertForbidden();
+
+        $this->actingAs($gymUser)
+            ->withSession(['tenant_id' => $gymTenant->id])
+            ->get(route('tenant.pos.checkout', ['mode' => 'garage']))
+            ->assertForbidden();
+
+        // 3. Parcels Tenant: Can access parcels mode, cannot access gym, fleet, or garage
+        [$parcelTenant, , , $parcelUser] = $this->setupTerminalEnvironment('parcel-delivery');
+
+        $parcelResponse = $this->actingAs($parcelUser)
+            ->withSession(['tenant_id' => $parcelTenant->id])
+            ->get(route('tenant.pos.checkout', ['mode' => 'parcels']));
+        $parcelResponse->assertOk();
+        $parcelResponse->assertSee('Parcel Counter Intake');
+        $parcelResponse->assertDontSee('Gym Front Desk');
+        $parcelResponse->assertDontSee('Fleet Dispatch');
+        $parcelResponse->assertDontSee('Auto Garage Service');
+
+        $this->actingAs($parcelUser)
+            ->withSession(['tenant_id' => $parcelTenant->id])
+            ->get(route('tenant.pos.checkout', ['mode' => 'gym']))
+            ->assertForbidden();
+
+        // 4. Fleet Tenant: Can access fleet mode, cannot access gym or garage
+        [$fleetTenant, , , $fleetUser] = $this->setupTerminalEnvironment('car-hire-fleet');
+
+        $fleetResponse = $this->actingAs($fleetUser)
+            ->withSession(['tenant_id' => $fleetTenant->id])
             ->get(route('tenant.pos.checkout', ['mode' => 'fleet']));
-        $response->assertOk();
-        $response->assertSee('Fleet Car Hire Dispatch Terminal');
+        $fleetResponse->assertOk();
+        $fleetResponse->assertSee('Fleet Car Hire Dispatch Terminal');
 
-        // Garage Mode
-        $response = $this->actingAs($user)
-            ->withSession(['tenant_id' => $tenant->id])
+        $this->actingAs($fleetUser)
+            ->withSession(['tenant_id' => $fleetTenant->id])
+            ->get(route('tenant.pos.checkout', ['mode' => 'gym']))
+            ->assertForbidden();
+
+        // 5. Garage Tenant: Can access garage mode, cannot access gym or parcels
+        [$garageTenant, , , $garageUser] = $this->setupTerminalEnvironment('auto-garage');
+
+        $garageResponse = $this->actingAs($garageUser)
+            ->withSession(['tenant_id' => $garageTenant->id])
             ->get(route('tenant.pos.checkout', ['mode' => 'garage']));
-        $response->assertOk();
-        $response->assertSee('Auto Garage Service Counter');
+        $garageResponse->assertOk();
+        $garageResponse->assertSee('Auto Garage Service Counter');
+
+        $this->actingAs($garageUser)
+            ->withSession(['tenant_id' => $garageTenant->id])
+            ->get(route('tenant.pos.checkout', ['mode' => 'gym']))
+            ->assertForbidden();
     }
 
     public function test_parcel_counter_intake_records_parcel_and_updates_cashier_shift(): void

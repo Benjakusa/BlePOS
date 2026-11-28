@@ -213,6 +213,13 @@ class ProductController extends Controller
      */
     public function lookup(Request $request): JsonResponse
     {
+        $user = $request->user();
+        abort_unless(
+            $user && ($user->hasPermission('pos.sale.create') || $user->hasPermission('inventory.view') || $user->hasPermission('catalog.products.manage')),
+            403,
+            'You are not allowed to search the product catalog.',
+        );
+
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403);
 

@@ -77,6 +77,11 @@
                         <div>
                             <strong style="display: block; font-size: 13px; color: #0f172a;">{{ $role->name }}</strong>
                             <span style="font-size: 11px; color: #64748b; line-height: 1.3; display: block;">{{ $role->description }}</span>
+                            @if($role->permissions->isNotEmpty())
+                                <small style="display:block;color:#475569;margin-top:5px;">Access: {{ $role->permissions->pluck('name')->join(', ') }}</small>
+                            @else
+                                <small style="display:block;color:#64748b;margin-top:5px;">No operational permissions configured</small>
+                            @endif
                         </div>
                     </label>
                 @endforeach

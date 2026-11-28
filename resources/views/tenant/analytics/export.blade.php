@@ -73,6 +73,7 @@
     </div>
 
     {{-- 2. Cashier Shifts & Balancing --}}
+    @if($canExportShifts)
     <div class="card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
         <div>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -92,8 +93,10 @@
             <i class="bi bi-file-earmark-spreadsheet"></i> Export Shifts CSV
         </button>
     </div>
+    @endif
 
     {{-- 3. Inventory & Stock Valuation --}}
+    @if($canExportInventory)
     <div class="card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
         <div>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -113,8 +116,10 @@
             <i class="bi bi-file-earmark-spreadsheet"></i> Export Inventory CSV
         </button>
     </div>
+    @endif
 
     {{-- 4. Products & Master Catalog --}}
+    @if($canExportProducts)
     <div class="card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
         <div>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -134,8 +139,14 @@
             <i class="bi bi-file-earmark-spreadsheet"></i> Export Products CSV
         </button>
     </div>
+    @endif
+
+    @php
+        $moduleService = app(\App\Services\ModuleService::class);
+    @endphp
 
     {{-- 5. Parcels & Logistics --}}
+    @if($canExportParcels)
     <div class="card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
         <div>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -155,8 +166,10 @@
             <i class="bi bi-file-earmark-spreadsheet"></i> Export Parcels CSV
         </button>
     </div>
+    @endif
 
     {{-- 6. Gym Memberships & Subscriptions --}}
+    @if($canExportGym)
     <div class="card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
         <div>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -176,8 +189,10 @@
             <i class="bi bi-file-earmark-spreadsheet"></i> Export Gym CSV
         </button>
     </div>
+    @endif
 
     {{-- 7. Fleet Bookings & Car Hire --}}
+    @if($canExportFleet)
     <div class="card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
         <div>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -197,8 +212,10 @@
             <i class="bi bi-file-earmark-spreadsheet"></i> Export Fleet CSV
         </button>
     </div>
+    @endif
 
     {{-- 8. Auto Garage Job Cards --}}
+    @if($canExportGarage)
     <div class="card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
         <div>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -218,6 +235,7 @@
             <i class="bi bi-file-earmark-spreadsheet"></i> Export Garage CSV
         </button>
     </div>
+    @endif
 </div>
 
 {{-- Hidden Form for Submitting Export --}}

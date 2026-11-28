@@ -60,6 +60,7 @@ use App\Http\Controllers\Tenant\TenantAnalyticsController;
 use App\Http\Controllers\Tenant\TenantAnnouncementController;
 use App\Http\Controllers\Tenant\TenantDashboardController;
 use App\Http\Controllers\Tenant\TenantLegalDocumentController;
+use App\Http\Controllers\Tenant\TenantRoleController;
 use App\Http\Controllers\Tenant\TenantSubscriptionController;
 use App\Http\Controllers\Tenant\TenantSupportCaseController;
 use App\Http\Controllers\Tenant\TenantUserController;
@@ -457,7 +458,7 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
     });
 
     // Business Analytics & Data Export Center
-    Route::prefix('analytics')->name('analytics.')->group(function (): void {
+    Route::prefix('analytics')->name('analytics.')->middleware('tenant.permission:reports.sales.view')->group(function (): void {
         Route::get('/', [TenantAnalyticsController::class, 'index'])->name('index');
         Route::get('/export', [TenantAnalyticsController::class, 'exportCenter'])->name('export-center');
         Route::post('/export', [TenantAnalyticsController::class, 'export'])->name('export');
@@ -467,6 +468,10 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
     Route::resource('users', TenantUserController::class)
         ->middleware('tenant.permission:users.manage')
         ->except(['show', 'destroy']);
+
+    Route::resource('roles', TenantRoleController::class)
+        ->middleware('tenant.permission:users.manage')
+        ->except(['show']);
 
     // Catalog - Categories
     Route::resource('categories', CategoryController::class)
@@ -497,14 +502,14 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
     Route::post('/pos/sales/{sale}/void', [PosController::class, 'voidSale'])->middleware('tenant.permission:pos.sale.void')->name('pos.void');
 
     // Industry-Specific POS Terminal Operations
-    Route::post('/pos/parcels/intake', [PosController::class, 'processParcelIntake'])->middleware('tenant.permission:pos.sale.create')->name('pos.parcels.intake');
-    Route::get('/pos/parcels/{parcel}/waybill', [PosController::class, 'waybill'])->middleware('tenant.permission:pos.sales.view')->name('pos.waybill');
-    Route::post('/pos/gym/action', [PosController::class, 'processGymAction'])->middleware('tenant.permission:pos.sale.create')->name('pos.gym.action');
-    Route::get('/pos/gym/slip/{payment}', [PosController::class, 'gymSlip'])->middleware('tenant.permission:pos.sales.view')->name('pos.gym-slip');
-    Route::post('/pos/fleet/dispatch', [PosController::class, 'processFleetDispatch'])->middleware('tenant.permission:pos.sale.create')->name('pos.fleet.dispatch');
-    Route::get('/pos/fleet/slip/{booking}', [PosController::class, 'fleetSlip'])->middleware('tenant.permission:pos.sales.view')->name('pos.fleet-slip');
-    Route::post('/pos/garage/intake', [PosController::class, 'processGarageIntake'])->middleware('tenant.permission:pos.sale.create')->name('pos.garage.intake');
-    Route::get('/pos/garage/slip/{jobCard}', [PosController::class, 'garageSlip'])->middleware('tenant.permission:pos.sales.view')->name('pos.garage-slip');
+    Route::post('/pos/parcels/intake', [PosController::class, 'processParcelIntake'])->middleware(['tenant.permission:pos.sale.create', 'module.enabled:parcel-delivery'])->name('pos.parcels.intake');
+    Route::get('/pos/parcels/{parcel}/waybill', [PosController::class, 'waybill'])->middleware(['tenant.permission:pos.sales.view', 'module.enabled:parcel-delivery'])->name('pos.waybill');
+    Route::post('/pos/gym/action', [PosController::class, 'processGymAction'])->middleware(['tenant.permission:pos.sale.create', 'module.enabled:gym'])->name('pos.gym.action');
+    Route::get('/pos/gym/slip/{payment}', [PosController::class, 'gymSlip'])->middleware(['tenant.permission:pos.sales.view', 'module.enabled:gym'])->name('pos.gym-slip');
+    Route::post('/pos/fleet/dispatch', [PosController::class, 'processFleetDispatch'])->middleware(['tenant.permission:pos.sale.create', 'module.enabled:fleet'])->name('pos.fleet.dispatch');
+    Route::get('/pos/fleet/slip/{booking}', [PosController::class, 'fleetSlip'])->middleware(['tenant.permission:pos.sales.view', 'module.enabled:fleet'])->name('pos.fleet-slip');
+    Route::post('/pos/garage/intake', [PosController::class, 'processGarageIntake'])->middleware(['tenant.permission:pos.sale.create', 'module.enabled:garage'])->name('pos.garage.intake');
+    Route::get('/pos/garage/slip/{jobCard}', [PosController::class, 'garageSlip'])->middleware(['tenant.permission:pos.sales.view', 'module.enabled:garage'])->name('pos.garage-slip');
 
     // Cashier Shifts
     Route::get('/shifts', [CashierShiftController::class, 'index'])->middleware('tenant.permission:shifts.view')->name('shifts.index');
@@ -560,114 +565,158 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
 
     // Gym & Fitness Studio
     Route::middleware('module.enabled:gym')->prefix('gym')->name('gym.')->group(function (): void {
-        Route::get('/', [GymController::class, 'index'])->name('index');
-        Route::get('/members', [GymController::class, 'members'])->name('members');
-        Route::get('/members/create', [GymController::class, 'createMember'])->name('members.create');
-        Route::post('/members', [GymController::class, 'storeMember'])->name('members.store');
-        Route::get('/members/{member}/edit', [GymController::class, 'editMember'])->name('members.edit');
-        Route::put('/members/{member}', [GymController::class, 'updateMember'])->name('members.update');
-        Route::get('/plans', [GymController::class, 'plans'])->name('plans');
-        Route::get('/plans/create', [GymController::class, 'createPlan'])->name('plans.create');
-        Route::post('/plans', [GymController::class, 'storePlan'])->name('plans.store');
-        Route::get('/subscriptions', [GymController::class, 'subscriptions'])->name('subscriptions');
-        Route::get('/subscriptions/create', [GymController::class, 'createSubscription'])->name('subscriptions.create');
-        Route::post('/subscriptions', [GymController::class, 'storeSubscription'])->name('subscriptions.store');
-        Route::post('/subscriptions/{subscription}/freeze', [GymController::class, 'freezeSubscription'])->name('subscriptions.freeze');
-        Route::post('/subscriptions/{subscription}/renew', [GymController::class, 'renewSubscription'])->name('subscriptions.renew');
-        Route::get('/checkin', [GymController::class, 'checkin'])->name('checkin');
-        Route::post('/checkin', [GymController::class, 'processCheckin'])->name('checkin.store');
-        Route::get('/classes', [GymController::class, 'classes'])->name('classes');
-        Route::get('/classes/create', [GymController::class, 'createClass'])->name('classes.create');
-        Route::post('/classes', [GymController::class, 'storeClass'])->name('classes.store');
-        Route::post('/classes/book', [GymController::class, 'bookClass'])->name('classes.book');
-        Route::post('/bookings/{booking}/attend', [GymController::class, 'markAttendance'])->name('classes.attend');
-        Route::get('/trainers', [GymController::class, 'trainers'])->name('trainers');
-        Route::get('/trainers/create', [GymController::class, 'createTrainer'])->name('trainers.create');
-        Route::post('/trainers', [GymController::class, 'storeTrainer'])->name('trainers.store');
+        Route::get('/', [GymController::class, 'index'])->middleware('tenant.permission:gym.view')->name('index');
+        Route::middleware('tenant.permission:gym.member.manage')->group(function (): void {
+            Route::get('/members', [GymController::class, 'members'])->name('members');
+            Route::get('/members/create', [GymController::class, 'createMember'])->name('members.create');
+            Route::post('/members', [GymController::class, 'storeMember'])->name('members.store');
+            Route::get('/members/{member}/edit', [GymController::class, 'editMember'])->name('members.edit');
+            Route::put('/members/{member}', [GymController::class, 'updateMember'])->name('members.update');
+        });
+        Route::middleware('tenant.permission:gym.subscription.manage')->group(function (): void {
+            Route::get('/plans', [GymController::class, 'plans'])->name('plans');
+            Route::get('/plans/create', [GymController::class, 'createPlan'])->name('plans.create');
+            Route::post('/plans', [GymController::class, 'storePlan'])->name('plans.store');
+            Route::get('/subscriptions', [GymController::class, 'subscriptions'])->name('subscriptions');
+            Route::get('/subscriptions/create', [GymController::class, 'createSubscription'])->name('subscriptions.create');
+            Route::post('/subscriptions', [GymController::class, 'storeSubscription'])->name('subscriptions.store');
+            Route::post('/subscriptions/{subscription}/freeze', [GymController::class, 'freezeSubscription'])->name('subscriptions.freeze');
+            Route::post('/subscriptions/{subscription}/renew', [GymController::class, 'renewSubscription'])->name('subscriptions.renew');
+        });
+        Route::middleware('tenant.permission:gym.checkin.manage')->group(function (): void {
+            Route::get('/checkin', [GymController::class, 'checkin'])->name('checkin');
+            Route::post('/checkin', [GymController::class, 'processCheckin'])->name('checkin.store');
+        });
+        Route::middleware('tenant.permission:gym.class.manage')->group(function (): void {
+            Route::get('/classes', [GymController::class, 'classes'])->name('classes');
+            Route::get('/classes/create', [GymController::class, 'createClass'])->name('classes.create');
+            Route::post('/classes', [GymController::class, 'storeClass'])->name('classes.store');
+            Route::post('/classes/book', [GymController::class, 'bookClass'])->name('classes.book');
+            Route::post('/bookings/{booking}/attend', [GymController::class, 'markAttendance'])->name('classes.attend');
+        });
+        Route::middleware('tenant.permission:gym.trainer.manage')->group(function (): void {
+            Route::get('/trainers', [GymController::class, 'trainers'])->name('trainers');
+            Route::get('/trainers/create', [GymController::class, 'createTrainer'])->name('trainers.create');
+            Route::post('/trainers', [GymController::class, 'storeTrainer'])->name('trainers.store');
+        });
     });
 
     // Printing & Branding
     Route::middleware('module.enabled:printing')->prefix('printing')->name('printing.')->group(function (): void {
-        Route::get('/', [PrintingController::class, 'index'])->name('index');
-        Route::get('/jobs', [PrintingController::class, 'jobs'])->name('jobs');
-        Route::get('/jobs/create', [PrintingController::class, 'createJob'])->name('jobs.create');
-        Route::post('/jobs', [PrintingController::class, 'storeJob'])->name('jobs.store');
-        Route::post('/jobs/{job}/quote', [PrintingController::class, 'storeQuote'])->name('jobs.quote');
-        Route::post('/jobs/{job}/accept-quote', [PrintingController::class, 'acceptQuote'])->name('jobs.accept-quote');
-        Route::post('/jobs/{job}/deposit', [PrintingController::class, 'recordDeposit'])->name('jobs.deposit');
-        Route::post('/jobs/{job}/advance', [PrintingController::class, 'advanceStatus'])->name('jobs.advance');
-        Route::get('/materials', [PrintingController::class, 'materials'])->name('materials');
-        Route::get('/materials/create', [PrintingController::class, 'createMaterial'])->name('materials.create');
-        Route::post('/materials', [PrintingController::class, 'storeMaterial'])->name('materials.store');
+        Route::get('/', [PrintingController::class, 'index'])->middleware('tenant.permission:printing.view')->name('index');
+        Route::middleware('tenant.permission:print.job.create')->group(function (): void {
+            Route::get('/jobs', [PrintingController::class, 'jobs'])->name('jobs');
+            Route::get('/jobs/create', [PrintingController::class, 'createJob'])->name('jobs.create');
+            Route::post('/jobs', [PrintingController::class, 'storeJob'])->name('jobs.store');
+        });
+        Route::middleware('tenant.permission:print.quote.manage')->group(function (): void {
+            Route::post('/jobs/{job}/quote', [PrintingController::class, 'storeQuote'])->name('jobs.quote');
+            Route::post('/jobs/{job}/accept-quote', [PrintingController::class, 'acceptQuote'])->name('jobs.accept-quote');
+        });
+        Route::post('/jobs/{job}/deposit', [PrintingController::class, 'recordDeposit'])->middleware('tenant.permission:print.payment.record')->name('jobs.deposit');
+        Route::post('/jobs/{job}/advance', [PrintingController::class, 'advanceStatus'])->middleware('tenant.permission:print.job.approve')->name('jobs.advance');
+        Route::middleware('tenant.permission:print.material.manage')->group(function (): void {
+            Route::get('/materials', [PrintingController::class, 'materials'])->name('materials');
+            Route::get('/materials/create', [PrintingController::class, 'createMaterial'])->name('materials.create');
+            Route::post('/materials', [PrintingController::class, 'storeMaterial'])->name('materials.store');
+        });
     });
 
     // Agrovet Operations
     Route::middleware('module.enabled:agrovet')->prefix('agrovet')->name('agrovet.')->group(function (): void {
-        Route::get('/', [AgrovetController::class, 'index'])->name('index');
-        Route::get('/products', [AgrovetController::class, 'products'])->name('products');
-        Route::get('/products/create', [AgrovetController::class, 'createProduct'])->name('products.create');
-        Route::post('/products', [AgrovetController::class, 'storeProduct'])->name('products.store');
-        Route::get('/customers', [AgrovetController::class, 'customers'])->name('customers');
-        Route::get('/customers/create', [AgrovetController::class, 'createCustomer'])->name('customers.create');
-        Route::post('/customers', [AgrovetController::class, 'storeCustomer'])->name('customers.store');
-        Route::get('/customers/{customer}/ledger', [AgrovetController::class, 'creditLedger'])->name('credit-ledger');
-        Route::post('/credit/repay', [AgrovetController::class, 'repayCredit'])->name('credit.repay');
-        Route::get('/purchases', [AgrovetController::class, 'purchases'])->name('purchases');
-        Route::get('/purchases/create', [AgrovetController::class, 'createPurchase'])->name('purchases.create');
-        Route::post('/purchases', [AgrovetController::class, 'storePurchase'])->name('purchases.store');
-        Route::get('/sales', [AgrovetController::class, 'sales'])->name('sales');
-        Route::get('/sales/create', [AgrovetController::class, 'createSale'])->name('sales.create');
-        Route::post('/sales', [AgrovetController::class, 'storeSale'])->name('sales.store');
+        Route::get('/', [AgrovetController::class, 'index'])->middleware('tenant.permission:agrovet.view')->name('index');
+        Route::middleware('tenant.permission:agrovet.product.manage')->group(function (): void {
+            Route::get('/products', [AgrovetController::class, 'products'])->name('products');
+            Route::get('/products/create', [AgrovetController::class, 'createProduct'])->name('products.create');
+            Route::post('/products', [AgrovetController::class, 'storeProduct'])->name('products.store');
+        });
+        Route::middleware('tenant.permission:agrovet.customer.manage')->group(function (): void {
+            Route::get('/customers', [AgrovetController::class, 'customers'])->name('customers');
+            Route::get('/customers/create', [AgrovetController::class, 'createCustomer'])->name('customers.create');
+            Route::post('/customers', [AgrovetController::class, 'storeCustomer'])->name('customers.store');
+        });
+        Route::middleware('tenant.permission:agrovet.credit.grant')->group(function (): void {
+            Route::get('/customers/{customer}/ledger', [AgrovetController::class, 'creditLedger'])->name('credit-ledger');
+        });
+        Route::post('/credit/repay', [AgrovetController::class, 'repayCredit'])->middleware('tenant.permission:agrovet.credit.approve')->name('credit.repay');
+        Route::middleware('tenant.permission:agrovet.purchase.manage')->group(function (): void {
+            Route::get('/purchases', [AgrovetController::class, 'purchases'])->name('purchases');
+            Route::get('/purchases/create', [AgrovetController::class, 'createPurchase'])->name('purchases.create');
+            Route::post('/purchases', [AgrovetController::class, 'storePurchase'])->name('purchases.store');
+        });
+        Route::middleware('tenant.permission:agrovet.sales.manage')->group(function (): void {
+            Route::get('/sales', [AgrovetController::class, 'sales'])->name('sales');
+            Route::get('/sales/create', [AgrovetController::class, 'createSale'])->name('sales.create');
+            Route::post('/sales', [AgrovetController::class, 'storeSale'])->name('sales.store');
+        });
     });
 
     // Auto Garage & Repair Shop
     Route::middleware('module.enabled:garage')->prefix('garage')->name('garage.')->group(function (): void {
-        Route::get('/', [GarageController::class, 'index'])->name('index');
-        Route::get('/jobs', [GarageController::class, 'jobs'])->name('jobs');
-        Route::get('/jobs/create', [GarageController::class, 'createJob'])->name('jobs.create');
-        Route::post('/jobs', [GarageController::class, 'storeJob'])->name('jobs.store');
-        Route::get('/jobs/{jobCard}', [GarageController::class, 'showJob'])->name('jobs.show');
-        Route::post('/jobs/{jobCard}/advance', [GarageController::class, 'advanceStatus'])->name('jobs.advance');
-        Route::post('/jobs/{jobCard}/estimate', [GarageController::class, 'storeEstimate'])->name('estimates.store');
-        Route::post('/jobs/{jobCard}/estimate/approve', [GarageController::class, 'approveEstimate'])->name('estimates.approve');
-        Route::post('/jobs/{jobCard}/consume-part', [GarageController::class, 'consumePart'])->name('parts.consume');
-        Route::post('/jobs/{jobCard}/payment', [GarageController::class, 'recordPayment'])->name('payments.store');
-        Route::get('/vehicles/{vehicle}/history', [GarageController::class, 'vehicleHistory'])->name('vehicles.history');
-        Route::get('/vehicles/create', [GarageController::class, 'createVehicle'])->name('vehicles.create');
-        Route::post('/vehicles', [GarageController::class, 'storeVehicle'])->name('vehicles.store');
-        Route::get('/customers', [GarageController::class, 'customers'])->name('customers');
-        Route::get('/customers/create', [GarageController::class, 'createCustomer'])->name('customers.create');
-        Route::post('/customers', [GarageController::class, 'storeCustomer'])->name('customers.store');
-        Route::get('/parts', [GarageController::class, 'parts'])->name('parts');
-        Route::get('/parts/create', [GarageController::class, 'createPart'])->name('parts.create');
-        Route::post('/parts', [GarageController::class, 'storePart'])->name('parts.store');
-        Route::get('/mechanics', [GarageController::class, 'mechanics'])->name('mechanics');
-        Route::get('/mechanics/create', [GarageController::class, 'createMechanic'])->name('mechanics.create');
-        Route::post('/mechanics', [GarageController::class, 'storeMechanic'])->name('mechanics.store');
+        Route::get('/', [GarageController::class, 'index'])->middleware('tenant.permission:garage.view')->name('index');
+        Route::middleware('tenant.permission:garage.job.manage')->group(function (): void {
+            Route::get('/jobs', [GarageController::class, 'jobs'])->name('jobs');
+            Route::get('/jobs/create', [GarageController::class, 'createJob'])->name('jobs.create');
+            Route::post('/jobs', [GarageController::class, 'storeJob'])->name('jobs.store');
+            Route::get('/jobs/{jobCard}', [GarageController::class, 'showJob'])->name('jobs.show');
+            Route::post('/jobs/{jobCard}/advance', [GarageController::class, 'advanceStatus'])->name('jobs.advance');
+        });
+        Route::post('/jobs/{jobCard}/estimate', [GarageController::class, 'storeEstimate'])->middleware('tenant.permission:garage.job.manage')->name('estimates.store');
+        Route::post('/jobs/{jobCard}/estimate/approve', [GarageController::class, 'approveEstimate'])->middleware('tenant.permission:garage.estimate.approve')->name('estimates.approve');
+        Route::post('/jobs/{jobCard}/consume-part', [GarageController::class, 'consumePart'])->middleware('tenant.permission:garage.part.manage')->name('parts.consume');
+        Route::post('/jobs/{jobCard}/payment', [GarageController::class, 'recordPayment'])->middleware('tenant.permission:garage.payment.record')->name('payments.store');
+        Route::middleware('tenant.permission:garage.vehicle.manage')->group(function (): void {
+            Route::get('/vehicles/{vehicle}/history', [GarageController::class, 'vehicleHistory'])->name('vehicles.history');
+            Route::get('/vehicles/create', [GarageController::class, 'createVehicle'])->name('vehicles.create');
+            Route::post('/vehicles', [GarageController::class, 'storeVehicle'])->name('vehicles.store');
+        });
+        Route::middleware('tenant.permission:garage.customer.manage')->group(function (): void {
+            Route::get('/customers', [GarageController::class, 'customers'])->name('customers');
+            Route::get('/customers/create', [GarageController::class, 'createCustomer'])->name('customers.create');
+            Route::post('/customers', [GarageController::class, 'storeCustomer'])->name('customers.store');
+        });
+        Route::middleware('tenant.permission:garage.part.manage')->group(function (): void {
+            Route::get('/parts', [GarageController::class, 'parts'])->name('parts');
+            Route::get('/parts/create', [GarageController::class, 'createPart'])->name('parts.create');
+            Route::post('/parts', [GarageController::class, 'storePart'])->name('parts.store');
+        });
+        Route::middleware('tenant.permission:garage.mechanic.manage')->group(function (): void {
+            Route::get('/mechanics', [GarageController::class, 'mechanics'])->name('mechanics');
+            Route::get('/mechanics/create', [GarageController::class, 'createMechanic'])->name('mechanics.create');
+            Route::post('/mechanics', [GarageController::class, 'storeMechanic'])->name('mechanics.store');
+        });
     });
 
     // Fleet & Car Hire
     Route::middleware('module.enabled:fleet')->prefix('fleet')->name('fleet.')->group(function (): void {
-        Route::get('/', [FleetController::class, 'index'])->name('index');
-        Route::get('/vehicles', [FleetController::class, 'vehicles'])->name('vehicles');
-        Route::get('/vehicles/create', [FleetController::class, 'createVehicle'])->name('vehicles.create');
-        Route::post('/vehicles', [FleetController::class, 'storeVehicle'])->name('vehicles.store');
-        Route::get('/bookings', [FleetController::class, 'bookings'])->name('bookings');
-        Route::get('/bookings/create', [FleetController::class, 'createBooking'])->name('bookings.create');
-        Route::post('/bookings', [FleetController::class, 'storeBooking'])->name('bookings.store');
-        Route::post('/bookings/{booking}/payment', [FleetController::class, 'recordPayment'])->name('bookings.payment');
-        Route::post('/bookings/{booking}/complete', [FleetController::class, 'completeBooking'])->name('bookings.complete');
-        Route::post('/bookings/{booking}/refund-deposit', [FleetController::class, 'refundDeposit'])->name('bookings.refund-deposit');
-        Route::post('/bookings/{booking}/inspection', [FleetController::class, 'storeInspection'])->name('bookings.inspection');
-        Route::get('/maintenance', [FleetController::class, 'maintenance'])->name('maintenance');
-        Route::post('/maintenance', [FleetController::class, 'logMaintenance'])->name('maintenance.store');
-        Route::post('/maintenance/{maintenance}/complete', [FleetController::class, 'completeMaintenance'])->name('maintenance.complete');
-        Route::get('/customers', [FleetController::class, 'customers'])->name('customers');
-        Route::get('/customers/create', [FleetController::class, 'createCustomer'])->name('customers.create');
-        Route::post('/customers', [FleetController::class, 'storeCustomer'])->name('customers.store');
-        Route::get('/drivers', [FleetController::class, 'drivers'])->name('drivers');
-        Route::get('/drivers/create', [FleetController::class, 'createDriver'])->name('drivers.create');
-        Route::post('/drivers', [FleetController::class, 'storeDriver'])->name('drivers.store');
+        Route::get('/', [FleetController::class, 'index'])->middleware('tenant.permission:fleet.view')->name('index');
+        Route::middleware('tenant.permission:fleet.vehicle.manage')->group(function (): void {
+            Route::get('/vehicles', [FleetController::class, 'vehicles'])->name('vehicles');
+            Route::get('/vehicles/create', [FleetController::class, 'createVehicle'])->name('vehicles.create');
+            Route::post('/vehicles', [FleetController::class, 'storeVehicle'])->name('vehicles.store');
+        });
+        Route::middleware('tenant.permission:fleet.booking.manage')->group(function (): void {
+            Route::get('/bookings', [FleetController::class, 'bookings'])->name('bookings');
+            Route::get('/bookings/create', [FleetController::class, 'createBooking'])->name('bookings.create');
+            Route::post('/bookings', [FleetController::class, 'storeBooking'])->name('bookings.store');
+            Route::post('/bookings/{booking}/complete', [FleetController::class, 'completeBooking'])->name('bookings.complete');
+            Route::get('/customers', [FleetController::class, 'customers'])->name('customers');
+            Route::get('/customers/create', [FleetController::class, 'createCustomer'])->name('customers.create');
+            Route::post('/customers', [FleetController::class, 'storeCustomer'])->name('customers.store');
+            Route::get('/drivers', [FleetController::class, 'drivers'])->name('drivers');
+            Route::get('/drivers/create', [FleetController::class, 'createDriver'])->name('drivers.create');
+            Route::post('/drivers', [FleetController::class, 'storeDriver'])->name('drivers.store');
+        });
+        Route::middleware('tenant.permission:fleet.payment.manage')->group(function (): void {
+            Route::post('/bookings/{booking}/payment', [FleetController::class, 'recordPayment'])->name('bookings.payment');
+            Route::post('/bookings/{booking}/refund-deposit', [FleetController::class, 'refundDeposit'])->name('bookings.refund-deposit');
+        });
+        Route::post('/bookings/{booking}/inspection', [FleetController::class, 'storeInspection'])->middleware('tenant.permission:fleet.inspection.manage')->name('bookings.inspection');
+        Route::middleware('tenant.permission:fleet.maintenance.manage')->group(function (): void {
+            Route::get('/maintenance', [FleetController::class, 'maintenance'])->name('maintenance');
+            Route::post('/maintenance', [FleetController::class, 'logMaintenance'])->name('maintenance.store');
+            Route::post('/maintenance/{maintenance}/complete', [FleetController::class, 'completeMaintenance'])->name('maintenance.complete');
+        });
     });
 
     // Parcel intake, office handoffs, and delivery

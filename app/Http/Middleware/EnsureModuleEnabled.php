@@ -22,10 +22,7 @@ class EnsureModuleEnabled
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403, 'Tenant context not established.');
 
-        $hasEntitlement = $this->modules->isModuleEnabled($tenant, $moduleSlug);
-        $industryMatches = ($tenant->industry === $moduleSlug) || str_starts_with($tenant->industry ?? '', $moduleSlug);
-
-        if (! $hasEntitlement && ! $industryMatches) {
+        if (! $this->modules->isModuleAccessible($tenant, $moduleSlug)) {
             abort(403, "Module '{$moduleSlug}' is not enabled for this workspace.");
         }
 

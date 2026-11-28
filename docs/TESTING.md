@@ -31,6 +31,8 @@ BlePOS enforces rigorous automated testing. No feature is marked `VERIFIED` or c
 
 ## 3. Execution Commands & Test Harness
 
+Tenant access control and industry role coverage is documented in [TENANT_ACCESS_CONTROL.md](TENANT_ACCESS_CONTROL.md). Focused feature suites include role management/provisioning, industry permission enforcement, module entitlement, dashboard role classification, analytics exports, and shop scoping.
+
 ```bash
 # Run the entire test suite with compact agent-optimized reporting
 php artisan test --compact

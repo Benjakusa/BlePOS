@@ -28,9 +28,9 @@ class TenantDashboardController extends Controller
         $user = $request->user();
 
         // 1. Determine role view perspective
-        $isOwner = $user->hasRole('owner') || $user->hasPermission('shops.all.manage') || strtolower($user->email) === strtolower($tenant->owner_email);
-        $isManager = $user->hasRole('shop-manager') || $user->hasPermission('inventory.manage');
-        $isCashier = $user->hasRole('cashier');
+        $isOwner = $user->isTenantOwner();
+        $isManager = $user->hasPermission('reports.sales.view');
+        $isCashier = $user->hasPermission('pos.sale.create') && $user->hasPermission('shifts.view');
 
         $requestedView = $request->query('view');
         if ($requestedView === 'cashier' && ($isCashier || $isOwner || $isManager)) {
@@ -39,12 +39,14 @@ class TenantDashboardController extends Controller
             $roleView = 'shop-manager';
         } elseif ($requestedView === 'owner' && $isOwner) {
             $roleView = 'owner';
-        } elseif ($isCashier && ! $isManager && ! $isOwner) {
-            $roleView = 'cashier';
-        } elseif ($isManager && ! $isOwner) {
-            $roleView = 'shop-manager';
-        } else {
+        } elseif ($isOwner) {
             $roleView = 'owner';
+        } elseif ($isManager) {
+            $roleView = 'shop-manager';
+        } elseif ($isCashier) {
+            $roleView = 'cashier';
+        } else {
+            $roleView = 'staff';
         }
 
         // 2. Determine accessible shops and active shop
@@ -80,6 +82,12 @@ class TenantDashboardController extends Controller
             'accessibleShops' => $accessibleShops,
             'activeShop' => $activeShop,
         ];
+
+        if ($roleView === 'staff') {
+            $staffRoles = $user->roles()->with('permissions')->get();
+            $data['staffRoles'] = $staffRoles;
+            $data['staffPermissions'] = $staffRoles->flatMap->permissions->unique('id')->groupBy('group');
+        }
 
         if ($roleView === 'cashier') {
             // Cashier Perspective: Scoped strictly to cashier user and active shop

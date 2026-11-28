@@ -94,6 +94,7 @@
             @endif
 
             {{-- Analytics & Reports --}}
+            @if(auth()->user()->hasPermission('reports.sales.view'))
             <span class="nav-section">Analytics &amp; Reports</span>
             <a href="{{ route('tenant.analytics.index') }}"
                class="nav-link {{ request()->routeIs('tenant.analytics.index') ? 'active' : '' }}"
@@ -109,6 +110,7 @@
                 <i class="bi bi-file-earmark-spreadsheet"></i>
                 <span class="nav-label">Data Export Center</span>
             </a>
+            @endif
 
             {{-- Support & Communication --}}
             <span class="nav-section">Support &amp; Communication</span>
@@ -255,6 +257,13 @@
                 <i class="bi bi-people"></i>
                 <span class="nav-label">Staff & Team</span>
             </a>
+            <a href="{{ route('tenant.roles.index') }}"
+               class="nav-link {{ request()->routeIs('tenant.roles.*') ? 'active' : '' }}"
+               data-tooltip="Roles & Permissions"
+               aria-label="Roles & Permissions">
+                <i class="bi bi-shield-lock"></i>
+                <span class="nav-label">Roles & Permissions</span>
+            </a>
             <a href="{{ route('tenant.activity.index') }}"
                class="nav-link {{ request()->routeIs('tenant.activity.*') ? 'active' : '' }}"
                data-tooltip="Employee Activity"
@@ -284,7 +293,7 @@
                 $moduleService = app(\App\Services\ModuleService::class);
             @endphp
 
-            @if($currentTenant && ($moduleService->isModuleEnabled($currentTenant, 'gym') || ($currentTenant->industry ?? '') === 'gym-fitness'))
+            @if($currentTenant && auth()->user()->hasPermission('gym.view') && $moduleService->isModuleAccessible($currentTenant, 'gym'))
             <span class="nav-section">Gym &amp; Fitness</span>
             <a href="{{ route('tenant.gym.index') }}"
                class="nav-link {{ request()->routeIs('tenant.gym.*') ? 'active' : '' }}"
@@ -294,7 +303,7 @@
             </a>
             @endif
 
-            @if($currentTenant && ($moduleService->isModuleEnabled($currentTenant, 'printing') || ($currentTenant->industry ?? '') === 'printing-branding'))
+            @if($currentTenant && auth()->user()->hasPermission('printing.view') && $moduleService->isModuleAccessible($currentTenant, 'printing'))
             <span class="nav-section">Printing &amp; Branding</span>
             <a href="{{ route('tenant.printing.index') }}"
                class="nav-link {{ request()->routeIs('tenant.printing.*') ? 'active' : '' }}"
@@ -304,7 +313,7 @@
             </a>
             @endif
 
-            @if($currentTenant && ($moduleService->isModuleEnabled($currentTenant, 'agrovet') || ($currentTenant->industry ?? '') === 'agrovet'))
+            @if($currentTenant && auth()->user()->hasPermission('agrovet.view') && $moduleService->isModuleAccessible($currentTenant, 'agrovet'))
             <span class="nav-section">Agrovet</span>
             <a href="{{ route('tenant.agrovet.index') }}"
                class="nav-link {{ request()->routeIs('tenant.agrovet.*') ? 'active' : '' }}"
@@ -314,7 +323,7 @@
             </a>
             @endif
 
-            @if($currentTenant && ($moduleService->isModuleEnabled($currentTenant, 'garage') || ($currentTenant->industry ?? '') === 'auto-garage'))
+            @if($currentTenant && auth()->user()->hasPermission('garage.view') && $moduleService->isModuleAccessible($currentTenant, 'garage'))
             <span class="nav-section">Auto Garage</span>
             <a href="{{ route('tenant.garage.index') }}"
                class="nav-link {{ request()->routeIs('tenant.garage.*') ? 'active' : '' }}"
@@ -324,7 +333,7 @@
             </a>
             @endif
 
-            @if($currentTenant && ($moduleService->isModuleEnabled($currentTenant, 'fleet') || ($currentTenant->industry ?? '') === 'car-hire-fleet'))
+            @if($currentTenant && auth()->user()->hasPermission('fleet.view') && $moduleService->isModuleAccessible($currentTenant, 'fleet'))
             <span class="nav-section">Fleet &amp; Car Hire</span>
             <a href="{{ route('tenant.fleet.index') }}"
                class="nav-link {{ request()->routeIs('tenant.fleet.*') ? 'active' : '' }}"
@@ -334,7 +343,7 @@
             </a>
             @endif
 
-            @if($currentTenant && auth()->user()->hasPermission('parcel.view') && ($moduleService->isModuleEnabled($currentTenant, 'parcel-delivery') || ($currentTenant->industry ?? '') === 'parcel-delivery'))
+            @if($currentTenant && auth()->user()->hasPermission('parcel.view') && $moduleService->isModuleAccessible($currentTenant, 'parcel-delivery'))
             <span class="nav-section">Parcel Delivery</span>
             <a href="{{ route('tenant.parcels.index') }}"
                class="nav-link {{ request()->routeIs('tenant.parcels.*') ? 'active' : '' }}"

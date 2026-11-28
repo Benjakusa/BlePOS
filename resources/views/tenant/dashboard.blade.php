@@ -24,7 +24,7 @@
             <span>Branch: <strong>{{ $activeShop ? $activeShop->name : 'All Shops Combined' }}</strong></span>
             <span>&bull;</span>
             <span class="badge {{ $roleView === 'owner' ? 'badge-info' : ($roleView === 'shop-manager' ? 'badge-warning' : 'badge-success') }}">
-                {{ $roleView === 'owner' ? 'Executive Overview' : ($roleView === 'shop-manager' ? 'Shop Manager' : 'Cashier Terminal') }}
+                {{ $roleView === 'owner' ? 'Executive Overview' : ($roleView === 'shop-manager' ? 'Shop Manager' : ($roleView === 'cashier' ? 'Cashier Terminal' : 'Staff Workspace')) }}
             </span>
         </div>
     </div>
@@ -76,10 +76,12 @@
             <span>Print summary</span>
         </button>
 
+        @if(auth()->user()->hasPermission('pos.sale.create'))
         <a href="{{ route('tenant.pos.checkout') }}" class="btn btn-primary" aria-label="New sale">
             <i class="bi bi-cart-plus"></i>
             <span>New sale</span>
         </a>
+        @endif
     </div>
 </div>
 
@@ -419,7 +421,7 @@
         </div>
     @endif
 
-@else
+@elseif($roleView === 'owner')
     <!-- ========================================== -->
     <!-- OWNER / BUSINESS MANAGER PERSPECTIVE (Part 19)-->
     <!-- ========================================== -->
@@ -694,32 +696,63 @@
             </div>
         </div>
     </div>
+@else
+    <section class="card" style="padding:24px;margin-top:20px;">
+        <h2 style="margin:0 0 8px;font-size:18px;">Your work area</h2>
+        <p class="muted">This workspace shows your assigned responsibilities. Financial and business-wide metrics are limited to explicitly authorized roles.</p>
+        <h3 style="font-size:14px;margin:18px 0 8px;">Assigned role(s)</h3>
+        <ul style="padding-left:20px;">
+            @forelse($staffRoles as $staffRole)
+                <li><strong>{{ $staffRole->name }}</strong>@if($staffRole->description) — {{ $staffRole->description }}@endif</li>
+            @empty
+                <li>No role has been assigned. Ask a business administrator to configure your access.</li>
+            @endforelse
+        </ul>
+        @if($staffPermissions->isNotEmpty())
+            <h3 style="font-size:14px;margin:18px 0 8px;">Your granted capabilities</h3>
+            @foreach($staffPermissions as $group => $permissions)
+                <p style="margin:8px 0;"><strong>{{ $group }}:</strong> {{ $permissions->pluck('description')->filter()->join('; ') }}</p>
+            @endforeach
+        @else
+            <p class="muted">No operational permissions are assigned to these roles yet.</p>
+        @endif
+    </section>
 @endif
 
 <!-- Quick Operations Panel -->
 <div class="card">
     <h3 class="section-title" style="margin-bottom: 16px;">Quick Business Operations</h3>
     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        @if(auth()->user()->hasPermission('pos.sale.create'))
         <a href="{{ route('tenant.pos.checkout') }}" class="btn btn-primary">
             <i class="bi bi-cart3"></i>
             <span>POS Checkout</span>
         </a>
+        @endif
+        @if(auth()->user()->hasPermission('shifts.manage'))
         <a href="{{ route('tenant.shifts.create') }}" class="btn btn-secondary">
             <i class="bi bi-clock"></i>
             <span>Open New Shift</span>
         </a>
+        @endif
+        @if(auth()->user()->hasPermission('catalog.products.manage'))
         <a href="{{ route('tenant.products.create') }}" class="btn btn-secondary">
             <i class="bi bi-plus-circle"></i>
             <span>Add Product</span>
         </a>
+        @endif
+        @if(auth()->user()->hasPermission('inventory.receive'))
         <a href="{{ route('tenant.inventory.receive') }}" class="btn btn-secondary">
             <i class="bi bi-box-arrow-in-down"></i>
             <span>Receive Delivery</span>
         </a>
+        @endif
+        @if(auth()->user()->hasPermission('inventory.view'))
         <a href="{{ route('tenant.inventory.movements') }}" class="btn btn-secondary">
             <i class="bi bi-arrow-left-right"></i>
             <span>Stock Movements Audit</span>
         </a>
+        @endif
     </div>
 </div>
 

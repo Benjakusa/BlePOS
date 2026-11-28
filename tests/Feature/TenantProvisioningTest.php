@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use App\Models\TenantDomain;
 use App\Models\User;
 use App\Services\ProvisioningEngine;
+use Database\Seeders\ModuleCatalogueSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,6 +18,7 @@ class TenantProvisioningTest extends TestCase
 
     public function test_provisioning_engine_initiates_and_executes_30_steps_successfully(): void
     {
+        $this->seed(ModuleCatalogueSeeder::class);
         $engine = new ProvisioningEngine;
 
         $payload = [
@@ -70,11 +72,24 @@ class TenantProvisioningTest extends TestCase
             'tenant_id' => $tenant->id,
             'slug' => 'cashier',
         ]);
+        $this->assertDatabaseHas('tenant_roles', [
+            'tenant_id' => $tenant->id,
+            'slug' => 'dispensing-pharmacist',
+        ]);
+        $this->assertDatabaseHas('tenant_roles', [
+            'tenant_id' => $tenant->id,
+            'slug' => 'stock-controller',
+        ]);
+        $this->assertDatabaseMissing('tenant_roles', [
+            'tenant_id' => $tenant->id,
+            'slug' => 'waiter',
+        ]);
 
         // Assert owner user created and assigned to owner role
         $owner = User::where('tenant_id', $tenant->id)->where('email', 'jane@kenyattachemist.co.ke')->first();
         $this->assertNotNull($owner);
         $this->assertTrue($owner->hasRole('owner'));
+        $this->assertSame(1, User::where('tenant_id', $tenant->id)->count(), 'Role templates must not create employee accounts.');
 
         // Assert initial shop and register created
         $shop = Shop::where('tenant_id', $tenant->id)->where('code', 'CBD')->first();

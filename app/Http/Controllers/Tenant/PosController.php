@@ -39,13 +39,16 @@ use Illuminate\View\View;
 
 class PosController extends Controller
 {
-    public function __construct(private readonly SaleService $saleService) {}
+    public function __construct(
+        private readonly SaleService $saleService,
+        private readonly ModuleService $moduleService,
+    ) {}
 
     /**
      * POS checkout screen. Supports industry-specific formatted terminal modes.
      * Requires an open cashier shift.
      */
-    public function checkout(Request $request, ModuleService $moduleService): View|RedirectResponse
+    public function checkout(Request $request): View|RedirectResponse
     {
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403, 'Tenant context not established.');
@@ -62,27 +65,50 @@ class PosController extends Controller
                 ->with('warning', 'You must open a cashier shift before processing sales.');
         }
 
-        // Available modes for POS terminal
-        $availableModes = [
-            'retail' => ['label' => 'Retail Checkout', 'icon' => 'bi-cart3'],
-            'parcels' => ['label' => 'Parcel Logistics', 'icon' => 'bi-box-seam'],
-            'gym' => ['label' => 'Gym Front Desk', 'icon' => 'bi-activity'],
-            'fleet' => ['label' => 'Fleet Dispatch', 'icon' => 'bi-car-front'],
-            'garage' => ['label' => 'Auto Garage Service', 'icon' => 'bi-tools'],
-        ];
+        // Available modes for POS terminal strictly scoped to active industry modules
+        $availableModes = [];
+
+        if ($this->moduleService->isModuleAccessible($tenant, 'gym')) {
+            $availableModes['gym'] = ['label' => 'Gym Front Desk', 'icon' => 'bi-activity'];
+        }
+
+        if ($this->moduleService->isModuleAccessible($tenant, 'parcels')) {
+            $availableModes['parcels'] = ['label' => 'Parcel Logistics', 'icon' => 'bi-box-seam'];
+        }
+
+        if ($this->moduleService->isModuleAccessible($tenant, 'fleet')) {
+            $availableModes['fleet'] = ['label' => 'Fleet Dispatch', 'icon' => 'bi-car-front'];
+        }
+
+        if ($this->moduleService->isModuleAccessible($tenant, 'garage')) {
+            $availableModes['garage'] = ['label' => 'Auto Garage Service', 'icon' => 'bi-tools'];
+        }
+
+        // Retail checkout mode (standard POS catalog sale)
+        // Available for general retail/wholesale/hospitality or tenants with product sales enabled
+        if (empty($availableModes) || $this->moduleService->isModuleAccessible($tenant, 'mod-products') || in_array($tenant->industry, ['retail', 'wholesale', 'restaurant', 'hotel', 'pharmacy', 'agrovet', 'printing-branding', 'general'], true)) {
+            $availableModes['retail'] = ['label' => 'Retail Checkout', 'icon' => 'bi-cart3'];
+        }
 
         $defaultMode = match ($tenant->industry) {
             'parcel-delivery' => 'parcels',
             'gym-fitness' => 'gym',
             'car-hire-fleet' => 'fleet',
             'auto-garage' => 'garage',
-            default => 'retail',
+            default => array_key_first($availableModes) ?? 'retail',
         };
 
+        if (! array_key_exists($defaultMode, $availableModes)) {
+            $defaultMode = array_key_first($availableModes) ?? 'retail';
+        }
+
         $requestedMode = $request->query('mode');
-        $mode = ($requestedMode && array_key_exists($requestedMode, $availableModes))
-            ? $requestedMode
-            : $defaultMode;
+        if ($requestedMode) {
+            abort_unless(array_key_exists($requestedMode, $availableModes), 403, "The requested POS mode '{$requestedMode}' is not available for your industry.");
+            $mode = $requestedMode;
+        } else {
+            $mode = $defaultMode;
+        }
 
         $registers = Register::query()->get();
         $tables = DiningTable::query()
@@ -96,20 +122,20 @@ class PosController extends Controller
             ->orderBy('name')
             ->get();
 
-        $destinationShops = Shop::where('tenant_id', $tenant->id)->where('is_active', true)->get();
-        $recentParcels = Parcel::where('tenant_id', $tenant->id)->latest()->limit(10)->get();
+        $destinationShops = $mode === 'parcels' ? Shop::where('tenant_id', $tenant->id)->where('is_active', true)->get() : collect();
+        $recentParcels = $mode === 'parcels' ? Parcel::where('tenant_id', $tenant->id)->latest()->limit(10)->get() : collect();
 
-        $gymPlans = GymPlan::where('tenant_id', $tenant->id)->where('is_active', true)->get();
-        $gymMembers = GymMember::where('tenant_id', $tenant->id)->latest()->limit(50)->get();
-        $recentCheckins = GymCheckin::where('tenant_id', $tenant->id)->with('member')->latest('checked_in_at')->limit(10)->get();
+        $gymPlans = $mode === 'gym' ? GymPlan::where('tenant_id', $tenant->id)->where('is_active', true)->get() : collect();
+        $gymMembers = $mode === 'gym' ? GymMember::where('tenant_id', $tenant->id)->latest()->limit(50)->get() : collect();
+        $recentCheckins = $mode === 'gym' ? GymCheckin::where('tenant_id', $tenant->id)->with('member')->latest('checked_in_at')->limit(10)->get() : collect();
 
-        $availableVehicles = FleetVehicle::where('tenant_id', $tenant->id)->where('status', 'available')->get();
-        $fleetCustomers = FleetCustomer::where('tenant_id', $tenant->id)->latest()->limit(50)->get();
-        $recentBookings = FleetBooking::where('tenant_id', $tenant->id)->with(['vehicle', 'customer'])->latest()->limit(10)->get();
+        $availableVehicles = $mode === 'fleet' ? FleetVehicle::where('tenant_id', $tenant->id)->where('status', 'available')->get() : collect();
+        $fleetCustomers = $mode === 'fleet' ? FleetCustomer::where('tenant_id', $tenant->id)->latest()->limit(50)->get() : collect();
+        $recentBookings = $mode === 'fleet' ? FleetBooking::where('tenant_id', $tenant->id)->with(['vehicle', 'customer'])->latest()->limit(10)->get() : collect();
 
-        $garageVehicles = GarageVehicle::where('tenant_id', $tenant->id)->with('customer')->latest()->limit(50)->get();
-        $garageCustomers = GarageCustomer::where('tenant_id', $tenant->id)->latest()->limit(50)->get();
-        $recentJobCards = GarageJobCard::where('tenant_id', $tenant->id)->with(['vehicle', 'customer', 'estimate'])->latest()->limit(10)->get();
+        $garageVehicles = $mode === 'garage' ? GarageVehicle::where('tenant_id', $tenant->id)->with('customer')->latest()->limit(50)->get() : collect();
+        $garageCustomers = $mode === 'garage' ? GarageCustomer::where('tenant_id', $tenant->id)->latest()->limit(50)->get() : collect();
+        $recentJobCards = $mode === 'garage' ? GarageJobCard::where('tenant_id', $tenant->id)->with(['vehicle', 'customer', 'estimate'])->latest()->limit(10)->get() : collect();
 
         return view('tenant.pos.checkout', [
             'tenant' => $tenant,
@@ -216,6 +242,7 @@ class PosController extends Controller
     {
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403, 'Tenant context not established.');
+        abort_unless($this->moduleService->isModuleAccessible($tenant, 'parcel-delivery'), 403, 'Parcel logistics module is not enabled for your industry.');
         abort_unless($request->user()?->hasPermission('pos.sale.create'), 403);
 
         $openShift = CashierShift::query()
@@ -300,6 +327,7 @@ class PosController extends Controller
     {
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403);
+        abort_unless($this->moduleService->isModuleAccessible($tenant, 'parcel-delivery'), 403, 'Parcel logistics module is not enabled for your industry.');
         abort_if((int) $parcel->tenant_id !== (int) $tenant->id, 403);
 
         $parcel->load(['originOffice', 'destinationOffice', 'receivedBy']);
@@ -317,6 +345,7 @@ class PosController extends Controller
     {
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403);
+        abort_unless($this->moduleService->isModuleAccessible($tenant, 'gym'), 403, 'Gym module is not enabled for your industry.');
         abort_unless($request->user()?->hasPermission('pos.sale.create'), 403);
 
         $openShift = CashierShift::query()
@@ -483,6 +512,7 @@ class PosController extends Controller
     {
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403);
+        abort_unless($this->moduleService->isModuleAccessible($tenant, 'gym'), 403, 'Gym module is not enabled for your industry.');
         abort_if((int) $payment->tenant_id !== (int) $tenant->id, 403);
 
         $payment->load(['member', 'subscription.plan']);
@@ -500,6 +530,7 @@ class PosController extends Controller
     {
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403);
+        abort_unless($this->moduleService->isModuleAccessible($tenant, 'fleet'), 403, 'Fleet module is not enabled for your industry.');
         abort_unless($request->user()?->hasPermission('pos.sale.create'), 403);
 
         $openShift = CashierShift::query()
@@ -590,6 +621,7 @@ class PosController extends Controller
     {
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403);
+        abort_unless($this->moduleService->isModuleAccessible($tenant, 'fleet'), 403, 'Fleet module is not enabled for your industry.');
         abort_if((int) $booking->tenant_id !== (int) $tenant->id, 403);
 
         $booking->load(['vehicle', 'customer', 'payments']);
@@ -607,6 +639,7 @@ class PosController extends Controller
     {
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403);
+        abort_unless($this->moduleService->isModuleAccessible($tenant, 'garage'), 403, 'Auto garage module is not enabled for your industry.');
         abort_unless($request->user()?->hasPermission('pos.sale.create'), 403);
 
         $openShift = CashierShift::query()
@@ -705,6 +738,7 @@ class PosController extends Controller
     {
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403);
+        abort_unless($this->moduleService->isModuleAccessible($tenant, 'garage'), 403, 'Auto garage module is not enabled for your industry.');
         abort_if((int) $jobCard->tenant_id !== (int) $tenant->id, 403);
 
         $jobCard->load(['vehicle', 'customer', 'estimate', 'payments']);

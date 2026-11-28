@@ -26,6 +26,29 @@ class ModuleService
     }
 
     /**
+     * Check if a module is accessible to the tenant either via active module entitlement
+     * or because it belongs to the tenant's primary industry vertical template.
+     */
+    public function isModuleAccessible(Tenant $tenant, string $moduleSlug): bool
+    {
+        if ($this->isModuleEnabled($tenant, $moduleSlug)) {
+            return true;
+        }
+
+        return match ($moduleSlug) {
+            'gym' => in_array($tenant->industry, ['gym-fitness', 'gym'], true),
+            'printing' => in_array($tenant->industry, ['printing-branding', 'printing'], true),
+            'agrovet' => in_array($tenant->industry, ['agrovet'], true),
+            'garage' => in_array($tenant->industry, ['auto-garage', 'garage'], true),
+            'fleet' => in_array($tenant->industry, ['car-hire-fleet', 'fleet'], true),
+            'parcel-delivery', 'parcels' => in_array($tenant->industry, ['parcel-delivery', 'courier'], true),
+            'mod-products' => ! in_array($tenant->industry, ['car-hire-fleet'], true),
+            'retail' => in_array($tenant->industry, ['retail', 'wholesale', 'supermarket', 'hardware', 'electronics', 'boutique', 'general'], true),
+            default => ($tenant->industry === $moduleSlug) || str_starts_with($tenant->industry ?? '', $moduleSlug),
+        };
+    }
+
+    /**
      * Get all enabled module slugs for a tenant.
      *
      * @return Collection<int, string>

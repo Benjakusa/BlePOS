@@ -33,11 +33,11 @@ class TenantAnalyticsAndExportTest extends TestCase
         parent::tearDown();
     }
 
-    private function createTenantAndUser(): array
+    private function createTenantAndUser(string $industry = 'retail'): array
     {
         $tenant = Tenant::factory()->create([
             'name' => 'Apex Retail Ltd',
-            'industry' => 'retail',
+            'industry' => $industry,
             'currency' => 'KES',
         ]);
         TenantContext::setTenant($tenant);
@@ -58,11 +58,27 @@ class TenantAnalyticsAndExportTest extends TestCase
             'shifts.manage',
             'inventory.view',
             'catalog.products.manage',
+            'accounting.view',
+            'reports.sales.view',
         ];
 
         foreach ($permissions as $p) {
             $perm = TenantPermission::firstOrCreate(['name' => $p], ['group' => 'general', 'description' => $p]);
             $role->permissions()->attach($perm->id);
+        }
+
+        $industryViewPermissions = [
+            'parcel-delivery' => 'parcel.view',
+            'gym-fitness' => 'gym.view',
+            'car-hire-fleet' => 'fleet.view',
+            'auto-garage' => 'garage.view',
+        ];
+        if (isset($industryViewPermissions[$industry])) {
+            $permission = TenantPermission::firstOrCreate(
+                ['name' => $industryViewPermissions[$industry]],
+                ['group' => 'industry', 'description' => 'View industry operations.'],
+            );
+            $role->permissions()->syncWithoutDetaching([$permission->id]);
         }
 
         $user = User::factory()->forTenant($tenant)->create(['name' => 'Jane Manager']);
@@ -85,6 +101,29 @@ class TenantAnalyticsAndExportTest extends TestCase
         $response->assertSee('Gross Sales Total');
         $response->assertSee('16% VAT Collected');
         $response->assertSee('Payment Tender Distribution');
+    }
+
+    public function test_staff_without_reporting_permission_cannot_read_analytics_or_export(): void
+    {
+        [$tenant] = $this->createTenantAndUser();
+        $staff = User::factory()->forTenant($tenant)->create(['name' => 'Unprivileged Staff']);
+
+        $this->actingAs($staff)->get(route('tenant.analytics.index'))->assertForbidden();
+        $this->actingAs($staff)->get(route('tenant.analytics.export-center'))->assertForbidden();
+        $this->actingAs($staff)->post(route('tenant.analytics.export'), ['export_type' => 'sales'])->assertForbidden();
+    }
+
+    public function test_report_user_cannot_query_or_export_an_unassigned_branch(): void
+    {
+        [$tenant, , $user] = $this->createTenantAndUser();
+        $otherShop = Shop::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Unassigned Branch']);
+
+        $this->actingAs($user)->get(route('tenant.analytics.index', ['shop_id' => $otherShop->id]))
+            ->assertForbidden();
+        $this->actingAs($user)->post(route('tenant.analytics.export'), [
+            'export_type' => 'sales',
+            'shop_id' => $otherShop->id,
+        ])->assertForbidden();
     }
 
     public function test_tenant_analytics_period_filtering(): void
@@ -188,17 +227,50 @@ class TenantAnalyticsAndExportTest extends TestCase
 
     public function test_tenant_can_export_industry_datasets_csvs(): void
     {
-        [$tenant, $shop, $user] = $this->createTenantAndUser();
+        // 1. Retail tenant should be forbidden from exporting specialized industry datasets
+        [$retailTenant, , $retailUser] = $this->createTenantAndUser('retail');
 
         foreach (['parcels', 'gym', 'fleet', 'garage'] as $type) {
+            $this->actingAs($retailUser)
+                ->withSession(['tenant_id' => $retailTenant->id])
+                ->post(route('tenant.analytics.export'), [
+                    'export_type' => $type,
+                ])
+                ->assertForbidden();
+        }
+
+        // 2. Each industry tenant can export its own dataset and is forbidden from others
+        $industryMap = [
+            'parcel-delivery' => 'parcels',
+            'gym-fitness' => 'gym',
+            'car-hire-fleet' => 'fleet',
+            'auto-garage' => 'garage',
+        ];
+
+        foreach ($industryMap as $industry => $allowedType) {
+            [$tenant, , $user] = $this->createTenantAndUser($industry);
+
+            // Allowed export succeeds
             $response = $this->actingAs($user)
                 ->withSession(['tenant_id' => $tenant->id])
                 ->post(route('tenant.analytics.export'), [
-                    'export_type' => $type,
+                    'export_type' => $allowedType,
                 ]);
 
             $response->assertOk();
             $this->assertStringContainsString('text/csv', (string) $response->headers->get('Content-Type'));
+
+            // Other industry exports are forbidden
+            foreach ($industryMap as $otherInd => $forbiddenType) {
+                if ($forbiddenType !== $allowedType) {
+                    $this->actingAs($user)
+                        ->withSession(['tenant_id' => $tenant->id])
+                        ->post(route('tenant.analytics.export'), [
+                            'export_type' => $forbiddenType,
+                        ])
+                        ->assertForbidden();
+                }
+            }
         }
     }
 
