@@ -554,13 +554,211 @@ a:hover {
 }
 .notif-dot {
   position: absolute;
-  top: 7px;
-  right: 7px;
-  width: 8px;
-  height: 8px;
-  background-color: var(--clr-red);
+  top: 6px;
+  right: 6px;
+  width: 9px;
+  height: 9px;
+  background-color: #ef4444;
   border-radius: 50%;
   border: 2px solid var(--clr-surface);
+}
+.notif-bell-btn.has-unread {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+.notif-bell-btn.has-unread:hover {
+  background-color: rgba(239, 68, 68, 0.22);
+  color: #dc2626;
+}
+.notif-bell-btn.has-unread .notif-bell-icon {
+  color: #ef4444;
+  animation: notifBellFlash 1.1s ease-in-out infinite;
+  transform-origin: top center;
+}
+.notif-bell-btn.has-unread .notif-dot {
+  animation: notifDotPulse 1.1s ease-in-out infinite;
+}
+.notif-count-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background-color: #ef4444;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+  border: 2px solid var(--clr-surface);
+  animation: notifDotPulse 1.1s ease-in-out infinite;
+}
+@keyframes notifBellFlash {
+  0%, 100% {
+    color: #ef4444;
+    filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.75));
+    transform: rotate(0deg) scale(1.06);
+    opacity: 1;
+  }
+  25% {
+    transform: rotate(12deg) scale(1.1);
+  }
+  50% {
+    color: #fca5a5;
+    filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.25));
+    transform: rotate(-10deg) scale(1);
+    opacity: 0.65;
+  }
+  75% {
+    transform: rotate(6deg) scale(1.08);
+  }
+}
+@keyframes notifDotPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.75);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    transform: scale(1.15);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notif-bell-btn.has-unread .notif-bell-icon,
+  .notif-bell-btn.has-unread .notif-dot,
+  .notif-count-badge {
+    animation: none;
+  }
+}
+
+/* Support Feedback & Announcement Popup Modal */
+.ble-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: blePopupFadeIn 180ms ease-out;
+}
+.ble-popup-backdrop[hidden] {
+  display: none !important;
+}
+.ble-popup-dialog {
+  width: min(520px, 100%);
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+.ble-popup-card {
+  background: var(--clr-surface, #ffffff);
+  color: var(--clr-text, #0f172a);
+  border: 1px solid var(--clr-border, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.28);
+  overflow: hidden;
+  animation: blePopupSlideIn 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ble-popup-card.kind-announcement {
+  border-top: 4px solid #f59e0b;
+}
+.ble-popup-card.kind-support {
+  border-top: 4px solid #3b82f6;
+}
+.ble-popup-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid var(--clr-border, #e2e8f0);
+}
+.ble-popup-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.ble-popup-badge.announcement {
+  background: rgba(245, 158, 11, 0.14);
+  color: #d97706;
+}
+.ble-popup-badge.support {
+  background: rgba(59, 130, 246, 0.14);
+  color: #2563eb;
+}
+[data-theme="dark"] .ble-popup-badge.announcement {
+  color: #fbbf24;
+}
+[data-theme="dark"] .ble-popup-badge.support {
+  color: #60a5fa;
+}
+.ble-popup-close {
+  border: 0;
+  background: transparent;
+  color: var(--clr-muted, #64748b);
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.ble-popup-close:hover {
+  background: var(--clr-grey-tint, rgba(148, 163, 184, 0.15));
+  color: var(--clr-text, #0f172a);
+}
+.ble-popup-body {
+  padding: 16px 20px;
+}
+.ble-popup-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  line-height: 1.35;
+}
+.ble-popup-message {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--clr-muted, #475569);
+  margin: 0;
+  white-space: pre-wrap;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.ble-popup-time {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--clr-muted, #64748b);
+}
+.ble-popup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 20px 18px;
+}
+@keyframes blePopupFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes blePopupSlideIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* Page Body */

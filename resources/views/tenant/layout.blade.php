@@ -397,9 +397,19 @@
                     <i class="bi bi-sun" id="theme-toggle-icon" style="font-size:17px;"></i>
                 </button>
 
-                <a href="{{ route('tenant.notifications.index') }}" class="top-bar-btn" aria-label="Notifications" data-tooltip="Notifications" style="position:relative">
-                    <i class="bi bi-bell" style="font-size:17px;"></i>
-                    @if(auth()->user()->unreadNotifications()->count())<span class="notif-dot" aria-label="Unread notifications"></span>@endif
+                @php
+                    $tenantUnreadCount = auth()->user()->unreadNotifications()->count();
+                @endphp
+                <a href="{{ route('tenant.notifications.index') }}"
+                   class="top-bar-btn notif-bell-btn {{ $tenantUnreadCount > 0 ? 'has-unread' : '' }}"
+                   data-notif-bell
+                   aria-label="Notifications"
+                   data-tooltip="Notifications"
+                   style="position:relative">
+                    <i class="bi {{ $tenantUnreadCount > 0 ? 'bi-bell-fill' : 'bi-bell' }} notif-bell-icon" style="font-size:17px;"></i>
+                    @if($tenantUnreadCount > 0)
+                        <span class="notif-count-badge" aria-label="Unread notifications">{{ $tenantUnreadCount > 99 ? '99+' : $tenantUnreadCount }}</span>
+                    @endif
                 </a>
 
                 @if(Route::has('tenant.logout'))
@@ -459,6 +469,10 @@
         </main>
     </div>
 </div>
+
+@auth
+    @include('partials.notification-popups', ['isPlatform' => false])
+@endauth
 
 @stack('scripts')
 <script nonce="{{ request()->attributes->get('csp_nonce') }}">

@@ -95,7 +95,9 @@ Route::prefix('platform-console')->name('platform.')->middleware(['platform.head
 
         Route::middleware(['platform.mfa', 'platform.session'])->group(function (): void {
             Route::get('/notifications', [NotificationCenterController::class, 'index'])->name('notifications.index');
+            Route::get('/notifications/poll', [NotificationCenterController::class, 'poll'])->name('notifications.poll');
             Route::post('/notifications/{notification}/read', [NotificationCenterController::class, 'read'])->name('notifications.read');
+            Route::post('/notifications/{notification}/dismiss', [NotificationCenterController::class, 'dismiss'])->name('notifications.dismiss');
             Route::post('/notifications/read-all', [NotificationCenterController::class, 'readAll'])->name('notifications.read-all');
             Route::get('/security/step-up', [StepUpController::class, 'create'])->name('step-up');
             Route::post('/security/step-up', [StepUpController::class, 'store'])->middleware('throttle:platform-step-up')->name('step-up.store');
@@ -436,7 +438,9 @@ Route::prefix('tenant')->name('tenant.')->middleware(['web', 'auth', 'tenant.res
     Route::get('/', TenantDashboardController::class)->name('dashboard');
     Route::get('/activity', [TenantActivityController::class, 'index'])->middleware('tenant.permission:users.manage')->name('activity.index');
     Route::get('/notifications', [NotificationCenterController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/poll', [NotificationCenterController::class, 'poll'])->name('notifications.poll');
     Route::post('/notifications/{notification}/read', [NotificationCenterController::class, 'read'])->name('notifications.read');
+    Route::post('/notifications/{notification}/dismiss', [NotificationCenterController::class, 'dismiss'])->name('notifications.dismiss');
     Route::post('/notifications/read-all', [NotificationCenterController::class, 'readAll'])->name('notifications.read-all');
 
     Route::get('/announcements', [TenantAnnouncementController::class, 'index'])->name('announcements.index');

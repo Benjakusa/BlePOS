@@ -242,9 +242,19 @@
                     <i class="bi bi-sun" id="theme-toggle-icon" style="font-size:17px;"></i>
                 </button>
 
-                <a href="{{ route('platform.notifications.index') }}" class="top-bar-btn" aria-label="Notifications" data-tooltip="Notifications" style="position:relative">
-                    <i class="bi bi-bell" style="font-size:17px;"></i>
-                    @if(auth('platform')->user()->unreadNotifications()->count())<span class="notif-dot" aria-label="Unread notifications"></span>@endif
+                @php
+                    $platformUnreadCount = auth('platform')->user()->unreadNotifications()->count();
+                @endphp
+                <a href="{{ route('platform.notifications.index') }}"
+                   class="top-bar-btn notif-bell-btn {{ $platformUnreadCount > 0 ? 'has-unread' : '' }}"
+                   data-notif-bell
+                   aria-label="Notifications"
+                   data-tooltip="Notifications"
+                   style="position:relative">
+                    <i class="bi {{ $platformUnreadCount > 0 ? 'bi-bell-fill' : 'bi-bell' }} notif-bell-icon" style="font-size:17px;"></i>
+                    @if($platformUnreadCount > 0)
+                        <span class="notif-count-badge" aria-label="Unread notifications">{{ $platformUnreadCount > 99 ? '99+' : $platformUnreadCount }}</span>
+                    @endif
                 </a>
 
                 <form method="post" action="{{ route('platform.logout') }}" style="margin:0;">
@@ -305,6 +315,10 @@
         </main>
     </div>
 </div>
+
+@auth('platform')
+    @include('partials.notification-popups', ['isPlatform' => true])
+@endauth
 
 @stack('scripts')
 

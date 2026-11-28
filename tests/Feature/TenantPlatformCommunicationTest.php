@@ -141,6 +141,76 @@ class TenantPlatformCommunicationTest extends TestCase
         ]);
     }
 
+    public function test_support_feedback_and_announcements_render_popup_and_flashing_red_bell(): void
+    {
+        $owner = User::where('email', 'restaurant.owner@blepos.co.ke')->firstOrFail();
+
+        // 1. Publish announcement -> tenant sees flashing red bell & popup modal
+        $announcement = app(SupportService::class)->createAnnouncement([
+            'title' => 'Urgent eTIMS update',
+            'content' => 'Please refresh your eTIMS configuration before 5 PM.',
+            'priority' => 'critical',
+            'target_type' => 'tenant',
+            'target_value' => (string) $owner->tenant_id,
+        ]);
+        app(WorkspaceNotificationService::class)->announcementPublished($announcement);
+
+        $dashResponse = $this->actingAs($owner)->get(route('tenant.dashboard'));
+        $dashResponse->assertOk()
+            ->assertSee('notif-bell-btn has-unread', false)
+            ->assertSee('notif-count-badge', false)
+            ->assertSee('ble-popup-card kind-announcement', false)
+            ->assertSee('Platform Announcement')
+            ->assertSee('Urgent eTIMS update');
+
+        $pollResponse = $this->actingAs($owner)->getJson(route('tenant.notifications.poll'));
+        $pollResponse->assertOk()
+            ->assertJsonPath('unread_count', 1)
+            ->assertJsonPath('popups.0.kind', 'announcement');
+
+        $notification = $owner->fresh()->unreadNotifications()->firstOrFail();
+        $this->actingAs($owner)->postJson(route('tenant.notifications.dismiss', $notification->id))
+            ->assertOk()
+            ->assertJson(['ok' => true, 'unread_count' => 0]);
+
+        $this->actingAs($owner)->get(route('tenant.dashboard'))
+            ->assertOk()
+            ->assertDontSee('notif-bell-btn has-unread', false)
+            ->assertDontSee('class="ble-popup-card', false);
+
+        // 2. Platform support reply -> tenant sees support ticket feedback popup & flashing bell
+        $case = SupportCase::query()->create([
+            'tenant_id' => $owner->tenant_id,
+            'case_number' => 'SUP-POPUP-001',
+            'subject' => 'Printer offline',
+            'description' => 'Receipt printer stopped',
+            'category' => 'hardware_pos',
+            'priority' => 'high',
+            'status' => 'open',
+            'requester_user_id' => $owner->id,
+            'requester_name' => $owner->name,
+            'requester_email' => $owner->email,
+        ]);
+        app(WorkspaceNotificationService::class)->caseReply($case, false);
+
+        $this->actingAs($owner)->get(route('tenant.dashboard'))
+            ->assertOk()
+            ->assertSee('notif-bell-btn has-unread', false)
+            ->assertSee('ble-popup-card kind-support', false)
+            ->assertSee('Support Ticket Feedback')
+            ->assertSee('Platform replied to your support ticket');
+
+        // 3. Tenant support reply -> platform agent sees flashing red bell & support feedback popup
+        [$agent, $session] = $this->createPlatformUser('support-agent');
+        app(WorkspaceNotificationService::class)->caseReply($case, true);
+
+        $this->platformRequest($agent, $session)->get(route('platform.support.cases.index'))
+            ->assertOk()
+            ->assertSee('notif-bell-btn has-unread', false)
+            ->assertSee('ble-popup-card kind-support', false)
+            ->assertSee('Tenant replied to a support ticket');
+    }
+
     private function createPlatformUser(string $roleSlug): array
     {
         $user = PlatformUser::factory()->create(['mfa_confirmed_at' => now()]);
