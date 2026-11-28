@@ -35,6 +35,18 @@ class PlatformAuditIntegrityTest extends TestCase
         app(PlatformAuditRecorder::class)->record(null, 'system.started');
     }
 
+    public function test_audit_chain_lock_repair_migration_restores_the_singleton_row_idempotently(): void
+    {
+        DB::table('platform_audit_chain_locks')->delete();
+        $migration = require database_path('migrations/2026_11_28_000007_restore_platform_audit_chain_lock.php');
+
+        $migration->up();
+        $migration->up();
+
+        $this->assertSame(1, DB::table('platform_audit_chain_locks')->where('id', 1)->count());
+        $this->assertNotNull(app(PlatformAuditRecorder::class)->record(null, 'system.started'));
+    }
+
     public function test_database_rejects_audit_updates(): void
     {
         $entry = app(PlatformAuditRecorder::class)->record(null, 'system.started');

@@ -28,7 +28,17 @@ Audit chain intact. Checked 152 entries at 2026-11-24 14:00:00.
 
 If tampering or hash mismatch is detected, the command terminates with exit code 1 and outputs the exact record ID where the chain was broken.
 
-## 4. Key Models & Code References
+## 4. Audit Chain Lock Recovery
+
+The recorder uses the singleton row `id = 1` in `platform_audit_chain_locks` as its transaction mutex. Login and other audited operations fail closed if the row is missing. The migration `2026_11_28_000007_restore_platform_audit_chain_lock` restores the row idempotently without changing audit entries. Run the normal database migration command after deploying:
+
+```bash
+php artisan migrate --force
+```
+
+Do not delete this row when clearing application data; it is required infrastructure for serialized audit writes.
+
+## 5. Key Models & Code References
 
 - Model: `App\Models\PlatformAuditLog`
 - Command: `App\Console\Commands\AuditVerifyCommand`
