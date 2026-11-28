@@ -20,7 +20,6 @@ use App\Models\SalePayment;
 use App\Models\Shop;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Services\ModuleService;
 use Carbon\Carbon;
 
 class TenantAnalyticsService
@@ -31,6 +30,7 @@ class TenantAnalyticsService
     {
         return $this->moduleService ?? app(ModuleService::class);
     }
+
     /**
      * Compute comprehensive business metrics for a tenant within a given period.
      */

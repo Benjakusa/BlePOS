@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tenant;
 use App\Models\TenantActivityLog;
 use App\Models\TenantPermission;
 use App\Models\TenantRole;
@@ -10,6 +11,7 @@ use App\Services\TenantContext;
 use App\Services\TenantRoleTemplateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -132,14 +134,14 @@ class TenantRoleController extends Controller
         ]);
     }
 
-    private function permissionOptions(TenantRoleTemplateService $templates): \Illuminate\Support\Collection
+    private function permissionOptions(TenantRoleTemplateService $templates): Collection
     {
         return TenantPermission::query()
             ->whereIn('name', array_keys($templates->permissionDefinitions()))
             ->orderBy('group')->orderBy('name')->get()->groupBy('group');
     }
 
-    private function tenant(): \App\Models\Tenant
+    private function tenant(): Tenant
     {
         $tenant = TenantContext::getTenant();
         abort_if($tenant === null, 403, 'Tenant context not established.');

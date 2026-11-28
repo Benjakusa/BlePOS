@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Shop;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\ModuleService;
 use App\Services\TenantAnalyticsService;
 use App\Services\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class TenantAnalyticsController extends Controller
@@ -52,7 +54,7 @@ class TenantAnalyticsController extends Controller
         abort_if($tenant === null, 403, 'Tenant context not established.');
 
         $shops = $this->visibleShops($request, $tenant);
-        $modules = app(\App\Services\ModuleService::class);
+        $modules = app(ModuleService::class);
 
         return view('tenant.analytics.export', [
             'tenant' => $tenant,
@@ -139,7 +141,7 @@ class TenantAnalyticsController extends Controller
         return $requestedShopId ? (int) $requestedShopId : (int) $shopIds->first();
     }
 
-    private function visibleShops(Request $request, Tenant $tenant): \Illuminate\Support\Collection
+    private function visibleShops(Request $request, Tenant $tenant): Collection
     {
         $user = $request->user();
         abort_unless($user instanceof User, 403);

@@ -6,6 +6,7 @@ use App\Models\IndustryTemplate;
 use App\Models\Tenant;
 use App\Models\TenantPermission;
 use App\Models\TenantRole;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /** Creates business-specific role templates without provisioning employee accounts. */
@@ -103,6 +104,7 @@ class TenantRoleTemplateService
         foreach ($roles as $role) {
             if ($role->slug === 'owner') {
                 $role->permissions()->sync($permissionIds->values()->all());
+
                 continue;
             }
 
@@ -153,33 +155,63 @@ class TenantRoleTemplateService
         }
 
         if (in_array($industry, ['gym-fitness', 'gym'], true)) {
-            if (str_contains($slug, 'front-desk')) return ['gym.view', 'gym.member.manage', 'gym.subscription.manage', 'gym.checkin.manage'];
-            if (str_contains($slug, 'trainer')) return ['gym.view', 'gym.class.manage', 'gym.trainer.manage'];
-            if (str_contains($slug, 'gym-manager')) return ['gym.view', 'gym.member.manage', 'gym.subscription.manage', 'gym.class.manage', 'gym.checkin.manage', 'gym.trainer.manage', 'reports.sales.view'];
+            if (str_contains($slug, 'front-desk')) {
+                return ['gym.view', 'gym.member.manage', 'gym.subscription.manage', 'gym.checkin.manage'];
+            }
+            if (str_contains($slug, 'trainer')) {
+                return ['gym.view', 'gym.class.manage', 'gym.trainer.manage'];
+            }
+            if (str_contains($slug, 'gym-manager')) {
+                return ['gym.view', 'gym.member.manage', 'gym.subscription.manage', 'gym.class.manage', 'gym.checkin.manage', 'gym.trainer.manage', 'reports.sales.view'];
+            }
         }
 
         if (in_array($industry, ['printing-branding', 'printing'], true)) {
-            if (str_contains($slug, 'designer')) return ['printing.view', 'print.job.create', 'print.quote.manage'];
-            if (str_contains($slug, 'production-operator')) return ['printing.view', 'print.job.create', 'print.material.manage'];
-            if (str_contains($slug, 'print-shop-manager')) return ['printing.view', 'print.job.create', 'print.job.approve', 'print.quote.manage', 'print.material.manage', 'print.payment.record', 'reports.sales.view'];
+            if (str_contains($slug, 'designer')) {
+                return ['printing.view', 'print.job.create', 'print.quote.manage'];
+            }
+            if (str_contains($slug, 'production-operator')) {
+                return ['printing.view', 'print.job.create', 'print.material.manage'];
+            }
+            if (str_contains($slug, 'print-shop-manager')) {
+                return ['printing.view', 'print.job.create', 'print.job.approve', 'print.quote.manage', 'print.material.manage', 'print.payment.record', 'reports.sales.view'];
+            }
         }
 
         if ($industry === 'agrovet') {
-            if (str_contains($slug, 'agrovet-attendant')) return ['agrovet.view', 'agrovet.product.manage', 'agrovet.customer.manage', 'agrovet.sales.manage'];
-            if (str_contains($slug, 'credit-officer')) return ['agrovet.view', 'agrovet.customer.manage', 'agrovet.credit.grant', 'agrovet.report.view'];
-            if (str_contains($slug, 'branch-manager')) return ['agrovet.view', 'agrovet.product.manage', 'agrovet.customer.manage', 'agrovet.sales.manage', 'agrovet.credit.grant', 'agrovet.credit.approve', 'agrovet.purchase.manage', 'agrovet.report.view', 'reports.sales.view'];
+            if (str_contains($slug, 'agrovet-attendant')) {
+                return ['agrovet.view', 'agrovet.product.manage', 'agrovet.customer.manage', 'agrovet.sales.manage'];
+            }
+            if (str_contains($slug, 'credit-officer')) {
+                return ['agrovet.view', 'agrovet.customer.manage', 'agrovet.credit.grant', 'agrovet.report.view'];
+            }
+            if (str_contains($slug, 'branch-manager')) {
+                return ['agrovet.view', 'agrovet.product.manage', 'agrovet.customer.manage', 'agrovet.sales.manage', 'agrovet.credit.grant', 'agrovet.credit.approve', 'agrovet.purchase.manage', 'agrovet.report.view', 'reports.sales.view'];
+            }
         }
 
         if (in_array($industry, ['auto-garage', 'garage'], true)) {
-            if (str_contains($slug, 'service-advisor')) return ['garage.view', 'garage.job.manage', 'garage.estimate.approve', 'garage.payment.record', 'garage.customer.manage'];
-            if (str_contains($slug, 'lead-mechanic')) return ['garage.view', 'garage.job.manage', 'garage.part.manage', 'garage.mechanic.manage', 'garage.vehicle.manage'];
-            if (str_contains($slug, 'parts-clerk')) return ['garage.view', 'garage.part.manage'];
+            if (str_contains($slug, 'service-advisor')) {
+                return ['garage.view', 'garage.job.manage', 'garage.estimate.approve', 'garage.payment.record', 'garage.customer.manage'];
+            }
+            if (str_contains($slug, 'lead-mechanic')) {
+                return ['garage.view', 'garage.job.manage', 'garage.part.manage', 'garage.mechanic.manage', 'garage.vehicle.manage'];
+            }
+            if (str_contains($slug, 'parts-clerk')) {
+                return ['garage.view', 'garage.part.manage'];
+            }
         }
 
         if (in_array($industry, ['car-hire-fleet', 'fleet'], true)) {
-            if (str_contains($slug, 'fleet-coordinator')) return ['fleet.view', 'fleet.vehicle.manage', 'fleet.booking.manage', 'fleet.inspection.manage', 'fleet.payment.manage', 'fleet.maintenance.manage', 'reports.sales.view'];
-            if (str_contains($slug, 'inspector')) return ['fleet.view', 'fleet.inspection.manage'];
-            if (str_contains($slug, 'dispatcher')) return ['fleet.view', 'fleet.booking.manage'];
+            if (str_contains($slug, 'fleet-coordinator')) {
+                return ['fleet.view', 'fleet.vehicle.manage', 'fleet.booking.manage', 'fleet.inspection.manage', 'fleet.payment.manage', 'fleet.maintenance.manage', 'reports.sales.view'];
+            }
+            if (str_contains($slug, 'inspector')) {
+                return ['fleet.view', 'fleet.inspection.manage'];
+            }
+            if (str_contains($slug, 'dispatcher')) {
+                return ['fleet.view', 'fleet.booking.manage'];
+            }
         }
 
         if (preg_match('/inventory|stock|storekeeper|warehouse|receiving/', $slug)) {
@@ -205,7 +237,7 @@ class TenantRoleTemplateService
         return null;
     }
 
-    /** @param \Illuminate\Support\Collection<string, int> $permissionIds */
+    /** @param Collection<string, int> $permissionIds */
     private function applyDefaultPermissions(TenantRole $role, Tenant $tenant, $permissionIds): void
     {
         $grants = $this->permissionsForRole($role, $tenant->industry);

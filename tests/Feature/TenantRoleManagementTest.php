@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Tenant;
+use App\Models\TenantActivityLog;
 use App\Models\TenantPermission;
 use App\Models\TenantRole;
 use App\Models\User;
+use App\Services\TenantRoleTemplateService;
+use Database\Seeders\ModuleCatalogueSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -62,7 +65,7 @@ class TenantRoleManagementTest extends TestCase
             'action' => 'tenant.role.updated',
             'subject_id' => (string) $role->id,
         ]);
-        $log = \App\Models\TenantActivityLog::withoutGlobalScopes()->where('action', 'tenant.role.updated')->firstOrFail();
+        $log = TenantActivityLog::withoutGlobalScopes()->where('action', 'tenant.role.updated')->firstOrFail();
         $this->assertContains('inventory.view', $log->context['before']['permissions']);
         $this->assertContains('accounting.view', $log->context['after']['permissions']);
 
@@ -105,10 +108,10 @@ class TenantRoleManagementTest extends TestCase
 
     public function test_template_roles_follow_industry_and_do_not_create_staff_accounts(): void
     {
-        $this->seed(\Database\Seeders\ModuleCatalogueSeeder::class);
+        $this->seed(ModuleCatalogueSeeder::class);
         $tenant = Tenant::factory()->create(['industry' => 'restaurant']);
 
-        $service = app(\App\Services\TenantRoleTemplateService::class);
+        $service = app(TenantRoleTemplateService::class);
         $service->createTemplateRoles($tenant);
         $service->assignTemplatePermissions($tenant);
 
